@@ -1,0 +1,151 @@
+{
+	"saved_at": "2026-11-10T00:22:17.850Z",
+	"items": {
+		"mit/beaver": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"mit/great_dome": {
+			"decision": "keep",
+			"comment": "no variant works on this one."
+		},
+		"mit/dna_helix": {
+			"decision": "keep",
+			"comment": "this is fine, but we don't want want to flip this image as it is symmetric. no variant."
+		},
+		"mit/apollo_capsule": {
+			"decision": "keep",
+			"comment": "variant is too similar in color."
+		},
+		"mit/mit_logo": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"mit/muddy_charles": {
+			"decision": "candidate",
+			"comment": "",
+			"candidate": "twemoji--beer-mug.svg",
+			"render": "original"
+		},
+		"mit/boston_skyline": {
+			"decision": "other",
+			"comment": "Find a square image of the skyline."
+		},
+		"mit/hacker_map": {
+			"decision": "other",
+			"comment": "not convinced by hacker map."
+		},
+		"mit/stata_center": {
+			"decision": "candidate",
+			"comment": "see if you can find a square footage of this.",
+			"candidate": "photo-1.jpg",
+			"render": "original"
+		},
+		"mit/green_building": {
+			"decision": "candidate",
+			"comment": "",
+			"candidate": "photo-3.jpg",
+			"render": "original"
+		},
+		"mit/kresge_auditorium": {
+			"decision": "keep",
+			"comment": "",
+			"candidate": "photo-2.jpg",
+			"render": "original"
+		},
+		"mit/harvard_bridge": {
+			"decision": "keep",
+			"comment": "square image"
+		},
+		"mit/brass_rat": {
+			"decision": "keep",
+			"comment": "find the current grad rat image."
+		},
+		"mit/infinite_corridor": {
+			"decision": "keep",
+			"comment": "add an infinity sign around this."
+		},
+		"mit/killian_court": {
+			"decision": "keep",
+			"comment": "variant is the same"
+		},
+		"mit/sailing_pavilion": {
+			"decision": "keep",
+			"comment": "variant is the same"
+		},
+		"transport/train": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/plane": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/car": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/boat": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/bike": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/scooter": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/helicopter": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/rocket": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/bus": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/tram": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/motorcycle": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/truck": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/submarine": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/hot_air_balloon": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/skateboard": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/tractor": {
+			"decision": "keep",
+			"comment": ""
+		}
+	},
+	"questions": {
+		"per_theme": 2,
+		"foils": 4,
+		"confidence": "",
+		"comment": ""
+	},
+	"survey": {
+		"comment": ""
+	},
+	"general": "MIT's might need some work if we're really going to go with SVG."
+}

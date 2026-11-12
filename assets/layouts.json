@@ -1,0 +1,68 @@
+{
+	"seed": 20261025,
+	"generated_at": "2026-10-25T19:50:56.392Z",
+	"layouts": {
+		"mit": {
+			"rows": 4,
+			"cols": 4,
+			"cards": [
+				"boston_skyline",
+				"dna_helix",
+				"beaver",
+				"muddy_charles",
+				"beaver",
+				"boston_skyline",
+				"mit_logo",
+				"dna_helix",
+				"integral",
+				"mit_logo",
+				"muddy_charles",
+				"apollo_capsule",
+				"great_dome",
+				"integral",
+				"apollo_capsule",
+				"great_dome"
+			]
+		},
+		"transport": {
+			"rows": 4,
+			"cols": 4,
+			"cards": [
+				"rocket",
+				"helicopter",
+				"bike",
+				"boat",
+				"bike",
+				"plane",
+				"train",
+				"scooter",
+				"helicopter",
+				"car",
+				"boat",
+				"rocket",
+				"car",
+				"train",
+				"scooter",
+				"plane"
+			]
+		},
+		"emoji": {
+			"rows": 3,
+			"cols": 4,
+			"cards": [
+				"ball",
+				"balloon",
+				"star",
+				"smile",
+				"heart",
+				"ball",
+				"bell",
+				"star",
+				"bell",
+				"smile",
+				"heart",
+				"balloon"
+			]
+		}
+	}
+}

@@ -1,0 +1,98 @@
+{
+	"conditions": ["rest", "elevated_hr"],
+	"theme_orders": [
+		["mit", "transport"],
+		["transport", "mit"]
+	],
+	"board": { "rows": 4, "cols": 4 },
+	"practice_board": { "rows": 3, "cols": 4, "theme": "emoji" },
+	"preview_s": 5,
+	"mismatch_flip_ms": 1000,
+	"max_participants": 30,
+	"sa_questions": ["objects", "color", "side_by_side"],
+	"sa_random_per_theme": 4,
+	"sa_foils_per_theme": 4,
+	"confidence_scale": 4,
+	"confidence_labels": ["Guessing", "Very sure"],
+
+	"colors": [
+		{ "id": "red", "label": "Red", "hex": "#d62828" },
+		{ "id": "blue", "label": "Blue", "hex": "#1f63d6" },
+		{ "id": "green", "label": "Green", "hex": "#2a9d3f" },
+		{ "id": "yellow", "label": "Yellow", "hex": "#e0a800" }
+	],
+	"orientations": [
+		{ "id": "up", "label": "Up", "rotate_deg": 0 },
+		{ "id": "right", "label": "Right", "rotate_deg": 90 },
+		{ "id": "down", "label": "Down", "rotate_deg": 180 },
+		{ "id": "left", "label": "Left", "rotate_deg": 270 }
+	],
+
+	"oral_sa_questions": [
+		{
+			"id": "env_placeholder_1",
+			"prompt": "PLACEHOLDER: What color was the facilitator's water bottle?",
+			"options": [
+				{ "id": "red", "label": "Red" },
+				{ "id": "blue", "label": "Blue" },
+				{ "id": "green", "label": "Green" },
+				{ "id": "black", "label": "Black" }
+			],
+			"answer": "blue"
+		},
+		{
+			"id": "env_placeholder_2",
+			"prompt": "PLACEHOLDER: How many chairs were in the room?",
+			"options": [
+				{ "id": "2", "label": "2" },
+				{ "id": "3", "label": "3" },
+				{ "id": "4", "label": "4" },
+				{ "id": "5", "label": "5 or more" }
+			],
+			"answer": "3"
+		},
+		{
+			"id": "env_placeholder_3",
+			"prompt": "PLACEHOLDER: Was there a poster on the wall behind the screen?",
+			"options": [
+				{ "id": "yes", "label": "Yes" },
+				{ "id": "no", "label": "No" }
+			],
+			"answer": "yes"
+		},
+		{
+			"id": "env_placeholder_4",
+			"prompt": "PLACEHOLDER: What was written on the whiteboard?",
+			"options": [
+				{ "id": "a", "label": "Option A" },
+				{ "id": "b", "label": "Option B" },
+				{ "id": "c", "label": "Option C" },
+				{ "id": "nothing", "label": "Nothing" }
+			],
+			"answer": "a"
+		}
+	],
+
+	"condition_text": {
+		"rest": {
+			"interval1": {
+				"title": "Seated rest",
+				"body": "Please sit quietly and relax. The researcher will let you know when it is time to continue."
+			},
+			"interval2": {
+				"title": "Seated rest",
+				"body": "Please sit quietly and relax. The researcher will let you know when it is time to continue."
+			}
+		},
+		"elevated_hr": {
+			"interval1": {
+				"title": "Exercise",
+				"body": "Follow the researcher's instructions for the exercise. Keep going until the timer ends."
+			},
+			"interval2": {
+				"title": "Exercise",
+				"body": "Follow the researcher's instructions to raise your heart rate again. Keep going until the timer ends."
+			}
+		}
+	}
+}

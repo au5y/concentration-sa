@@ -1,0 +1,13 @@
+{
+	"theme": "emoji",
+	"label": "Practice (emoji)",
+	"objects": [
+		{ "id": "star", "label": "star", "emoji": "⭐" },
+		{ "id": "heart", "label": "heart", "emoji": "❤️" },
+		{ "id": "ball", "label": "ball", "emoji": "⚽" },
+		{ "id": "balloon", "label": "balloon", "emoji": "🎈" },
+		{ "id": "bell", "label": "bell", "emoji": "🔔" },
+		{ "id": "smile", "label": "smiley", "emoji": "😀" }
+	],
+	"foils": []
+}

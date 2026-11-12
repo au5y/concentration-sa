@@ -1,0 +1,2141 @@
+{
+	"emoji": {},
+	"mit": {
+		"beaver": [
+			{
+				"file": "game-icons--beaver.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:beaver",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=beaver"
+			},
+			{
+				"file": "openmoji--beaver.svg",
+				"render": "original",
+				"source": "Iconify openmoji:beaver",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=beaver"
+			},
+			{
+				"file": "twemoji--beaver.svg",
+				"render": "original",
+				"source": "Iconify twemoji:beaver",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=beaver"
+			},
+			{
+				"file": "noto--beaver.svg",
+				"render": "original",
+				"source": "Iconify noto:beaver",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=beaver"
+			}
+		],
+		"great_dome": [
+			{
+				"file": "mdi--dome-light.svg",
+				"render": "mask",
+				"source": "Iconify mdi:dome-light",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=dome-light"
+			},
+			{
+				"file": "icon-park-solid--dome-light.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:dome-light",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=dome-light"
+			},
+			{
+				"file": "game-icons--base-dome.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:base-dome",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=base-dome"
+			},
+			{
+				"file": "fa6-solid--landmark-dome.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:landmark-dome",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=landmark-dome"
+			},
+			{
+				"file": "healthicons--domestic-worker.svg",
+				"render": "mask",
+				"source": "Iconify healthicons:domestic-worker",
+				"license": "MIT",
+				"author": "Resolve to Save Lives",
+				"url": "https://icon-sets.iconify.design/healthicons/?icon-filter=domestic-worker"
+			},
+			{
+				"file": "photo-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Peacearth",
+				"url": "https://commons.wikimedia.org/wiki/File:Great_dome_of_MIT,_Feb_2021.jpg"
+			},
+			{
+				"file": "photo-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Peacearth",
+				"url": "https://commons.wikimedia.org/wiki/File:Great_dome_of_MIT,_Feb_2021_(2)_(cropped).jpg"
+			},
+			{
+				"file": "photo-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Peacearth",
+				"url": "https://commons.wikimedia.org/wiki/File:Great_dome_of_MIT,_Feb_2021_(2).jpg"
+			}
+		],
+		"dna_helix": [
+			{
+				"file": "mdi--dna.svg",
+				"render": "mask",
+				"source": "Iconify mdi:dna",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=dna"
+			},
+			{
+				"file": "tabler--dna.svg",
+				"render": "mask",
+				"source": "Iconify tabler:dna",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=dna"
+			},
+			{
+				"file": "ph--dna.svg",
+				"render": "mask",
+				"source": "Iconify ph:dna",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=dna"
+			},
+			{
+				"file": "healthicons--dna.svg",
+				"render": "mask",
+				"source": "Iconify healthicons:dna",
+				"license": "MIT",
+				"author": "Resolve to Save Lives",
+				"url": "https://icon-sets.iconify.design/healthicons/?icon-filter=dna"
+			},
+			{
+				"file": "fa6-solid--dna.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:dna",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=dna"
+			},
+			{
+				"file": "openmoji--dna.svg",
+				"render": "original",
+				"source": "Iconify openmoji:dna",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=dna"
+			},
+			{
+				"file": "twemoji--dna.svg",
+				"render": "original",
+				"source": "Iconify twemoji:dna",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=dna"
+			},
+			{
+				"file": "noto--dna.svg",
+				"render": "original",
+				"source": "Iconify noto:dna",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=dna"
+			}
+		],
+		"apollo_capsule": [
+			{
+				"file": "game-icons--apollo-capsule.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:apollo-capsule",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=apollo-capsule"
+			},
+			{
+				"file": "photo-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "Public domain",
+				"author": "NASA",
+				"url": "https://commons.wikimedia.org/wiki/File:Apollo_11_Crew.jpg"
+			},
+			{
+				"file": "photo-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "Public domain",
+				"author": "NASA / Harrison H. Schmitt",
+				"url": "https://commons.wikimedia.org/wiki/File:NASA_Apollo_17_Lunar_Roving_Vehicle.jpg"
+			},
+			{
+				"file": "photo-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY 2.0",
+				"author": "Steve Jurvetson",
+				"url": "https://commons.wikimedia.org/wiki/File:Apollo_Command_Module_Fire_Extinguisher.jpg"
+			}
+		],
+		"mit_logo": [],
+		"muddy_charles": [
+			{
+				"file": "icon-park-solid--beer-mug.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:beer-mug",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=beer-mug",
+				"label": "now in use"
+			},
+			{
+				"file": "fa6-solid--beer-mug-empty.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:beer-mug-empty",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=beer-mug-empty"
+			},
+			{
+				"file": "mdi--pub.svg",
+				"render": "mask",
+				"source": "Iconify mdi:pub",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=pub"
+			},
+			{
+				"file": "material-symbols--public.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:public",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=public"
+			},
+			{
+				"file": "game-icons--public-speaker.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:public-speaker",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=public-speaker"
+			},
+			{
+				"file": "openmoji--beer-mug.svg",
+				"render": "original",
+				"source": "Iconify openmoji:beer-mug",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=beer-mug"
+			},
+			{
+				"file": "twemoji--beer-mug.svg",
+				"render": "original",
+				"source": "Iconify twemoji:beer-mug",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=beer-mug"
+			},
+			{
+				"file": "noto--beer-mug.svg",
+				"render": "original",
+				"source": "Iconify noto:beer-mug",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=beer-mug"
+			}
+		],
+		"boston_skyline": [
+			{
+				"file": "openmoji--cityscape.svg",
+				"render": "original",
+				"source": "Iconify openmoji:cityscape",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=cityscape"
+			},
+			{
+				"file": "twemoji--cityscape.svg",
+				"render": "original",
+				"source": "Iconify twemoji:cityscape",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=cityscape"
+			},
+			{
+				"file": "noto--cityscape.svg",
+				"render": "original",
+				"source": "Iconify noto:cityscape",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=cityscape"
+			},
+			{
+				"file": "square-sky-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 4.0",
+				"author": "EgorovaSvetlana",
+				"url": "https://commons.wikimedia.org/wiki/File:Boston_Skyline_Charles_River.jpg"
+			},
+			{
+				"file": "square-sky-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 4.0",
+				"author": "EgorovaSvetlana",
+				"url": "https://commons.wikimedia.org/wiki/File:Boston_Skyline_from_Charles_river.jpg"
+			},
+			{
+				"file": "square-skyb-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 2.0",
+				"author": "Ethan Long",
+				"url": "https://commons.wikimedia.org/wiki/File:Back_Bay_skyline_from_Charles_River_(54592142897).jpg"
+			},
+			{
+				"file": "square-skyb-5.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 3.0",
+				"author": "joefrogger",
+				"url": "https://commons.wikimedia.org/wiki/File:Boston_Skyline_Back_Bay_on_the_Charles_-_panoramio.jpg"
+			},
+			{
+				"file": "square-skyb-6.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 4.0",
+				"author": "NewtonCourt",
+				"url": "https://commons.wikimedia.org/wiki/File:Back_Bay_Boston_skyline_P1010879.jpg",
+				"label": "now in use"
+			},
+			{
+				"file": "square-skyb-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 4.0",
+				"author": "EgorovaSvetlana",
+				"url": "https://commons.wikimedia.org/wiki/File:Boats_on_the_Charles_River_Longfellow_Bridge_Beacon_Hill_Back_Bay_Boston_Skyline.jpg"
+			}
+		],
+		"stata_center": [
+			{
+				"file": "square-stata-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 4.0",
+				"author": "Rhododendrites",
+				"url": "https://commons.wikimedia.org/wiki/File:Stata_Center_(05689p)2.jpg"
+			},
+			{
+				"file": "square-stata-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 4.0",
+				"author": "Rhododendrites",
+				"url": "https://commons.wikimedia.org/wiki/File:Stata_Center_(95535).jpg"
+			},
+			{
+				"file": "photo-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Rhododendrites",
+				"url": "https://commons.wikimedia.org/wiki/File:Stata_Center_(05689p)2.jpg"
+			},
+			{
+				"file": "photo-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Rhododendrites",
+				"url": "https://commons.wikimedia.org/wiki/File:Stata_Center_(05697p).jpg"
+			},
+			{
+				"file": "photo-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Rhododendrites",
+				"url": "https://commons.wikimedia.org/wiki/File:Stata_Center_(05699p).jpg"
+			}
+		],
+		"green_building": [
+			{
+				"file": "square-green-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 4.0",
+				"author": "Alacoolwiki",
+				"url": "https://commons.wikimedia.org/wiki/File:MIT_Building_54_(Green_Building).jpg"
+			},
+			{
+				"file": "square-green-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 3.0",
+				"author": "The original uploader was Daderot at English Wikipedia.",
+				"url": "https://commons.wikimedia.org/wiki/File:Green_Building,_MIT,_Cambridge,_Massachusetts.JPG"
+			},
+			{
+				"file": "mdi--office-building.svg",
+				"render": "mask",
+				"source": "Iconify mdi:office-building",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=office-building"
+			},
+			{
+				"file": "ph--building-office.svg",
+				"render": "mask",
+				"source": "Iconify ph:building-office",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=building-office"
+			},
+			{
+				"file": "tabler--building-skyscraper.svg",
+				"render": "mask",
+				"source": "Iconify tabler:building-skyscraper",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=building-skyscraper"
+			},
+			{
+				"file": "openmoji--office-building.svg",
+				"render": "original",
+				"source": "Iconify openmoji:office-building",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=office-building"
+			},
+			{
+				"file": "twemoji--office-building.svg",
+				"render": "original",
+				"source": "Iconify twemoji:office-building",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=office-building"
+			},
+			{
+				"file": "noto--office-building.svg",
+				"render": "original",
+				"source": "Iconify noto:office-building",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=office-building"
+			},
+			{
+				"file": "photo-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 3.0",
+				"author": "The original uploader was Daderot at English Wikipedia.",
+				"url": "https://commons.wikimedia.org/wiki/File:Green_Building,_MIT,_Cambridge,_Massachusetts.JPG"
+			},
+			{
+				"file": "photo-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Rizka",
+				"url": "https://commons.wikimedia.org/wiki/File:Storm_clouds_behind_the_Green_Building_and_Dome,_MIT.jpg"
+			},
+			{
+				"file": "photo-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Alacoolwiki",
+				"url": "https://commons.wikimedia.org/wiki/File:MIT_Building_54_(Green_Building).jpg"
+			}
+		],
+		"kresge_auditorium": [
+			{
+				"file": "mdi--theater.svg",
+				"render": "mask",
+				"source": "Iconify mdi:theater",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=theater"
+			},
+			{
+				"file": "tabler--theater.svg",
+				"render": "mask",
+				"source": "Iconify tabler:theater",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=theater"
+			},
+			{
+				"file": "icon-park-solid--theater.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:theater",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=theater"
+			},
+			{
+				"file": "game-icons--theater.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:theater",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=theater"
+			},
+			{
+				"file": "fa6-solid--masks-theater.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:masks-theater",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=masks-theater"
+			},
+			{
+				"file": "photo-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 3.0",
+				"author": "The original uploader was Daderot at English Wikipedia.",
+				"url": "https://commons.wikimedia.org/wiki/File:Kresge_Auditorium,_MIT_(interior_with_concert).JPG"
+			},
+			{
+				"file": "photo-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 3.0",
+				"author": "The original uploader was Daderot at English Wikipedia.",
+				"url": "https://commons.wikimedia.org/wiki/File:Kresge_Auditorium,_MIT_(roof_detail).JPG"
+			},
+			{
+				"file": "photo-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY 4.0",
+				"author": "ajay_suresh",
+				"url": "https://commons.wikimedia.org/wiki/File:Kresge_Auditorium_-_MIT_(54960889194).jpg"
+			}
+		],
+		"harvard_bridge": [
+			{
+				"file": "mdi--bridge.svg",
+				"render": "mask",
+				"source": "Iconify mdi:bridge",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=bridge"
+			},
+			{
+				"file": "ph--bridge.svg",
+				"render": "mask",
+				"source": "Iconify ph:bridge",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=bridge"
+			},
+			{
+				"file": "game-icons--bridge.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:bridge",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=bridge"
+			},
+			{
+				"file": "fa6-solid--bridge.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:bridge",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=bridge"
+			},
+			{
+				"file": "icon-park-solid--bridge-one.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:bridge-one",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=bridge-one"
+			},
+			{
+				"file": "openmoji--bridge-at-night.svg",
+				"render": "original",
+				"source": "Iconify openmoji:bridge-at-night",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=bridge-at-night"
+			},
+			{
+				"file": "twemoji--bridge-at-night.svg",
+				"render": "original",
+				"source": "Iconify twemoji:bridge-at-night",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=bridge-at-night"
+			},
+			{
+				"file": "noto--bridge-at-night.svg",
+				"render": "original",
+				"source": "Iconify noto:bridge-at-night",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=bridge-at-night"
+			},
+			{
+				"file": "photo-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY 4.0",
+				"author": "4300streetcar",
+				"url": "https://commons.wikimedia.org/wiki/File:Harvard_Bridge_from_Boston_October_2024.jpg"
+			},
+			{
+				"file": "photo-2.png",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Tal Achituv",
+				"url": "https://commons.wikimedia.org/wiki/File:Harvard_Bridge.png"
+			},
+			{
+				"file": "photo-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY 4.0",
+				"author": "4300streetcar",
+				"url": "https://commons.wikimedia.org/wiki/File:Wrapped_MBTA_1_bus_crossing_Harvard_Bridge.jpg"
+			},
+			{
+				"file": "square-bridge-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY 4.0",
+				"author": "4300streetcar",
+				"url": "https://commons.wikimedia.org/wiki/File:Harvard_Bridge_from_Boston_October_2024.jpg"
+			},
+			{
+				"file": "square-bridge-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY 4.0",
+				"author": "S5A-0043",
+				"url": "https://commons.wikimedia.org/wiki/File:(USA-Massachusetts)_Harvard_Bridge_from_View_Boston_2024-06-09.jpg"
+			}
+		],
+		"brass_rat": [
+			{
+				"file": "square-rat-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "Public domain",
+				"author": "Pvanvoast",
+				"url": "https://commons.wikimedia.org/wiki/File:Brass_Rat_1950_Bezel.JPG",
+				"label": "now in use"
+			},
+			{
+				"file": "mdi--ring.svg",
+				"render": "mask",
+				"source": "Iconify mdi:ring",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=ring"
+			},
+			{
+				"file": "icon-park-solid--ring.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:ring",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=ring"
+			},
+			{
+				"file": "game-icons--ring.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:ring",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=ring"
+			},
+			{
+				"file": "fa6-solid--ring.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:ring",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=ring"
+			},
+			{
+				"file": "material-symbols--ring-volume.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:ring-volume",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=ring-volume"
+			},
+			{
+				"file": "openmoji--ring.svg",
+				"render": "original",
+				"source": "Iconify openmoji:ring",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=ring"
+			},
+			{
+				"file": "twemoji--ring.svg",
+				"render": "original",
+				"source": "Iconify twemoji:ring",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=ring"
+			},
+			{
+				"file": "noto--ring.svg",
+				"render": "original",
+				"source": "Iconify noto:ring",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=ring"
+			},
+			{
+				"file": "photo-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "Public domain",
+				"author": "Pvanvoast",
+				"url": "https://commons.wikimedia.org/wiki/File:Brass_Rat_1950_Seal_Shank.JPG"
+			}
+		],
+		"infinite_corridor": [
+			{
+				"file": "composed-infinity-over-door.svg",
+				"render": "mask",
+				"source": "Composed: game-icons doorway + mdi infinity",
+				"license": "CC BY 3.0 + Apache-2.0",
+				"label": "infinity over door (now in use)"
+			},
+			{
+				"file": "composed-infinity-around-door.svg",
+				"render": "mask",
+				"source": "Composed: game-icons doorway + mdi infinity",
+				"license": "CC BY 3.0 + Apache-2.0",
+				"label": "infinity around door"
+			},
+			{
+				"file": "game-icons--doorway-previous.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:doorway",
+				"license": "CC BY 3.0",
+				"label": "previous icon"
+			},
+			{
+				"file": "material-symbols--hallway.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:hallway",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=hallway"
+			},
+			{
+				"file": "mdi--hallway.svg",
+				"render": "mask",
+				"source": "Iconify mdi:hallway",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=hallway"
+			},
+			{
+				"file": "tabler--door.svg",
+				"render": "mask",
+				"source": "Iconify tabler:door",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=door"
+			},
+			{
+				"file": "ph--door.svg",
+				"render": "mask",
+				"source": "Iconify ph:door",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=door"
+			},
+			{
+				"file": "game-icons--door.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:door",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=door"
+			},
+			{
+				"file": "openmoji--door.svg",
+				"render": "original",
+				"source": "Iconify openmoji:door",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=door"
+			},
+			{
+				"file": "twemoji--door.svg",
+				"render": "original",
+				"source": "Iconify twemoji:door",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=door"
+			},
+			{
+				"file": "noto--door.svg",
+				"render": "original",
+				"source": "Iconify noto:door",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=door"
+			},
+			{
+				"file": "photo-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Peacearth",
+				"url": "https://commons.wikimedia.org/wiki/File:MIT_infinite_corridor_02.jpg"
+			},
+			{
+				"file": "photo-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Peacearth",
+				"url": "https://commons.wikimedia.org/wiki/File:MIT_infinite_corridor_01.jpg"
+			},
+			{
+				"file": "photo-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Peacearth",
+				"url": "https://commons.wikimedia.org/wiki/File:MIT_infinite_corridor_03.jpg"
+			}
+		],
+		"killian_court": [
+			{
+				"file": "material-symbols--school.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:school",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=school"
+			},
+			{
+				"file": "mdi--school.svg",
+				"render": "mask",
+				"source": "Iconify mdi:school",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=school"
+			},
+			{
+				"file": "tabler--school.svg",
+				"render": "mask",
+				"source": "Iconify tabler:school",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=school"
+			},
+			{
+				"file": "icon-park-solid--school.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:school",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=school"
+			},
+			{
+				"file": "fa6-solid--school.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:school",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=school"
+			},
+			{
+				"file": "openmoji--school.svg",
+				"render": "original",
+				"source": "Iconify openmoji:school",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=school"
+			},
+			{
+				"file": "twemoji--school.svg",
+				"render": "original",
+				"source": "Iconify twemoji:school",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=school"
+			},
+			{
+				"file": "noto--school.svg",
+				"render": "original",
+				"source": "Iconify noto:school",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=school"
+			},
+			{
+				"file": "photo-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Peacearth",
+				"url": "https://commons.wikimedia.org/wiki/File:Great_dome_of_MIT,_Feb_2021.jpg"
+			},
+			{
+				"file": "photo-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 3.0",
+				"author": "Diliff",
+				"url": "https://commons.wikimedia.org/wiki/File:British_Museum_Great_Court,_London,_UK_-_Diliff.jpg"
+			},
+			{
+				"file": "photo-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "Peacearth",
+				"url": "https://commons.wikimedia.org/wiki/File:Great_dome_of_MIT,_Feb_2021_(2)_(cropped).jpg"
+			}
+		],
+		"sailing_pavilion": [
+			{
+				"file": "tabler--sailboat.svg",
+				"render": "mask",
+				"source": "Iconify tabler:sailboat",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=sailboat"
+			},
+			{
+				"file": "icon-park-solid--sailboat.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:sailboat",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=sailboat"
+			},
+			{
+				"file": "ph--sailboat.svg",
+				"render": "mask",
+				"source": "Iconify ph:sailboat",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=sailboat"
+			},
+			{
+				"file": "game-icons--sailboat.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:sailboat",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=sailboat"
+			},
+			{
+				"file": "fa6-solid--sailboat.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:sailboat",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=sailboat"
+			},
+			{
+				"file": "openmoji--sailboat.svg",
+				"render": "original",
+				"source": "Iconify openmoji:sailboat",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=sailboat"
+			},
+			{
+				"file": "twemoji--sailboat.svg",
+				"render": "original",
+				"source": "Iconify twemoji:sailboat",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=sailboat"
+			},
+			{
+				"file": "noto--sailboat.svg",
+				"render": "original",
+				"source": "Iconify noto:sailboat",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=sailboat"
+			},
+			{
+				"file": "photo-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY-SA 4.0",
+				"author": "User:Magicpiano",
+				"url": "https://commons.wikimedia.org/wiki/File:Wood_Sailing_Pavilion_(MIT_Building_51).jpg"
+			},
+			{
+				"file": "photo-2.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY 4.0",
+				"author": "ajay_suresh",
+				"url": "https://commons.wikimedia.org/wiki/File:MIT_Wood_Sailing_Pavilion_(54960888744).jpg"
+			},
+			{
+				"file": "photo-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons",
+				"license": "CC BY 2.0",
+				"author": "Tony Webster from Portland, Oregon",
+				"url": "https://commons.wikimedia.org/wiki/File:MIT_Sailing_Pavilion_Boston_Skyline_(17491045021).jpg"
+			}
+		],
+		"integral": [
+			{
+				"file": "replace-eq-emc2.svg",
+				"render": "mask",
+				"source": "Typeset with MathJax (paths, no font)",
+				"license": "n/a (made here; MathJax fonts Apache-2.0)",
+				"label": "Replace with: E = mc\u00b2"
+			},
+			{
+				"file": "replace-eq-euler.svg",
+				"render": "mask",
+				"source": "Typeset with MathJax (paths, no font)",
+				"license": "n/a (made here; MathJax fonts Apache-2.0)",
+				"label": "Replace with: Euler's identity"
+			},
+			{
+				"file": "replace-eq-fma.svg",
+				"render": "mask",
+				"source": "Typeset with MathJax (paths, no font)",
+				"license": "n/a (made here; MathJax fonts Apache-2.0)",
+				"label": "Replace with: F = ma"
+			},
+			{
+				"file": "replace-eq-integral.svg",
+				"render": "mask",
+				"source": "Typeset with MathJax (paths, no font)",
+				"license": "n/a (made here; MathJax fonts Apache-2.0)",
+				"label": "now in use"
+			},
+			{
+				"file": "replace-eq-maxwell.svg",
+				"render": "mask",
+				"source": "Typeset with MathJax (paths, no font)",
+				"license": "n/a (made here; MathJax fonts Apache-2.0)",
+				"label": "Replace with: Maxwell's equations"
+			},
+			{
+				"file": "replace-eq-schrodinger.svg",
+				"render": "mask",
+				"source": "Typeset with MathJax (paths, no font)",
+				"license": "n/a (made here; MathJax fonts Apache-2.0)",
+				"label": "Replace with: Schr\u00f6dinger equation"
+			},
+			{
+				"file": "replace-logo-media-lab.svg",
+				"render": "mask",
+				"source": "Wikimedia Commons (padded square)",
+				"license": "Public domain (trademarked)",
+				"author": "w:Pentagram https://www.pentagram.com/work/mit-media-lab",
+				"url": "https://commons.wikimedia.org/wiki/File:MIT_Media_Lab_logo.svg",
+				"label": "Replace with: MIT Media Lab logo"
+			},
+			{
+				"file": "replace-logo-tech-review.svg",
+				"render": "mask",
+				"source": "Wikimedia Commons (padded square)",
+				"license": "Public domain (trademarked)",
+				"author": "MIT Technology Review",
+				"url": "https://commons.wikimedia.org/wiki/File:MIT_Technology_Review_logo.svg",
+				"label": "Replace with: MIT Technology Review logo"
+			},
+			{
+				"file": "game-icons--treasure-map.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:treasure-map",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=treasure-map"
+			},
+			{
+				"file": "material-symbols--map.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:map",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=map"
+			},
+			{
+				"file": "mdi--map.svg",
+				"render": "mask",
+				"source": "Iconify mdi:map",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=map"
+			},
+			{
+				"file": "tabler--map.svg",
+				"render": "mask",
+				"source": "Iconify tabler:map",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=map"
+			},
+			{
+				"file": "fa6-solid--map.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:map",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=map"
+			},
+			{
+				"file": "openmoji--world-map.svg",
+				"render": "original",
+				"source": "Iconify openmoji:world-map",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=world-map"
+			},
+			{
+				"file": "twemoji--world-map.svg",
+				"render": "original",
+				"source": "Iconify twemoji:world-map",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=world-map"
+			},
+			{
+				"file": "noto--world-map.svg",
+				"render": "original",
+				"source": "Iconify noto:world-map",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=world-map"
+			},
+			{
+				"file": "replace-simmons-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 4.0",
+				"author": "Gunnar Klack",
+				"url": "https://commons.wikimedia.org/wiki/File:2014-04-02-MIT-Simmons-Hall-Vassar-Street-Cambridge-Massachusetts-A.jpg",
+				"label": "Replace with: Simmons Hall"
+			},
+			{
+				"file": "replace-simmons-3.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 4.0",
+				"author": "Gunnar Klack",
+				"url": "https://commons.wikimedia.org/wiki/File:2014-04-02-MIT-Simmons-Hall-Vassar-Street-Cambridge-Massachusetts-E.jpg",
+				"label": "Replace with: Simmons Hall"
+			},
+			{
+				"file": "replace-baker-1.jpg",
+				"render": "original",
+				"source": "Wikimedia Commons (square crop)",
+				"license": "CC BY-SA 3.0",
+				"author": "Original uploader was Daderot at en.wikipedia",
+				"url": "https://commons.wikimedia.org/wiki/File:Baker_House,_MIT,_Cambridge,_Massachusetts.JPG",
+				"label": "Replace with: Baker House"
+			}
+		]
+	},
+	"transport": {
+		"train": [
+			{
+				"file": "material-symbols--train.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:train",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=train"
+			},
+			{
+				"file": "mdi--train.svg",
+				"render": "mask",
+				"source": "Iconify mdi:train",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=train"
+			},
+			{
+				"file": "tabler--train.svg",
+				"render": "mask",
+				"source": "Iconify tabler:train",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=train"
+			},
+			{
+				"file": "icon-park-solid--train.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:train",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=train"
+			},
+			{
+				"file": "ph--train.svg",
+				"render": "mask",
+				"source": "Iconify ph:train",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=train"
+			},
+			{
+				"file": "openmoji--train.svg",
+				"render": "original",
+				"source": "Iconify openmoji:train",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=train"
+			},
+			{
+				"file": "twemoji--train.svg",
+				"render": "original",
+				"source": "Iconify twemoji:train",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=train"
+			},
+			{
+				"file": "noto--train.svg",
+				"render": "original",
+				"source": "Iconify noto:train",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=train"
+			}
+		],
+		"plane": [
+			{
+				"file": "mdi--airplane.svg",
+				"render": "mask",
+				"source": "Iconify mdi:airplane",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=airplane"
+			},
+			{
+				"file": "icon-park-solid--airplane.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:airplane",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=airplane"
+			},
+			{
+				"file": "ph--airplane.svg",
+				"render": "mask",
+				"source": "Iconify ph:airplane",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=airplane"
+			},
+			{
+				"file": "game-icons--airplane.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:airplane",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=airplane"
+			},
+			{
+				"file": "material-symbols--airplane-ticket.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:airplane-ticket",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=airplane-ticket"
+			},
+			{
+				"file": "openmoji--airplane.svg",
+				"render": "original",
+				"source": "Iconify openmoji:airplane",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=airplane"
+			},
+			{
+				"file": "twemoji--airplane.svg",
+				"render": "original",
+				"source": "Iconify twemoji:airplane",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=airplane"
+			},
+			{
+				"file": "noto--airplane.svg",
+				"render": "original",
+				"source": "Iconify noto:airplane",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=airplane"
+			}
+		],
+		"car": [
+			{
+				"file": "mdi--car.svg",
+				"render": "mask",
+				"source": "Iconify mdi:car",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=car"
+			},
+			{
+				"file": "tabler--car.svg",
+				"render": "mask",
+				"source": "Iconify tabler:car",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=car"
+			},
+			{
+				"file": "icon-park-solid--car.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:car",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=car"
+			},
+			{
+				"file": "ph--car.svg",
+				"render": "mask",
+				"source": "Iconify ph:car",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=car"
+			},
+			{
+				"file": "fa6-solid--car.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:car",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=car"
+			},
+			{
+				"file": "openmoji--tram-car.svg",
+				"render": "original",
+				"source": "Iconify openmoji:tram-car",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=tram-car"
+			},
+			{
+				"file": "twemoji--tram-car.svg",
+				"render": "original",
+				"source": "Iconify twemoji:tram-car",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=tram-car"
+			},
+			{
+				"file": "noto--tram-car.svg",
+				"render": "original",
+				"source": "Iconify noto:tram-car",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=tram-car"
+			}
+		],
+		"boat": [
+			{
+				"file": "mdi--ferry.svg",
+				"render": "mask",
+				"source": "Iconify mdi:ferry",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=ferry"
+			},
+			{
+				"file": "tabler--ferry.svg",
+				"render": "mask",
+				"source": "Iconify tabler:ferry",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=ferry"
+			},
+			{
+				"file": "fa6-solid--ferry.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:ferry",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=ferry"
+			},
+			{
+				"file": "icon-park-solid--ship.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:ship",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=ship"
+			},
+			{
+				"file": "game-icons--ship-bow.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:ship-bow",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=ship-bow"
+			},
+			{
+				"file": "openmoji--ferry.svg",
+				"render": "original",
+				"source": "Iconify openmoji:ferry",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=ferry"
+			},
+			{
+				"file": "twemoji--ferry.svg",
+				"render": "original",
+				"source": "Iconify twemoji:ferry",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=ferry"
+			},
+			{
+				"file": "noto--ferry.svg",
+				"render": "original",
+				"source": "Iconify noto:ferry",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=ferry"
+			}
+		],
+		"bike": [
+			{
+				"file": "mdi--bicycle.svg",
+				"render": "mask",
+				"source": "Iconify mdi:bicycle",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=bicycle"
+			},
+			{
+				"file": "ph--bicycle.svg",
+				"render": "mask",
+				"source": "Iconify ph:bicycle",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=bicycle"
+			},
+			{
+				"file": "fa6-solid--bicycle.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:bicycle",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=bicycle"
+			},
+			{
+				"file": "healthicons--exercise-bicycle.svg",
+				"render": "mask",
+				"source": "Iconify healthicons:exercise-bicycle",
+				"license": "MIT",
+				"author": "Resolve to Save Lives",
+				"url": "https://icon-sets.iconify.design/healthicons/?icon-filter=exercise-bicycle"
+			},
+			{
+				"file": "openmoji--bicycle.svg",
+				"render": "original",
+				"source": "Iconify openmoji:bicycle",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=bicycle"
+			}
+		],
+		"scooter": [
+			{
+				"file": "material-symbols--scooter.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:scooter",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=scooter"
+			},
+			{
+				"file": "mdi--scooter-outline.svg",
+				"render": "mask",
+				"source": "Iconify mdi:scooter-outline",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=scooter-outline"
+			},
+			{
+				"file": "tabler--scooter.svg",
+				"render": "mask",
+				"source": "Iconify tabler:scooter",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=scooter"
+			},
+			{
+				"file": "ph--scooter.svg",
+				"render": "mask",
+				"source": "Iconify ph:scooter",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=scooter"
+			},
+			{
+				"file": "openmoji--kick-scooter.svg",
+				"render": "original",
+				"source": "Iconify openmoji:kick-scooter",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=kick-scooter"
+			},
+			{
+				"file": "twemoji--kick-scooter.svg",
+				"render": "original",
+				"source": "Iconify twemoji:kick-scooter",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=kick-scooter"
+			},
+			{
+				"file": "noto--kick-scooter.svg",
+				"render": "original",
+				"source": "Iconify noto:kick-scooter",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=kick-scooter"
+			}
+		],
+		"helicopter": [
+			{
+				"file": "material-symbols--helicopter.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:helicopter",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=helicopter"
+			},
+			{
+				"file": "mdi--helicopter.svg",
+				"render": "mask",
+				"source": "Iconify mdi:helicopter",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=helicopter"
+			},
+			{
+				"file": "tabler--helicopter.svg",
+				"render": "mask",
+				"source": "Iconify tabler:helicopter",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=helicopter"
+			},
+			{
+				"file": "game-icons--helicopter.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:helicopter",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=helicopter"
+			},
+			{
+				"file": "healthicons--helicopter.svg",
+				"render": "mask",
+				"source": "Iconify healthicons:helicopter",
+				"license": "MIT",
+				"author": "Resolve to Save Lives",
+				"url": "https://icon-sets.iconify.design/healthicons/?icon-filter=helicopter"
+			},
+			{
+				"file": "openmoji--helicopter.svg",
+				"render": "original",
+				"source": "Iconify openmoji:helicopter",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=helicopter"
+			},
+			{
+				"file": "twemoji--helicopter.svg",
+				"render": "original",
+				"source": "Iconify twemoji:helicopter",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=helicopter"
+			},
+			{
+				"file": "noto--helicopter.svg",
+				"render": "original",
+				"source": "Iconify noto:helicopter",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=helicopter"
+			}
+		],
+		"rocket": [
+			{
+				"file": "material-symbols--rocket.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:rocket",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=rocket"
+			},
+			{
+				"file": "mdi--rocket.svg",
+				"render": "mask",
+				"source": "Iconify mdi:rocket",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=rocket"
+			},
+			{
+				"file": "tabler--rocket.svg",
+				"render": "mask",
+				"source": "Iconify tabler:rocket",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=rocket"
+			},
+			{
+				"file": "icon-park-solid--rocket.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:rocket",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=rocket"
+			},
+			{
+				"file": "ph--rocket.svg",
+				"render": "mask",
+				"source": "Iconify ph:rocket",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=rocket"
+			},
+			{
+				"file": "openmoji--rocket.svg",
+				"render": "original",
+				"source": "Iconify openmoji:rocket",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=rocket"
+			},
+			{
+				"file": "twemoji--rocket.svg",
+				"render": "original",
+				"source": "Iconify twemoji:rocket",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=rocket"
+			},
+			{
+				"file": "noto--rocket.svg",
+				"render": "original",
+				"source": "Iconify noto:rocket",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=rocket"
+			}
+		],
+		"bus": [
+			{
+				"file": "mdi--bus.svg",
+				"render": "mask",
+				"source": "Iconify mdi:bus",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=bus"
+			},
+			{
+				"file": "tabler--bus.svg",
+				"render": "mask",
+				"source": "Iconify tabler:bus",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=bus"
+			},
+			{
+				"file": "icon-park-solid--bus.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:bus",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=bus"
+			},
+			{
+				"file": "ph--bus.svg",
+				"render": "mask",
+				"source": "Iconify ph:bus",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=bus"
+			},
+			{
+				"file": "game-icons--bus.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:bus",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=bus"
+			},
+			{
+				"file": "openmoji--bus.svg",
+				"render": "original",
+				"source": "Iconify openmoji:bus",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=bus"
+			},
+			{
+				"file": "twemoji--bus.svg",
+				"render": "original",
+				"source": "Iconify twemoji:bus",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=bus"
+			},
+			{
+				"file": "noto--bus.svg",
+				"render": "original",
+				"source": "Iconify noto:bus",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=bus"
+			}
+		],
+		"tram": [
+			{
+				"file": "material-symbols--tram.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:tram",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=tram"
+			},
+			{
+				"file": "mdi--tram.svg",
+				"render": "mask",
+				"source": "Iconify mdi:tram",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=tram"
+			},
+			{
+				"file": "ph--tram.svg",
+				"render": "mask",
+				"source": "Iconify ph:tram",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=tram"
+			},
+			{
+				"file": "fa6-solid--train-tram.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:train-tram",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=train-tram"
+			},
+			{
+				"file": "game-icons--trample.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:trample",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=trample"
+			},
+			{
+				"file": "openmoji--tram.svg",
+				"render": "original",
+				"source": "Iconify openmoji:tram",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=tram"
+			},
+			{
+				"file": "twemoji--tram.svg",
+				"render": "original",
+				"source": "Iconify twemoji:tram",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=tram"
+			},
+			{
+				"file": "noto--tram.svg",
+				"render": "original",
+				"source": "Iconify noto:tram",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=tram"
+			}
+		],
+		"motorcycle": [
+			{
+				"file": "material-symbols--motorcycle.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:motorcycle",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=motorcycle"
+			},
+			{
+				"file": "mdi--motorcycle.svg",
+				"render": "mask",
+				"source": "Iconify mdi:motorcycle",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=motorcycle"
+			},
+			{
+				"file": "ph--motorcycle.svg",
+				"render": "mask",
+				"source": "Iconify ph:motorcycle",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=motorcycle"
+			},
+			{
+				"file": "fa6-solid--motorcycle.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:motorcycle",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=motorcycle"
+			},
+			{
+				"file": "healthicons--basic-motorcycle.svg",
+				"render": "mask",
+				"source": "Iconify healthicons:basic-motorcycle",
+				"license": "MIT",
+				"author": "Resolve to Save Lives",
+				"url": "https://icon-sets.iconify.design/healthicons/?icon-filter=basic-motorcycle"
+			},
+			{
+				"file": "openmoji--motorcycle.svg",
+				"render": "original",
+				"source": "Iconify openmoji:motorcycle",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=motorcycle"
+			},
+			{
+				"file": "twemoji--motorcycle.svg",
+				"render": "original",
+				"source": "Iconify twemoji:motorcycle",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=motorcycle"
+			},
+			{
+				"file": "noto--motorcycle.svg",
+				"render": "original",
+				"source": "Iconify noto:motorcycle",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=motorcycle"
+			}
+		],
+		"truck": [
+			{
+				"file": "mdi--truck.svg",
+				"render": "mask",
+				"source": "Iconify mdi:truck",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=truck"
+			},
+			{
+				"file": "tabler--truck.svg",
+				"render": "mask",
+				"source": "Iconify tabler:truck",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=truck"
+			},
+			{
+				"file": "ph--truck.svg",
+				"render": "mask",
+				"source": "Iconify ph:truck",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=truck"
+			},
+			{
+				"file": "game-icons--truck.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:truck",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=truck"
+			},
+			{
+				"file": "fa6-solid--truck.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:truck",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=truck"
+			},
+			{
+				"file": "openmoji--pickup-truck.svg",
+				"render": "original",
+				"source": "Iconify openmoji:pickup-truck",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=pickup-truck"
+			},
+			{
+				"file": "twemoji--pickup-truck.svg",
+				"render": "original",
+				"source": "Iconify twemoji:pickup-truck",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=pickup-truck"
+			},
+			{
+				"file": "noto--pickup-truck.svg",
+				"render": "original",
+				"source": "Iconify noto:pickup-truck",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=pickup-truck"
+			}
+		],
+		"submarine": [
+			{
+				"file": "mdi--submarine.svg",
+				"render": "mask",
+				"source": "Iconify mdi:submarine",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=submarine"
+			},
+			{
+				"file": "tabler--submarine.svg",
+				"render": "mask",
+				"source": "Iconify tabler:submarine",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=submarine"
+			},
+			{
+				"file": "game-icons--submarine.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:submarine",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=submarine"
+			},
+			{
+				"file": "openmoji--submarine.svg",
+				"render": "original",
+				"source": "Iconify openmoji:submarine",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=submarine"
+			}
+		],
+		"hot_air_balloon": [
+			{
+				"file": "mdi--hot-air-balloon.svg",
+				"render": "mask",
+				"source": "Iconify mdi:hot-air-balloon",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=hot-air-balloon"
+			},
+			{
+				"file": "icon-park-solid--hot-air-balloon.svg",
+				"render": "mask",
+				"source": "Iconify icon-park-solid:hot-air-balloon",
+				"license": "Apache 2.0",
+				"author": "ByteDance",
+				"url": "https://icon-sets.iconify.design/icon-park-solid/?icon-filter=hot-air-balloon"
+			},
+			{
+				"file": "openmoji--balloon.svg",
+				"render": "original",
+				"source": "Iconify openmoji:balloon",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=balloon"
+			},
+			{
+				"file": "twemoji--balloon.svg",
+				"render": "original",
+				"source": "Iconify twemoji:balloon",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=balloon"
+			},
+			{
+				"file": "noto--balloon.svg",
+				"render": "original",
+				"source": "Iconify noto:balloon",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=balloon"
+			}
+		],
+		"skateboard": [
+			{
+				"file": "mdi--skateboard.svg",
+				"render": "mask",
+				"source": "Iconify mdi:skateboard",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=skateboard"
+			},
+			{
+				"file": "tabler--skateboard.svg",
+				"render": "mask",
+				"source": "Iconify tabler:skateboard",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=skateboard"
+			},
+			{
+				"file": "game-icons--skateboard.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:skateboard",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=skateboard"
+			},
+			{
+				"file": "material-symbols--skateboarding.svg",
+				"render": "mask",
+				"source": "Iconify material-symbols:skateboarding",
+				"license": "Apache 2.0",
+				"author": "Google",
+				"url": "https://icon-sets.iconify.design/material-symbols/?icon-filter=skateboarding"
+			},
+			{
+				"file": "openmoji--skateboard.svg",
+				"render": "original",
+				"source": "Iconify openmoji:skateboard",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=skateboard"
+			},
+			{
+				"file": "twemoji--skateboard.svg",
+				"render": "original",
+				"source": "Iconify twemoji:skateboard",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=skateboard"
+			},
+			{
+				"file": "noto--skateboard.svg",
+				"render": "original",
+				"source": "Iconify noto:skateboard",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=skateboard"
+			}
+		],
+		"tractor": [
+			{
+				"file": "mdi--tractor.svg",
+				"render": "mask",
+				"source": "Iconify mdi:tractor",
+				"license": "Apache 2.0",
+				"author": "Pictogrammers",
+				"url": "https://icon-sets.iconify.design/mdi/?icon-filter=tractor"
+			},
+			{
+				"file": "tabler--tractor.svg",
+				"render": "mask",
+				"source": "Iconify tabler:tractor",
+				"license": "MIT",
+				"author": "Pawe\u0142 Kuna",
+				"url": "https://icon-sets.iconify.design/tabler/?icon-filter=tractor"
+			},
+			{
+				"file": "ph--tractor.svg",
+				"render": "mask",
+				"source": "Iconify ph:tractor",
+				"license": "MIT",
+				"author": "Phosphor Icons",
+				"url": "https://icon-sets.iconify.design/ph/?icon-filter=tractor"
+			},
+			{
+				"file": "fa6-solid--tractor.svg",
+				"render": "mask",
+				"source": "Iconify fa6-solid:tractor",
+				"license": "CC BY 4.0",
+				"author": "Dave Gandy",
+				"url": "https://icon-sets.iconify.design/fa6-solid/?icon-filter=tractor"
+			},
+			{
+				"file": "game-icons--farm-tractor.svg",
+				"render": "mask",
+				"source": "Iconify game-icons:farm-tractor",
+				"license": "CC BY 3.0",
+				"author": "GameIcons",
+				"url": "https://icon-sets.iconify.design/game-icons/?icon-filter=farm-tractor"
+			},
+			{
+				"file": "openmoji--tractor.svg",
+				"render": "original",
+				"source": "Iconify openmoji:tractor",
+				"license": "CC BY-SA 4.0",
+				"author": "OpenMoji",
+				"url": "https://icon-sets.iconify.design/openmoji/?icon-filter=tractor"
+			},
+			{
+				"file": "twemoji--tractor.svg",
+				"render": "original",
+				"source": "Iconify twemoji:tractor",
+				"license": "CC BY 4.0",
+				"author": "Twitter",
+				"url": "https://icon-sets.iconify.design/twemoji/?icon-filter=tractor"
+			},
+			{
+				"file": "noto--tractor.svg",
+				"render": "original",
+				"source": "Iconify noto:tractor",
+				"license": "Apache 2.0",
+				"author": "Google Inc",
+				"url": "https://icon-sets.iconify.design/noto/?icon-filter=tractor"
+			}
+		]
+	}
+}

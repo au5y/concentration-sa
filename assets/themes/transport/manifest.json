@@ -1,0 +1,144 @@
+{
+	"theme": "transport",
+	"label": "Transport",
+	"objects": [
+		{
+			"id": "train",
+			"label": "train",
+			"image": "train.svg",
+			"color": "red",
+			"orientation": "up",
+			"variant": {
+				"scale": 0.85
+			}
+		},
+		{
+			"id": "plane",
+			"label": "plane",
+			"image": "plane.svg",
+			"color": "blue",
+			"orientation": "up",
+			"variant": {
+				"mirror": true
+			}
+		},
+		{
+			"id": "car",
+			"label": "car",
+			"image": "car.svg",
+			"color": "green",
+			"orientation": "up",
+			"variant": {
+				"mirror": true
+			}
+		},
+		{
+			"id": "boat",
+			"label": "boat",
+			"image": "boat.svg",
+			"color": "yellow",
+			"orientation": "up",
+			"variant": {
+				"color_shift_deg": 25
+			}
+		},
+		{
+			"id": "bike",
+			"label": "bike",
+			"image": "bike.svg",
+			"color": "red",
+			"orientation": "up",
+			"variant": {
+				"scale": 0.85
+			}
+		},
+		{
+			"id": "scooter",
+			"label": "scooter",
+			"image": "scooter.svg",
+			"color": "blue",
+			"orientation": "up",
+			"variant": {
+				"mirror": true
+			}
+		},
+		{
+			"id": "helicopter",
+			"label": "helicopter",
+			"image": "helicopter.svg",
+			"color": "green",
+			"orientation": "up",
+			"variant": {
+				"color_shift_deg": 25
+			}
+		},
+		{
+			"id": "rocket",
+			"label": "rocket",
+			"image": "rocket.svg",
+			"color": "yellow",
+			"orientation": "up",
+			"variant": {
+				"scale": 0.85
+			}
+		}
+	],
+	"foils": [
+		{
+			"id": "bus",
+			"label": "bus",
+			"image": "bus.svg",
+			"color": "red",
+			"orientation": "up"
+		},
+		{
+			"id": "tram",
+			"label": "tram",
+			"image": "tram.svg",
+			"color": "blue",
+			"orientation": "up"
+		},
+		{
+			"id": "motorcycle",
+			"label": "motorcycle",
+			"image": "motorcycle.svg",
+			"color": "green",
+			"orientation": "up"
+		},
+		{
+			"id": "truck",
+			"label": "truck",
+			"image": "truck.svg",
+			"color": "yellow",
+			"orientation": "up"
+		},
+		{
+			"id": "submarine",
+			"label": "submarine",
+			"image": "submarine.svg",
+			"color": "red",
+			"orientation": "up"
+		},
+		{
+			"id": "hot_air_balloon",
+			"label": "hot air balloon",
+			"image": "hot_air_balloon.svg",
+			"color": "blue",
+			"orientation": "up"
+		},
+		{
+			"id": "skateboard",
+			"label": "skateboard",
+			"image": "skateboard.svg",
+			"color": "green",
+			"orientation": "up"
+		},
+		{
+			"id": "tractor",
+			"label": "tractor",
+			"image": "tractor.svg",
+			"color": "yellow",
+			"orientation": "up"
+		}
+	]
+}

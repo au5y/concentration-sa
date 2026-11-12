@@ -1,0 +1,143 @@
+{
+	"items": {
+		"mit/beaver": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"mit/great_dome": {
+			"decision": "keep",
+			"comment": "DONE: variant removed, so no side-by-side question is asked about it."
+		},
+		"mit/dna_helix": {
+			"decision": "keep",
+			"comment": "DONE: variant removed (symmetric), so no side-by-side question."
+		},
+		"mit/apollo_capsule": {
+			"decision": "keep",
+			"comment": "DONE: variant is now the capsule with its round window filled in (no color shift)."
+		},
+		"mit/mit_logo": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"mit/muddy_charles": {
+			"decision": "keep",
+			"comment": "DONE: solid IconPark beer mug, recolored blue like the other icons; variant = mirrored (handle on other side)."
+		},
+		"mit/boston_skyline": {
+			"decision": "keep",
+			"comment": "DONE: square Back Bay photo with the Hancock tower (square-skyb-6). Variant = mirrored."
+		},
+		"mit/stata_center": {
+			"decision": "keep",
+			"comment": "DONE: square crop of the photo you picked; a square of the other Stata photo is also listed."
+		},
+		"mit/green_building": {
+			"decision": "keep",
+			"comment": "DONE: square crop of the photo you picked."
+		},
+		"mit/kresge_auditorium": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"mit/harvard_bridge": {
+			"decision": "keep",
+			"comment": "DONE: icon kept."
+		},
+		"mit/brass_rat": {
+			"decision": "keep",
+			"comment": "DONE: square crop of the Wikimedia photo (1950 ring bezel, public domain)."
+		},
+		"mit/infinite_corridor": {
+			"decision": "keep",
+			"comment": "DONE: infinity sign over the doorway. An \"infinity around the door\" version and the previous icon are listed as alternatives."
+		},
+		"mit/killian_court": {
+			"decision": "keep",
+			"comment": "DONE: foils are never asked side-by-side, so their variants were removed (all foils)."
+		},
+		"mit/sailing_pavilion": {
+			"decision": "keep",
+			"comment": "DONE: foils are never asked side-by-side, so their variants were removed (all foils)."
+		},
+		"transport/train": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/plane": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/car": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/boat": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/bike": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/scooter": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/helicopter": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/rocket": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/bus": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/tram": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/motorcycle": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/truck": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/submarine": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/hot_air_balloon": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/skateboard": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"transport/tractor": {
+			"decision": "keep",
+			"comment": ""
+		},
+		"mit/integral": {
+			"decision": "keep",
+			"comment": "OPEN: pick a replacement: equations (E = mc\u00b2, Euler, Maxwell, Schr\u00f6dinger, F = ma, integral) or the Media Lab / Technology Review logos. All are one-color, so color questions still work."
+		}
+	},
+	"questions": {
+		"per_theme": 4,
+		"foils": 4,
+		"confidence": "",
+		"comment": ""
+	},
+	"survey": {
+		"comment": ""
+	},
+	"general": "",
+	"saved_at": "2026-11-10T01:18:30.526Z"
+}

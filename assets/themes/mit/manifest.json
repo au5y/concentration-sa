@@ -1,0 +1,142 @@
+{
+	"theme": "mit",
+	"label": "MIT",
+	"objects": [
+		{
+			"id": "beaver",
+			"label": "beaver mascot",
+			"image": "beaver.svg",
+			"color": "red",
+			"orientation": "up",
+			"variant": {
+				"mirror": true
+			}
+		},
+		{
+			"id": "great_dome",
+			"label": "Great Dome",
+			"image": "great_dome.svg",
+			"color": "blue",
+			"orientation": "up"
+		},
+		{
+			"id": "dna_helix",
+			"label": "DNA helix",
+			"image": "dna_helix.svg",
+			"color": "green",
+			"orientation": "up"
+		},
+		{
+			"id": "apollo_capsule",
+			"label": "Apollo capsule",
+			"image": "apollo_capsule.svg",
+			"color": "yellow",
+			"orientation": "up",
+			"variant": {
+				"image": "apollo_capsule_variant.svg"
+			}
+		},
+		{
+			"id": "mit_logo",
+			"label": "MIT logo",
+			"image": "mit_logo.svg",
+			"color": "red",
+			"orientation": "up",
+			"variant": {
+				"mirror": true
+			}
+		},
+		{
+			"id": "muddy_charles",
+			"label": "Muddy Charles beer mug",
+			"image": "muddy_charles.svg",
+			"color": "blue",
+			"orientation": "up",
+			"variant": {
+				"mirror": true
+			}
+		},
+		{
+			"id": "boston_skyline",
+			"label": "Boston skyline",
+			"image": "boston_skyline.jpg",
+			"color": "green",
+			"orientation": "up",
+			"variant": {
+				"mirror": true
+			},
+			"render": "original"
+		},
+		{
+			"id": "integral",
+			"label": "integral sign",
+			"image": "integral.svg",
+			"color": "yellow",
+			"orientation": "up",
+			"variant": {
+				"mirror": true
+			}
+		}
+	],
+	"foils": [
+		{
+			"id": "stata_center",
+			"label": "Stata Center",
+			"image": "stata_center.jpg",
+			"color": "red",
+			"orientation": "up",
+			"render": "original"
+		},
+		{
+			"id": "green_building",
+			"label": "Green Building",
+			"image": "green_building.jpg",
+			"color": "blue",
+			"orientation": "up",
+			"render": "original"
+		},
+		{
+			"id": "kresge_auditorium",
+			"label": "Kresge Auditorium",
+			"image": "kresge_auditorium.svg",
+			"color": "green",
+			"orientation": "up"
+		},
+		{
+			"id": "harvard_bridge",
+			"label": "Harvard Bridge",
+			"image": "harvard_bridge.svg",
+			"color": "yellow",
+			"orientation": "up"
+		},
+		{
+			"id": "brass_rat",
+			"label": "Brass Rat",
+			"image": "brass_rat.jpg",
+			"color": "red",
+			"orientation": "up",
+			"render": "original"
+		},
+		{
+			"id": "infinite_corridor",
+			"label": "Infinite Corridor",
+			"image": "infinite_corridor.svg",
+			"color": "blue",
+			"orientation": "up"
+		},
+		{
+			"id": "killian_court",
+			"label": "Killian Court",
+			"image": "killian_court.svg",
+			"color": "green",
+			"orientation": "up"
+		},
+		{
+			"id": "sailing_pavilion",
+			"label": "sailing pavilion",
+			"image": "sailing_pavilion.svg",
+			"color": "yellow",
+			"orientation": "up"
+		}
+	]
+}

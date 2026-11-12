@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      PORT: ${PORT:-3000}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      DEV_TIMERS: ${DEV_TIMERS:-0}
+      DATA_DIR: /data
+      CONFIG_PATH: /app/config.json
+      ASSETS_DIR: /app/assets
+    volumes:
+      # SQLite database + schedule.csv live here on the host.
+      - ./data:/data
+      - ./config.json:/app/config.json:ro
+      # Theme images and layouts.json; edit on the host, no rebuild needed (restart after changes).
+      - ./assets:/app/assets
