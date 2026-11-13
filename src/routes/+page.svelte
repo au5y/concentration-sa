@@ -114,6 +114,8 @@
 			case 'done':
 				location.href = '/';
 				break;
+			case 'sa':
+				break; // Sa.svelte unlocks the environment questions itself
 			default:
 				say('The participant controls this phase.');
 		}

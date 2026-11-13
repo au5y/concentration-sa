@@ -194,7 +194,7 @@
 		if (!d) return [];
 		const types = [...new Set(d.sa.map((r: Row) => r.question_type as string))];
 		return types.map((t) => {
-			const g = d.sa.filter((r: Row) => r.question_type === t && r.response !== 'color_blind' && !(t === 'oral' && r.target === ''));
+			const g = d.sa.filter((r: Row) => r.question_type === t && r.response !== 'color_blind');
 			return { type: t, n: g.length, acc: mean(g.map((r: Row) => r.correct)) };
 		});
 	});
@@ -397,13 +397,10 @@
 				<thead><tr><th>#</th><th>Board</th><th>Type</th><th>Item</th><th>Correct answer</th><th>Response</th><th></th><th>Conf.</th><th>RT</th></tr></thead>
 				<tbody>
 					{#each singles as r, i (i)}
-						{@const unset = r.question_type === 'oral' && r.target === ''}
 						<tr>
-							<td>{r.seq}</td><td>{r.board}</td><td>{r.question_type}</td><td>{r.item}</td><td>{unset ? 'not set' : r.target}</td>
+							<td>{r.seq}</td><td>{r.board}</td><td>{r.question_type}</td><td>{r.item}</td><td>{r.question_type === 'oral' ? 'facilitator' : r.target}</td>
 							<td>{RESPONSE_LABEL[r.response] ?? r.response}</td>
-							<td class={r.response === 'color_blind' || unset ? 'muted' : r.correct ? 'ok' : 'no'}>
-								{r.response === 'color_blind' ? 'excl.' : unset ? '—' : r.correct ? '✓' : '✗'}
-							</td>
+							<td class={r.response === 'color_blind' ? 'muted' : r.correct ? 'ok' : 'no'}>{r.response === 'color_blind' ? 'excl.' : r.correct ? '✓' : '✗'}</td>
 							<td>{r.confidence ?? ''}</td><td>{isNum(r.rt_ms) ? `${(r.rt_ms / 1000).toFixed(1)} s` : ''}</td>
 						</tr>
 					{/each}

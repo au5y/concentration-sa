@@ -94,10 +94,10 @@ function level2Types(): string[] {
 	return (['color_pair', 'count'] as const).filter((k) => qs.some((q) => q.kind === k)).map((k) => (k === 'color_pair' ? 'level2_color' : 'level2_count'));
 }
 
-/** Score oral and Level 2 answers against the current config (answers may be filled in later). */
+/** Score Level 2 answers against the current config (an answer may be corrected later). */
 function rescore<T extends Parameters<typeof rescoreFixedAnswers>[0][number]>(rows: T[]): T[] {
 	const { config } = experiment();
-	return rescoreFixedAnswers(rows, config.oral_sa_questions, config.sa_level2_questions);
+	return rescoreFixedAnswers(rows, config.sa_level2_questions);
 }
 
 export function status() {

@@ -73,7 +73,7 @@ theme manifests.
 | `colors` | The 4 colors: `{id, label, hex}` |
 | `orientations` | The 4 orientations: `{id, label, rotate_deg}`. `rotate_deg` is applied to the image as drawn. Every object is currently `up` (unrotated) |
 | `condition_text` | Per condition: the `interval1` / `interval2` screen title and body |
-| `oral_sa_questions` | Environment SA questions read aloud by the facilitator after the on-screen questions: `{id, prompt, options: [{id, label}], answer}`. `answer: null` means not decided yet: answers are logged but not scored, and `npm run validate` and the server warn. **Both answers in config.json are currently `null`. The facilitator fills them in once the hat and sticky note are chosen.** Exports re-score against the current config, so sessions run before that are scored too |
+| `oral_sa_questions` | Environment SA questions asked aloud by the facilitator after the on-screen questions: `{id, prompt, options: [{id, label}]}`. `options` are the choices the facilitator reads out. There is no answer key: the facilitator marks each answer correct or incorrect against what was really there that session (e.g. that day's hat) |
 | `sa_level2_questions` | Level 2 questions per theme id, asked after that theme's Level 1 questions in the order listed. `{id, kind: "color_pair", prompt, cue, answer}` (cue and answer are seen object ids of the same color) or `{id, kind: "count", prompt, options: [{id, label}], answer}` |
 | `sa_level2_neutral_hex` | The single color all color-pair options are drawn in (default `#8c8c8c`) |
 
@@ -237,10 +237,13 @@ items + 3 Level 2), then 2 spoken environment questions:
    - **Count**: e.g. "How many of the vehicles could fly?" Text options.
    Options are drawn from a separate random stream, so a PID's Level 1 questions are the same as before Level 2 existed.
 
-4. **Environment SA** (after both blocks): the questions in `oral_sa_questions`, in order. The screen
-   tells the facilitator to read the question and choices aloud and tap the participant's answer.
+4. **Environment SA** (after both blocks): the participant's screen says only "Please stand up and talk
+   to your facilitator, who will ask you some questions about the environment." The facilitator presses
+   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> to show the controls, then for each question in
+   `oral_sa_questions` asks it, reads the choices, and taps **Correct**, **Incorrect** or **Didn't
+   remember** (scored incorrect), then Next. No confidence rating. After the last one the session moves to the survey.
 
-Every single-item question (card and environment) also offers **I don't remember** (scored incorrect,
+Every single-item card question also offers **I don't remember** (scored incorrect,
 no confidence rating). Color and Level 2 color-pair questions also offer **I'm color blind** (excluded from scoring, no
 confidence rating). The analysis groups Level 1 card questions as **Memory**, Level 2 card questions as **Level 2**,
 and environment questions as **SA**.
@@ -283,7 +286,7 @@ Download links, each a full table as CSV (every epoch-ms column also gets an `_i
 | `sessions.csv` | One row per participant: assignment, current phase, timestamps, the SA plan |
 | `phases.csv` | Every phase start/end (server ms; client high-res ms where available), plus markers: `baseline.start` (HR lap), `board_a.preview`, `board_a.play` (cards flipped down), `board_a.timeout` (time limit ran out), `board_a.resume` |
 | `clicks.csv` | Every card flip: pid, board, theme, seq, card index, object id, outcome (`first_flip` / `match` / `mismatch`), `client_ts` (`performance.timeOrigin + performance.now()`, fractional ms), `server_ts` |
-| `sa_responses.csv` | One row per answer (16 per objects grid): question type, item, target, response, correct, confidence, `rt_ms` (shown → final answer choice), `confidence_rt_ms` (shown → final confidence choice), `submit_rt_ms`, `answer_changes`, `confidence_changes`, what was presented (for Level 2 color pairs: the 4 option ids and the neutral color). Environment and Level 2 rows are re-scored against the current config on export |
+| `sa_responses.csv` | One row per answer (16 per objects grid): question type, item, target, response, correct, confidence, `rt_ms` (shown → final answer choice), `confidence_rt_ms` (shown → final confidence choice), `submit_rt_ms`, `answer_changes`, `confidence_changes`, what was presented (for Level 2 color pairs: the 4 option ids and the neutral color). Level 2 rows are re-scored against the current config on export. Environment rows: response `correct` / `incorrect` / `dont_remember` as marked by the facilitator |
 | `bouts.csv` | Per exercise/rest bout (`interval1` before Game A, `interval2` before Game B): RPE, peak HR |
 | `survey.csv` | Age, exercise days/week, fitness (1–5), hours slept, caffeine, color vision |
 | `summary.csv` | One row per participant (below) |
@@ -306,7 +309,7 @@ Download links, each a full table as CSV (every epoch-ms column also gets an `_i
 - `q_objects_hit_rate`, `_fa_rate` and `_dprime`: recognition d′ = z(H) − z(F), using the
   log-linear correction H = (hits+.5)/(targets+1), F = (FAs+.5)/(foils+1) (Hautus, 1995).
 - `memory_*` (Level 1 card questions: color, side-by-side), `level2_*` (Level 2 card questions) and
-  `sa_env_*` (spoken environment questions; questions whose answer is still `null` are left out),
+  `sa_env_*` (spoken environment questions, as marked by the facilitator),
   the Question Type factor:
   - `_n`: number of questions
   - `_acc`: accuracy, with "I don't remember" scored as incorrect

@@ -40,7 +40,8 @@ function answer(step: SaStep): { response: unknown; confidence: number | null } 
 		return { response: q.answer, confidence: 4 };
 	}
 	if (step.type === 'level2_count') return { response: '4', confidence: 3 }; // wrong (answer 3)
-	if (step.type === 'oral') return { response: step.item === 'env_facilitator_hat' ? 'red' : 'yellow', confidence: 3 };
+	// facilitator marks: hat correct, sticky note incorrect
+	if (step.type === 'oral') return { response: step.item === 'env_facilitator_hat' ? 'correct' : 'incorrect', confidence: null };
 	if (step.type === 'color') return { response: 'red', confidence: 3 };
 	if (step.type === 'side_by_side') return { response: step.original_side, confidence: 3 };
 	return { response: 'up', confidence: 3 };
@@ -77,9 +78,14 @@ describe('Level 2 through a session', () => {
 		expect(summary.q_level2_count_acc).toBe(0);
 		expect(summary.q_level2_color_acc).toBe(0.5);
 		expect(summary.color_blind_answers).toBe(1);
-		// environment answers are not set yet in config.json: logged, not scored
-		expect(summary.sa_env_n).toBe(0);
-		expect(summary.sa_env_acc).toBeNull();
+		// environment answers as marked by the facilitator
+		expect(summary.sa_env_n).toBe(2);
+		expect(summary.sa_env_acc).toBe(0.5);
+		const oral = db.getDb().prepare("SELECT item, target, response, correct, confidence FROM sa_responses WHERE pid = ? AND question_type = 'oral' ORDER BY seq").all(pid);
+		expect(oral).toEqual([
+			{ item: 'env_facilitator_hat', target: 'correct', response: 'correct', correct: 1, confidence: null },
+			{ item: 'env_laptop_sticky_note', target: 'correct', response: 'incorrect', correct: 0, confidence: null }
+		]);
 	});
 
 	it('rejects "I\'m color blind" on the count question and unknown options', () => {
@@ -92,7 +98,18 @@ describe('Level 2 through a session', () => {
 		expect(color).toBeLessThan(stop);
 	});
 
-	it('writes the Level 2 columns to summary.csv', async () => {
+	it('accepts only correct / incorrect / didn\'t remember for environment questions', () => {
+		const pid = session.createTestSession({ condition: 'rest', board_a_theme: 'mit', board_b_theme: 'transport', phase: 'sa', fast: true });
+		const plan: SaStep[] = JSON.parse(session.getSession(pid)!.sa_plan);
+		const first = plan.findIndex((s) => s.type === 'oral');
+		for (const step of plan.slice(0, first)) session.recordSa(pid, { seq: step.seq, ...answer(step), ...timing } as any);
+		expect(() => session.recordSa(pid, { seq: first, response: 'red', confidence: null, ...timing } as any)).toThrow();
+		session.recordSa(pid, { seq: first, response: 'dont_remember', confidence: null, ...timing } as any);
+		const r = db.getDb().prepare('SELECT response, correct FROM sa_responses WHERE pid = ? AND seq = ?').get(pid, first);
+		expect(r).toEqual({ response: 'dont_remember', correct: 0 });
+	});
+
+		it('writes the Level 2 columns to summary.csv', async () => {
 		const { toCsv, parseCsv } = await import('../src/lib/csv');
 		// summary.csv is toCsv(summaryRows()); test sessions are only included with includeTests.
 		const rows = parseCsv(toCsv(admin.summaryRows(true))) as Record<string, string>[];

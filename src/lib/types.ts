@@ -50,8 +50,10 @@ export interface ExperimentConfig {
 	orientations: OrientationOption[];
 	condition_text: Record<string, { interval1: PhaseText; interval2: PhaseText }>;
 	/**
-	 * Situation-awareness questions about the environment, read aloud by the facilitator
-	 * after the on-screen questions. The facilitator taps the participant's answer.
+	 * Situation-awareness questions about the environment, asked aloud by the facilitator
+	 * after the on-screen questions. The participant's screen only asks them to talk to the
+	 * facilitator; the facilitator unlocks the controls (Ctrl+Shift+F) and marks each answer
+	 * correct, incorrect or "didn't remember".
 	 */
 	oral_sa_questions?: OralQuestion[];
 	/**
@@ -78,12 +80,14 @@ export type Level2Question =
 
 export interface OralQuestion {
 	id: string;
-	/** What the facilitator reads aloud. */
+	/** What the facilitator asks. */
 	prompt: string;
+	/** Choices the facilitator reads out. The facilitator judges the answer against what was really there that session. */
 	options: { id: string; label: string }[];
-	/** id of the correct option. null = not decided yet: responses are logged but not scored. */
-	answer: string | null;
 }
+
+/** Facilitator's marks for an environment question. */
+export const ORAL_RESPONSES = ['correct', 'incorrect'] as const;
 
 /** Answers every single-item question offers besides its normal options. Scored as incorrect / excluded. */
 export const DONT_REMEMBER = 'dont_remember';

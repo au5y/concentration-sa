@@ -95,7 +95,6 @@ export function validateExperiment(
 		oralIds.add(q.id);
 		if (!q.prompt) errs.push(`${where}: no prompt`);
 		if (!Array.isArray(q.options) || q.options.length < 2) errs.push(`${where}: needs at least 2 options`);
-		else if (q.answer !== null && !q.options.some((o) => o.id === q.answer)) errs.push(`${where}: answer "${q.answer}" is not one of its option ids`);
 		if (q.options?.some((o) => o.id === DONT_REMEMBER || o.id === COLOR_BLIND)) errs.push(`${where}: option ids "${DONT_REMEMBER}"/"${COLOR_BLIND}" are reserved`);
 	}
 	const level2Ids = new Set<string>();
@@ -133,9 +132,3 @@ export function validateExperiment(
 	return errs;
 }
 
-/** Things that do not stop a session from running but must be fixed before data collection. */
-export function experimentWarnings(config: ExperimentConfig): string[] {
-	return (config.oral_sa_questions ?? [])
-		.filter((q) => q.answer === null)
-		.map((q) => `oral_sa_questions "${q.id}": answer not set yet. Responses are logged but not scored until it is filled in`);
-}

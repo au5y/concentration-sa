@@ -1,5 +1,5 @@
 import type { ExperimentConfig, LayoutsFile, ThemeManifest } from '../types';
-import { experimentWarnings, validateExperiment } from '../validate';
+import { validateExperiment } from '../validate';
 import { loadConfig, loadLayouts, loadManifests, themeFileExists } from './files';
 
 export interface Experiment {
@@ -19,7 +19,6 @@ export function experiment(): Experiment {
 	const layouts = loadLayouts();
 	const errs = validateExperiment(config, manifests, layouts, themeFileExists);
 	if (errs.length) throw new Error('Experiment setup is invalid:\n' + errs.map((e) => ' - ' + e).join('\n'));
-	for (const w of experimentWarnings(config)) console.warn('warning: ' + w);
 	cached = {
 		config,
 		manifests: manifests as Record<string, ThemeManifest>,

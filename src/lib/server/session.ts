@@ -3,7 +3,7 @@ import { computeBoardMetrics } from '../metrics';
 import { hashString, mulberry32 } from '../rng';
 import { buildSaPlan, type SaStep } from '../sa-plan';
 import type { SessionState } from '../state';
-import { COLOR_BLIND, DONT_REMEMBER, FACILITATOR_PHASES, LEVEL2_NEUTRAL_HEX, PHASES, type ClickOutcome, type ClickRecord, type Phase } from '../types';
+import { COLOR_BLIND, DONT_REMEMBER, FACILITATOR_PHASES, LEVEL2_NEUTRAL_HEX, ORAL_RESPONSES, PHASES, type ClickOutcome, type ClickRecord, type Phase } from '../types';
 import { getDb } from './db';
 import { experiment, timers } from './experiment';
 import { loadSchedule } from './files';
@@ -347,7 +347,8 @@ export function recordSa(pid: string, a: SaAnswer): { answered: number } {
 		// color-pair only; excluded from accuracy) carry no confidence rating.
 		const colorQ = step.type === 'color' || step.type === 'level2_color';
 		const special = !grid && (resp === DONT_REMEMBER || (resp === COLOR_BLIND && colorQ));
-		const noConf = grid || special;
+		// Environment questions are marked by the facilitator: no confidence rating.
+		const noConf = grid || special || step.type === 'oral';
 		const row = (item: string, target: string, response: string, correct: boolean, presented: unknown) =>
 			insert.run(pid, step.seq, step.board, step.theme, step.type, item, target, response, correct ? 1 : 0,
 				noConf ? null : a.confidence, a.rt_ms, noConf ? null : a.confidence_rt_ms, a.submit_rt_ms,
@@ -369,9 +370,9 @@ export function recordSa(pid: string, a: SaAnswer): { answered: number } {
 		} else if (step.type === 'oral') {
 			const q = (exp.config.oral_sa_questions ?? []).find((x) => x.id === step.item);
 			if (!q) error(500, `oral question "${step.item}" is no longer in the config`);
-			if (!special && !q.options.some((o) => o.id === resp)) error(400, 'unknown option');
-			// answer null = not decided yet: target '' marks the response as unscored.
-			row(step.item, q.answer ?? '', resp, q.answer !== null && resp === q.answer, { prompt: q.prompt, options: q.options.map((o) => o.id) });
+			// The facilitator marks the spoken answer correct / incorrect (or "didn't remember").
+			if (!special && !(ORAL_RESPONSES as readonly string[]).includes(resp)) error(400, 'oral response must be correct, incorrect or dont_remember');
+			row(step.item, 'correct', resp, resp === 'correct', { prompt: q.prompt, options: q.options.map((o) => o.id), marked_by: 'facilitator' });
 		} else if (step.type === 'level2_color' || step.type === 'level2_count') {
 			const q = (exp.config.sa_level2_questions?.[step.theme] ?? []).find((x) => x.id === step.item);
 			if (!q) error(500, `Level 2 question "${step.item}" is no longer in the config`);

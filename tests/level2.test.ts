@@ -234,32 +234,48 @@ describe('Level 2 summary columns', () => {
 });
 
 describe('rescoreFixedAnswers', () => {
-	const oral = [
-		{ id: 'hat', prompt: '', options: [], answer: 'red' },
-		{ id: 'note', prompt: '', options: [], answer: null }
-	];
-	const row = (item: string, response: string) => ({ question_type: 'oral', item, theme: 'env', target: '', response, correct: 0 });
+	const row = (question_type: string, item: string, response: string, correct: number) => ({ question_type, item, theme: 'transport', target: 'old', response, correct });
 
-	it('scores environment answers against the answer in the current config', () => {
-		const [hat, wrong, note] = rescoreFixedAnswers([row('hat', 'red'), row('hat', 'blue'), row('note', 'pink')], oral);
-		expect([hat.target, hat.correct]).toEqual(['red', 1]);
-		expect([wrong.target, wrong.correct]).toEqual(['red', 0]);
-		expect([note.target, note.correct]).toEqual(['', 0]); // not set yet
+	it('re-scores Level 2 answers against the current config', () => {
+		const [right, wrong] = rescoreFixedAnswers([row('level2_color', 'transport_same_color_train', 'bike', 0), row('level2_color', 'transport_same_color_train', 'car', 1)], level2);
+		expect([right.target, right.correct]).toEqual(['bike', 1]);
+		expect([wrong.target, wrong.correct]).toEqual(['bike', 0]);
 	});
 
-	it('leaves unset environment answers out of the summary', () => {
-		const sa = rescoreFixedAnswers([row('hat', 'red'), row('note', 'pink')], oral).map((r) => ({ ...r, pid: 'P01', board: 'env', confidence: 2 }));
-		const [s] = buildSummary({
-			sessions: [{ pid: 'P01', condition: 'rest', board_a_theme: 'a', board_b_theme: 'b', phase: 'done', completed_at: 1 }],
-			phases: [],
-			clicks: [],
-			sa,
-			survey: [],
-			bouts: [],
-			layouts: {},
-			saTypes: ['oral']
-		});
-		expect(s.sa_env_n).toBe(1);
-		expect(s.sa_env_acc).toBe(1);
+	it('leaves facilitator-marked environment answers as recorded', () => {
+		const r = row('oral', 'env_facilitator_hat', 'correct', 1);
+		expect(rescoreFixedAnswers([r], level2)[0]).toBe(r);
+	});
+});
+
+describe('environment question screen', () => {
+	const p = plan(0);
+	const props = {
+		plan: p,
+		answered: p.findIndex((s) => s.type === 'oral'),
+		manifests,
+		colors: config.colors,
+		orientations: config.orientations,
+		scale: 4,
+		labels: ['Guessing', 'Very sure'] as [string, string],
+		oralQuestions: config.oral_sa_questions,
+		onAnswer: async () => ({}),
+		onDone: () => {}
+	};
+
+	it('tells the participant to talk to the facilitator and hides the questions', () => {
+		const { body } = render(Sa, { props });
+		expect(body).toContain('Please stand up and talk to your facilitator, who will ask you some questions about the environment.');
+		expect(body).not.toContain("What color was the facilitator's hat?");
+		expect(body).not.toContain('Correct');
+		expect(body).not.toMatch(/Question \d+ of/);
+	});
+
+	it('has no answer key in the config: the facilitator marks each answer', () => {
+		for (const q of config.oral_sa_questions!) expect(q).not.toHaveProperty('answer');
+		expect(config.oral_sa_questions!.map((q) => q.prompt)).toEqual([
+			"What color was the facilitator's hat?",
+			'What color was the sticky note on the laptop?'
+		]);
 	});
 });

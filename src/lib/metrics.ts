@@ -1,4 +1,4 @@
-import type { ClickRecord, Level2Question, OralQuestion } from './types';
+import type { ClickRecord, Level2Question } from './types';
 
 export interface BoardMetrics {
 	cleared: boolean;
@@ -163,25 +163,20 @@ export const QUESTION_GROUPS: Record<string, string[]> = {
 export const COLOR_TYPES = ['color', 'level2_color'];
 
 /**
- * Re-score fixed-answer questions (oral, Level 2) against the current config, so answers the
- * facilitator fills in or corrects after data collection apply to every session. Rows whose
- * question has no answer yet (answer null) get target '' and are left out of the summary.
- * Rows whose question is no longer in the config keep their stored score.
+ * Re-score Level 2 questions against the current config, so a corrected answer applies to
+ * every session. Rows whose question is no longer in the config keep their stored score.
+ * (Environment questions are marked correct/incorrect by the facilitator and are left as is.)
  */
 export function rescoreFixedAnswers<
 	T extends { question_type: string; theme?: string; item?: string; target: string; response: string; correct: number }
->(rows: T[], oral: OralQuestion[] = [], level2: Record<string, Level2Question[]> = {}): T[] {
+>(rows: T[], level2: Record<string, Level2Question[]> = {}): T[] {
 	return rows.map((r) => {
-		let answer: string | null | undefined;
-		if (r.question_type === 'oral') answer = oral.find((q) => q.id === r.item)?.answer;
-		else if (r.question_type.startsWith('level2_')) answer = level2[r.theme ?? '']?.find((q) => q.id === r.item)?.answer;
-		else return r;
+		if (!r.question_type.startsWith('level2_')) return r;
+		const answer = level2[r.theme ?? '']?.find((q) => q.id === r.item)?.answer;
 		if (answer === undefined) return r;
-		return { ...r, target: answer ?? '', correct: answer !== null && r.response === answer ? 1 : 0 };
+		return { ...r, target: answer, correct: r.response === answer ? 1 : 0 };
 	});
 }
-/** An environment question whose answer is not set yet. */
-const unscored = (r: { question_type: string; target: string }) => r.question_type === 'oral' && r.target === '';
 const DONT_REMEMBER = 'dont_remember';
 const COLOR_BLIND = 'color_blind';
 
@@ -214,7 +209,7 @@ export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 		for (const f of BOARD_FIELDS) row[`delta_BminusA_${f}`] = diff(boardMetrics.B[f], boardMetrics.A[f]);
 
 		// "I'm color blind" answers are excluded from scoring; "I don't remember" counts as incorrect.
-		const sa = input.sa.filter((r) => r.pid === s.pid && r.response !== COLOR_BLIND && !unscored(r));
+		const sa = input.sa.filter((r) => r.pid === s.pid && r.response !== COLOR_BLIND);
 		row.color_blind_answers = input.sa.filter((r) => r.pid === s.pid && r.response === COLOR_BLIND).length;
 		for (const type of input.saTypes) {
 			for (const scope of ['all', 'A', 'B']) {

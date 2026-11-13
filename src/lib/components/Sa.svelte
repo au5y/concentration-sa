@@ -41,7 +41,17 @@
 	const oral = $derived(step?.type === 'oral' ? oralQuestions.find((q) => q.id === step.item) : undefined);
 	/** "I don't remember" / "I'm color blind": no confidence rating. */
 	const special = $derived(response === DONT_REMEMBER || response === COLOR_BLIND);
-	const needConf = $derived(scale > 0 && !special);
+	/** Environment questions are marked by the facilitator: no confidence rating. */
+	const needConf = $derived(scale > 0 && !special && step?.type !== 'oral');
+	/** The facilitator has unlocked the environment-question controls (Ctrl+Shift+F). Stays on for the rest of them. */
+	let facilitator = $state(false);
+
+	function onKey(e: KeyboardEvent) {
+		if (e.ctrlKey && e.shiftKey && e.code === 'KeyF' && step?.type === 'oral') {
+			e.preventDefault();
+			facilitator = true;
+		}
+	}
 	const find = (id: string) => [...manifest!.objects, ...manifest!.foils].find((o) => o.id === id)!;
 	const nTargets = $derived(manifest?.objects.length ?? 0);
 
@@ -121,19 +131,28 @@
 	<button class="go" disabled={response === null || (needConf && confidence === null) || busy} onclick={submitItem}>Next</button>
 {/snippet}
 
+<svelte:window onkeydown={onKey} />
+
 {#if step && step.type === 'oral'}
 	{#key step.seq}
 		<div class="sa">
-			<p class="progress">Question {index + 1} of {plan.length}</p>
-			<p class="facil">Facilitator: read the question and the choices aloud, then tap the participant's answer.</p>
-			<h2>{oral?.prompt ?? `Missing question "${step.item}"`}</h2>
-			<div class="choices">
-				{#each oral?.options ?? [] as o (o.id)}
-					<button class="choice" class:sel={response === o.id} onclick={() => pick(o.id)}>{o.label}</button>
-				{/each}
-			</div>
-			{@render extras(false)}
-			{@render finish()}
+			{#if !facilitator}
+				<h2 class="talk">Please stand up and talk to your facilitator, who will ask you some questions about the environment.</h2>
+				<p class="hint">Facilitator: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></p>
+			{:else}
+				<p class="progress">Environment question {index + 1 - plan.findIndex((p) => p.type === 'oral')} of {plan.filter((p) => p.type === 'oral').length}</p>
+				<p class="facil">Facilitator: ask the question and read the choices, then mark the answer.</p>
+				<h2>{oral?.prompt ?? `Missing question "${step.item}"`}</h2>
+				{#if oral?.options.length}<p class="read">{oral.options.map((o) => o.label).join(' · ')}</p>{/if}
+				<div class="choices">
+					<button class="choice" class:sel={response === 'correct'} onclick={() => pick('correct')}>Correct</button>
+					<button class="choice" class:sel={response === 'incorrect'} onclick={() => pick('incorrect')}>Incorrect</button>
+				</div>
+				<div class="extras">
+					<button class="extra" class:sel={response === DONT_REMEMBER} onclick={() => pick(DONT_REMEMBER)}>Didn't remember</button>
+				</div>
+				{@render finish()}
+			{/if}
 		</div>
 	{/key}
 {:else if step && manifest}
@@ -289,6 +308,21 @@
 		border-color: #1f63d6;
 		background: #eef4ff;
 		box-shadow: 0 0 0 2px #1f63d6;
+	}
+	.talk {
+		max-width: 40rem;
+		margin-top: 20vh;
+		line-height: 1.3;
+	}
+	.hint {
+		color: #aaa;
+		font-size: 0.9rem;
+		margin-top: 3rem;
+	}
+	.read {
+		font-size: 1.3rem;
+		color: #555;
+		margin-top: 0;
 	}
 	.facil {
 		background: #fff4cc;

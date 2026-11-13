@@ -38,8 +38,7 @@
 				{ "id": "blue", "label": "Blue" },
 				{ "id": "green", "label": "Green" },
 				{ "id": "black", "label": "Black" }
-			],
-			"answer": null
+			]
 		},
 		{
 			"id": "env_laptop_sticky_note",
@@ -49,8 +48,7 @@
 				{ "id": "pink", "label": "Pink" },
 				{ "id": "blue", "label": "Blue" },
 				{ "id": "green", "label": "Green" }
-			],
-			"answer": null
+			]
 		}
 	],
 
