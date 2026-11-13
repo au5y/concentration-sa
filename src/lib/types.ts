@@ -27,6 +27,11 @@ export interface ExperimentConfig {
 	practice_board: BoardDims & { theme: string };
 	preview_s: number;
 	mismatch_flip_ms: number;
+	/**
+	 * Seconds of play allowed per matching board (practice, A and B), counted from when the
+	 * cards flip face down. When it runs out the board ends and moves on. 0 or omitted = no limit.
+	 */
+	board_time_limit_s?: number;
 	max_participants: number;
 	/** Question types. "objects" (the recognition grid) is asked first in each theme block. */
 	sa_questions: SaQuestionType[];
@@ -49,20 +54,40 @@ export interface ExperimentConfig {
 	 * after the on-screen questions. The facilitator taps the participant's answer.
 	 */
 	oral_sa_questions?: OralQuestion[];
+	/**
+	 * Level 2 SA questions per theme (keyed by theme id), asked after that theme's Level 1
+	 * questions, in the order listed here.
+	 */
+	sa_level2_questions?: Record<string, Level2Question[]>;
+	/** Color every color-pair option is drawn in, so the option colors don't give the answer away. Default #8c8c8c. */
+	sa_level2_neutral_hex?: string;
 }
+
+/** Default neutral color for Level 2 color-pair options. */
+export const LEVEL2_NEUTRAL_HEX = '#8c8c8c';
+
+/**
+ * Level 2 (comprehension) question with a fixed answer.
+ *  - color_pair: "Which object was the same color as the <cue>?" Four picture options (the
+ *    answer plus 3 other seen objects, never the cue), all drawn in the neutral color.
+ *  - count: text options, e.g. "How many of the vehicles could fly?"
+ */
+export type Level2Question =
+	| { id: string; kind: 'color_pair'; prompt: string; cue: string; answer: string }
+	| { id: string; kind: 'count'; prompt: string; options: { id: string; label: string }[]; answer: string };
 
 export interface OralQuestion {
 	id: string;
 	/** What the facilitator reads aloud. */
 	prompt: string;
 	options: { id: string; label: string }[];
-	/** id of the correct option. */
-	answer: string;
+	/** id of the correct option. null = not decided yet: responses are logged but not scored. */
+	answer: string | null;
 }
 
 /** Answers every single-item question offers besides its normal options. Scored as incorrect / excluded. */
 export const DONT_REMEMBER = 'dont_remember';
-/** Color questions only: excluded from color accuracy. */
+/** Color and Level 2 color-pair questions only: excluded from accuracy. */
 export const COLOR_BLIND = 'color_blind';
 
 export type SaQuestionType = 'objects' | 'color' | 'orientation' | 'side_by_side';

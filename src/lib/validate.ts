@@ -1,4 +1,4 @@
-import { hasVariant } from './sa-plan';
+import { hasVariant, level2Distractors } from './sa-plan';
 import { COLOR_BLIND, DONT_REMEMBER } from './types';
 import type { ExperimentConfig, LayoutsFile, ThemeManifest } from './types';
 
@@ -82,6 +82,9 @@ export function validateExperiment(
 	if (config.sa_foils_per_theme !== undefined && (!Number.isInteger(config.sa_foils_per_theme) || config.sa_foils_per_theme < 0)) {
 		errs.push('config.sa_foils_per_theme must be a whole number >= 0');
 	}
+	if (config.board_time_limit_s !== undefined && (typeof config.board_time_limit_s !== 'number' || config.board_time_limit_s < 0)) {
+		errs.push('config.board_time_limit_s must be a number of seconds >= 0 (0 = no limit)');
+	}
 	if (!Number.isInteger(config.confidence_scale) || config.confidence_scale < 0) {
 		errs.push('config.confidence_scale must be a whole number (0 turns confidence off)');
 	}
@@ -92,10 +95,47 @@ export function validateExperiment(
 		oralIds.add(q.id);
 		if (!q.prompt) errs.push(`${where}: no prompt`);
 		if (!Array.isArray(q.options) || q.options.length < 2) errs.push(`${where}: needs at least 2 options`);
-		else if (!q.options.some((o) => o.id === q.answer)) errs.push(`${where}: answer "${q.answer}" is not one of its option ids`);
+		else if (q.answer !== null && !q.options.some((o) => o.id === q.answer)) errs.push(`${where}: answer "${q.answer}" is not one of its option ids`);
 		if (q.options?.some((o) => o.id === DONT_REMEMBER || o.id === COLOR_BLIND)) errs.push(`${where}: option ids "${DONT_REMEMBER}"/"${COLOR_BLIND}" are reserved`);
+	}
+	const level2Ids = new Set<string>();
+	for (const [theme, qs] of Object.entries(config.sa_level2_questions ?? {})) {
+		const m = manifests[theme];
+		if (!sa.includes(theme)) errs.push(`sa_level2_questions: theme "${theme}" is not in theme_orders`);
+		if (!m) continue;
+		for (const q of qs) {
+			const where = `sa_level2_questions "${theme}" "${q.id}"`;
+			if (!q.id || level2Ids.has(q.id)) errs.push(`${where}: missing or duplicate id`);
+			level2Ids.add(q.id);
+			if (!q.prompt) errs.push(`${where}: no prompt`);
+			if (q.kind === 'color_pair') {
+				const cue = m.objects.find((o) => o.id === q.cue);
+				const ans = m.objects.find((o) => o.id === q.answer);
+				if (!cue) errs.push(`${where}: cue "${q.cue}" is not a seen object of the theme`);
+				if (!ans) errs.push(`${where}: answer "${q.answer}" is not a seen object of the theme`);
+				if (cue && ans) {
+					if (q.cue === q.answer) errs.push(`${where}: the answer cannot be the cue`);
+					if (ans.render === 'original' || ans.emoji) errs.push(`${where}: answer "${q.answer}" cannot be drawn in the neutral color`);
+					if (cue.color !== ans.color) errs.push(`${where}: answer "${q.answer}" (${ans.color}) is not the same color as "${q.cue}" (${cue.color})`);
+					if (level2Distractors(m, q).length < 3) errs.push(`${where}: needs at least 3 other recolorable objects of a different color as wrong options`);
+				}
+			} else if (q.kind === 'count') {
+				if (!Array.isArray(q.options) || q.options.length < 2) errs.push(`${where}: needs at least 2 options`);
+				else if (!q.options.some((o) => o.id === q.answer)) errs.push(`${where}: answer "${q.answer}" is not one of its option ids`);
+				if (q.options?.some((o) => o.id === DONT_REMEMBER || o.id === COLOR_BLIND)) errs.push(`${where}: option ids "${DONT_REMEMBER}"/"${COLOR_BLIND}" are reserved`);
+			} else {
+				errs.push(`${where}: kind must be "color_pair" or "count"`);
+			}
+		}
 	}
 	for (const t of sa) check(t, config.board, true);
 	check(practice, config.practice_board, false);
 	return errs;
+}
+
+/** Things that do not stop a session from running but must be fixed before data collection. */
+export function experimentWarnings(config: ExperimentConfig): string[] {
+	return (config.oral_sa_questions ?? [])
+		.filter((q) => q.answer === null)
+		.map((q) => `oral_sa_questions "${q.id}": answer not set yet. Responses are logged but not scored until it is filled in`);
 }

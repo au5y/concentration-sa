@@ -159,3 +159,31 @@ describe('buildSummary', () => {
 		expect(row.fitness).toBe(3);
 	});
 });
+
+describe('buildSummary time limit', () => {
+	it('flags a timed-out board and reports pairs found', () => {
+		// Board A: one pair found, then time ran out. Board B: cleared.
+		const A = seqOf([[0, 3], [1, 0]], cards2);
+		const B = seqOf([[0, 3], [1, 2]], cards2, 5000);
+		const [row] = buildSummary({
+			sessions: [{ pid: 'P02', condition: 'rest', board_a_theme: 'm', board_b_theme: 't', phase: 'done', completed_at: 1 }],
+			phases: [
+				{ pid: 'P02', phase: 'board_a.play', client_started_at: 1000 },
+				{ pid: 'P02', phase: 'board_a.timeout', client_started_at: 91000 },
+				{ pid: 'P02', phase: 'board_b.play', client_started_at: 5000 }
+			],
+			clicks: [...A.map((c) => ({ ...c, pid: 'P02', board: 'A' })), ...B.map((c) => ({ ...c, pid: 'P02', board: 'B' }))],
+			sa: [],
+			survey: [],
+			bouts: [],
+			layouts: { m: cards2, t: cards2 },
+			saTypes: []
+		});
+		expect(row.A_timed_out).toBe(1);
+		expect(row.A_cleared).toBe(0);
+		expect(row.A_pairs_found).toBe(1);
+		expect(row.A_time_to_clear_ms).toBeNull();
+		expect(row.B_timed_out).toBe(0);
+		expect(row.B_pairs_found).toBe(2);
+	});
+});

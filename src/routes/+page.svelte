@@ -18,6 +18,8 @@
 	let practiceDone = $state(false);
 	let confirmUntil = 0;
 	let busy = false;
+	/** Server clock minus this computer's clock, for resuming board timers after a reload. */
+	let clockOffset = 0;
 
 	// Start-page form
 	let formPid = $state('');
@@ -30,6 +32,7 @@
 
 	function setState(next: SessionState) {
 		if (s?.phase !== next.phase) practiceDone = false;
+		clockOffset = next.serverNow - Date.now();
 		s = next;
 	}
 
@@ -44,6 +47,21 @@
 	});
 
 	const marker = (name: string) => s?.progress.markers.find((m) => m.name === name) ?? null;
+	/** Play time already used on the current board (server clock), for resuming after a reload. */
+	const playElapsed = () => {
+		const play = marker('play');
+		return play ? Math.max(0, Date.now() + clockOffset - play.at) : 0;
+	};
+
+	/** Log the timeout and move on. Retries for a few seconds in case the server's clock check is still a moment behind. */
+	async function boardTimeout() {
+		const phase = s?.phase;
+		for (let i = 0; i < 5 && s?.phase === phase; i++) {
+			if (i) await new Promise((r) => setTimeout(r, 2000));
+			await addMarker('timeout');
+			await advance();
+		}
+	}
 
 	async function addMarker(name: string, ts = nowTs()) {
 		if (!s) return;
@@ -176,7 +194,12 @@
 				previewMs={s.timers.preview_ms}
 				flipMs={s.timers.mismatch_flip_ms}
 				practice
+				timeLimitMs={s.timers.time_limit_ms}
 				onMark={(name, ts) => addMarker(name, ts)}
+				onTimeout={() => {
+					practiceDone = true;
+					addMarker('timeout');
+				}}
 				onComplete={() => (practiceDone = true)}
 			/>
 		{:else if s.phase === 'interval1' || s.phase === 'interval2'}
@@ -201,7 +224,10 @@
 				flipMs={s.timers.mismatch_flip_ms}
 				priorClicks={s.progress.clicks}
 				resumed={!!marker('play')}
+				timeLimitMs={s.timers.time_limit_ms}
+				elapsedMs={playElapsed()}
 				onMark={(name, ts) => addMarker(name, ts)}
+				onTimeout={boardTimeout}
 				onFlip={(c) => onFlip(key, c)}
 				onComplete={() => advance()}
 			/>
@@ -215,6 +241,7 @@
 				scale={s.confidenceScale}
 				labels={s.confidenceLabels}
 				oralQuestions={s.oralQuestions}
+				level2Hex={s.level2Hex}
 				onAnswer={(a) => api.sa(s!.pid, a).catch((e) => say(`Answer not saved: ${e.message}`, 6000))}
 				onDone={() => advance()}
 			/>

@@ -6,8 +6,9 @@
 	],
 	"board": { "rows": 4, "cols": 4 },
 	"practice_board": { "rows": 3, "cols": 4, "theme": "emoji" },
-	"preview_s": 5,
+	"preview_s": 10,
 	"mismatch_flip_ms": 1000,
+	"board_time_limit_s": 90,
 	"max_participants": 30,
 	"sa_questions": ["objects", "color", "side_by_side"],
 	"sa_random_per_theme": 4,
@@ -30,58 +31,63 @@
 
 	"oral_sa_questions": [
 		{
-			"id": "env_placeholder_1",
-			"prompt": "PLACEHOLDER: What color was the facilitator's water bottle?",
+			"id": "env_facilitator_hat",
+			"prompt": "What color was the facilitator's hat?",
 			"options": [
 				{ "id": "red", "label": "Red" },
 				{ "id": "blue", "label": "Blue" },
 				{ "id": "green", "label": "Green" },
 				{ "id": "black", "label": "Black" }
 			],
-			"answer": "blue"
+			"answer": null
 		},
 		{
-			"id": "env_placeholder_2",
-			"prompt": "PLACEHOLDER: How many chairs were in the room?",
+			"id": "env_laptop_sticky_note",
+			"prompt": "What color was the sticky note on the laptop?",
 			"options": [
-				{ "id": "2", "label": "2" },
-				{ "id": "3", "label": "3" },
-				{ "id": "4", "label": "4" },
-				{ "id": "5", "label": "5 or more" }
+				{ "id": "yellow", "label": "Yellow" },
+				{ "id": "pink", "label": "Pink" },
+				{ "id": "blue", "label": "Blue" },
+				{ "id": "green", "label": "Green" }
 			],
-			"answer": "3"
-		},
-		{
-			"id": "env_placeholder_3",
-			"prompt": "PLACEHOLDER: Was there a poster on the wall behind the screen?",
-			"options": [
-				{ "id": "yes", "label": "Yes" },
-				{ "id": "no", "label": "No" }
-			],
-			"answer": "yes"
-		},
-		{
-			"id": "env_placeholder_4",
-			"prompt": "PLACEHOLDER: What was written on the whiteboard?",
-			"options": [
-				{ "id": "a", "label": "Option A" },
-				{ "id": "b", "label": "Option B" },
-				{ "id": "c", "label": "Option C" },
-				{ "id": "nothing", "label": "Nothing" }
-			],
-			"answer": "a"
+			"answer": null
 		}
 	],
+
+	"sa_level2_neutral_hex": "#8c8c8c",
+	"sa_level2_questions": {
+		"transport": [
+			{ "id": "transport_same_color_train", "kind": "color_pair", "prompt": "Which vehicle was the same color as the train?", "cue": "train", "answer": "bike" },
+			{ "id": "transport_same_color_plane", "kind": "color_pair", "prompt": "Which vehicle was the same color as the plane?", "cue": "plane", "answer": "scooter" },
+			{
+				"id": "transport_count_fly",
+				"kind": "count",
+				"prompt": "How many of the vehicles could fly?",
+				"options": [
+					{ "id": "2", "label": "2" },
+					{ "id": "3", "label": "3" },
+					{ "id": "4", "label": "4" },
+					{ "id": "5", "label": "5" }
+				],
+				"answer": "3"
+			}
+		],
+		"mit": [
+			{ "id": "mit_same_color_beaver", "kind": "color_pair", "prompt": "Which object was the same color as the beaver?", "cue": "beaver", "answer": "mit_logo" },
+			{ "id": "mit_same_color_apollo", "kind": "color_pair", "prompt": "Which object was the same color as the Apollo capsule?", "cue": "apollo_capsule", "answer": "integral" },
+			{ "id": "mit_same_color_dome", "kind": "color_pair", "prompt": "Which object was the same color as the Great Dome?", "cue": "great_dome", "answer": "muddy_charles" }
+		]
+	},
 
 	"condition_text": {
 		"rest": {
 			"interval1": {
-				"title": "Seated rest",
-				"body": "Please sit quietly and relax. The researcher will let you know when it is time to continue."
+				"title": "Rest",
+				"body": "Please stand quietly and relax. The researcher will let you know when it is time to continue."
 			},
 			"interval2": {
-				"title": "Seated rest",
-				"body": "Please sit quietly and relax. The researcher will let you know when it is time to continue."
+				"title": "Rest",
+				"body": "Please stand quietly and relax. The researcher will let you know when it is time to continue."
 			}
 		},
 		"elevated_hr": {

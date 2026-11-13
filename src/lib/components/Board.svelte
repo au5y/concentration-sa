@@ -18,6 +18,12 @@
 		/** True if the preview already finished before a reload. */
 		resumed?: boolean;
 		practice?: boolean;
+		/** Play time allowed after the cards flip face down; 0 = no limit. */
+		timeLimitMs?: number;
+		/** Play time already used before a reload (resumed boards only). */
+		elapsedMs?: number;
+		/** Called once when the time limit runs out before the board is cleared. */
+		onTimeout?: () => void;
 		onMark?: (name: 'preview' | 'play', ts: number) => void;
 		onFlip?: (c: ClickRecord) => void;
 		onComplete: () => void;
@@ -32,6 +38,9 @@
 		priorClicks = [],
 		resumed = false,
 		practice = false,
+		timeLimitMs = 0,
+		elapsedMs = 0,
+		onTimeout,
 		onMark,
 		onFlip,
 		onComplete
@@ -55,17 +64,50 @@
 	let seq = initialSeq;
 	let previewLeft = $state(untrack(() => Math.ceil(previewMs / 1000)));
 	let hint = $state('');
+	let timedOut = $state(false);
+	let timeLeft = $state(untrack(() => Math.ceil(timeLimitMs / 1000)));
 	const timeouts: ReturnType<typeof setTimeout>[] = [];
 	let tick: ReturnType<typeof setInterval> | undefined;
+	let clock: ReturnType<typeof setInterval> | undefined;
 
 	onMount(() => {
 		if (practice) hint = 'This is a practice round. Press Start when you are ready.';
-		if (resumed && cards.every((c) => c.matched)) finish();
+		if (resumed) {
+			if (cards.every((c) => c.matched)) finish();
+			else startClock(elapsedMs);
+		}
 	});
 	onDestroy(() => {
 		timeouts.forEach(clearTimeout);
 		clearInterval(tick);
+		clearInterval(clock);
 	});
+
+	/** Count down the play time; `used` is time already spent (after a reload). */
+	function startClock(used: number) {
+		if (!timeLimitMs) return;
+		const end = performance.now() + timeLimitMs - used;
+		const update = () => {
+			const left = end - performance.now();
+			timeLeft = Math.max(0, Math.ceil(left / 1000));
+			if (left <= 0) timeUp();
+		};
+		update();
+		if (stage === 'play') clock = setInterval(update, 200);
+	}
+
+	function timeUp() {
+		clearInterval(clock);
+		if (stage === 'done') return;
+		stage = 'done';
+		timedOut = true;
+		first = null;
+		if (practice) hint = "Time's up! Practice complete. Please wait for the researcher.";
+		timeouts.push(setTimeout(() => onTimeout?.(), practice ? 0 : 1500));
+	}
+
+	/** The clock stays hidden until the last few seconds, so it adds as little time pressure as possible. */
+	const WARN_S = 5;
 
 	function start() {
 		stage = 'preview';
@@ -84,6 +126,7 @@
 				stage = 'play';
 				onMark?.('play', nowTs());
 				if (practice) hint = 'Click a card to turn it over.';
+				startClock(0);
 			}, previewMs)
 		);
 	}
@@ -125,6 +168,8 @@
 	}
 
 	function finish() {
+		clearInterval(clock);
+		if (stage === 'done') return;
 		stage = 'done';
 		if (practice) hint = 'Practice complete. Please wait for the researcher.';
 		timeouts.push(setTimeout(onComplete, practice ? 0 : 1200));
@@ -163,9 +208,15 @@
 		{/if}
 	</div>
 
+	{#if stage === 'play' && timeLimitMs && timeLeft <= WARN_S}
+		<div class="clock" aria-live="polite">{timeLeft}</div>
+	{/if}
+
 	<p class="status">
 		{#if stage === 'preview'}
 			Cards turn over in {previewLeft}
+		{:else if stage === 'done' && timedOut}
+			Time's up!
 		{:else if stage === 'done' && !practice}
 			Done!
 		{/if}
@@ -198,6 +249,21 @@
 		min-height: 1.5em;
 		font-size: 1.4rem;
 		font-weight: 600;
+	}
+	/* Last-seconds warning, top right (below the test toolbar). */
+	.clock {
+		position: fixed;
+		top: 2.4rem;
+		right: 1.2rem;
+		min-width: 2.4rem;
+		padding: 0.2rem 0.6rem;
+		border-radius: 8px;
+		background: #fdecea;
+		color: #c0392b;
+		font-size: 1.6rem;
+		font-weight: 700;
+		text-align: center;
+		font-variant-numeric: tabular-nums;
 	}
 	.board {
 		position: relative;

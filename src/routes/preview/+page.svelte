@@ -251,6 +251,7 @@
 							scale={fb.questions.confidence === 'off' ? 0 : data.confidenceScale}
 							labels={data.confidenceLabels}
 							oralQuestions={data.oralQuestions}
+							level2Hex={data.level2Hex}
 							onAnswer={async () => ({})}
 							onDone={() => (status = 'Question demo finished. Press Restart to go again.')}
 						/>

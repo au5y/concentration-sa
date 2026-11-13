@@ -2,7 +2,7 @@
 	import { nowTs } from '$lib/client/api';
 	import { renderSpec } from '$lib/render';
 	import type { SaStep } from '$lib/sa-plan';
-	import { COLOR_BLIND, DONT_REMEMBER, type ColorOption, type OralQuestion, type OrientationOption, type ThemeManifest } from '$lib/types';
+	import { COLOR_BLIND, DONT_REMEMBER, LEVEL2_NEUTRAL_HEX, type ColorOption, type OralQuestion, type OrientationOption, type ThemeManifest } from '$lib/types';
 	import Confidence from './Confidence.svelte';
 	import ObjectImage from './ObjectImage.svelte';
 
@@ -15,10 +15,12 @@
 		scale: number;
 		labels: [string, string];
 		oralQuestions?: OralQuestion[];
+		/** Neutral color for Level 2 color-pair options. */
+		level2Hex?: string;
 		onAnswer: (a: Record<string, unknown>) => Promise<unknown>;
 		onDone: () => void;
 	}
-	let { plan, answered, manifests, colors, orientations, scale, labels, oralQuestions = [], onAnswer, onDone }: Props = $props();
+	let { plan, answered, manifests, colors, orientations, scale, labels, oralQuestions = [], level2Hex = LEVEL2_NEUTRAL_HEX, onAnswer, onDone }: Props = $props();
 
 	// Props are read once on purpose: the component is re-created per phase.
 	// svelte-ignore state_referenced_locally
@@ -155,6 +157,26 @@
 				>
 					Next ({selected.length}/{nTargets})
 				</button>
+			{:else if step.type === 'level2_color'}
+				<h2>{step.prompt}</h2>
+				<div class="row">
+					{#each step.options as id (id)}
+						<button class="opt big" class:sel={response === id} onclick={() => pick(id)}>
+							<ObjectImage spec={renderSpec(step.theme, find(id), colors, orientations, { hex: level2Hex })} size="80%" />
+						</button>
+					{/each}
+				</div>
+				{@render extras(true)}
+				{@render finish()}
+			{:else if step.type === 'level2_count'}
+				<h2>{step.prompt}</h2>
+				<div class="choices">
+					{#each step.options as o (o.id)}
+						<button class="choice" class:sel={response === o.id} onclick={() => pick(o.id)}>{o.label}</button>
+					{/each}
+				</div>
+				{@render extras(false)}
+				{@render finish()}
 			{:else}
 				{@const item = find(step.item)}
 				{#if step.type === 'color'}

@@ -161,7 +161,9 @@
 			(top right) for jumping to any phase. Delete them below when you're done.
 		</p>
 
-		<h2>Export</h2>
+		<h2>Data</h2>
+		<p><a class="explore" href="/admin/explore">Open the data explorer →</a> <span class="muted small">Per-participant boards, timelines, answers and condition averages.</span></p>
+		<h3>Export</h3>
 		<p class="exports">
 			{#each EXPORTS as name (name)}
 				<a href="/admin/export/{name}.csv" download>{name}.csv</a>
@@ -184,7 +186,7 @@
 				{#each data.sessions as r (r.pid)}
 					<tr>
 						<td><input type="checkbox" checked={selected.includes(r.pid)} onchange={() => toggle(r.pid)} /></td>
-						<td>{r.pid}{#if isTest(r.pid)} <span class="tag">test</span>{/if}</td><td>{r.condition}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
+						<td><a href="/admin/explore?pid={encodeURIComponent(r.pid)}">{r.pid}</a>{#if isTest(r.pid)} <span class="tag">test</span>{/if}</td><td>{r.condition}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
 						<td>{r.phase}</td><td>{r.clicks}</td><td>{r.sa_answered}/{r.sa_total}</td>
 						<td class:warnc={r.reloads > 0}>{r.reloads}</td><td>{time(r.created_at)}</td><td>{time(r.completed_at)}</td>
 						<td class="nowrap">
@@ -260,6 +262,10 @@
 		border: 2px dashed #7b2cbf;
 		border-radius: 10px;
 		padding: 0.8rem 1rem;
+	}
+	.explore {
+		font-weight: 600;
+		font-size: 1.1rem;
 	}
 	.primary {
 		background: #7b2cbf;

@@ -3,7 +3,7 @@ import { computeBoardMetrics } from '../metrics';
 import { hashString, mulberry32 } from '../rng';
 import { buildSaPlan, type SaStep } from '../sa-plan';
 import type { SessionState } from '../state';
-import { COLOR_BLIND, DONT_REMEMBER, FACILITATOR_PHASES, PHASES, type ClickOutcome, type ClickRecord, type Phase } from '../types';
+import { COLOR_BLIND, DONT_REMEMBER, FACILITATOR_PHASES, LEVEL2_NEUTRAL_HEX, PHASES, type ClickOutcome, type ClickRecord, type Phase } from '../types';
 import { getDb } from './db';
 import { experiment, timers } from './experiment';
 import { loadSchedule } from './files';
@@ -26,10 +26,12 @@ export interface SessionRow {
 const BOARD_OF: Partial<Record<Phase, 'A' | 'B'>> = { board_a: 'A', board_b: 'B' };
 const MARKERS: Partial<Record<Phase, string[]>> = {
 	baseline: ['start'],
-	practice: ['preview', 'play'],
-	board_a: ['preview', 'play'],
-	board_b: ['preview', 'play']
+	practice: ['preview', 'play', 'timeout'],
+	board_a: ['preview', 'play', 'timeout'],
+	board_b: ['preview', 'play', 'timeout']
 };
+/** Allowance for network delay and clock drift when checking a board's time limit on the server. */
+const TIME_LIMIT_SLACK_MS = 5000;
 
 export function getSession(pid: string): SessionRow | undefined {
 	return getDb().prepare('SELECT * FROM sessions WHERE pid = ?').get(pid) as SessionRow | undefined;
@@ -89,7 +91,8 @@ function makePlan(pid: string, row: { seed: number; board_a_theme: string; board
 		mulberry32(hashString(`${pid}:${row.seed}:sa`)),
 		config.sa_random_per_theme,
 		config.sa_foils_per_theme,
-		(config.oral_sa_questions ?? []).map((q) => q.id)
+		(config.oral_sa_questions ?? []).map((q) => q.id),
+		{ questions: config.sa_level2_questions ?? {}, rand: mulberry32(hashString(`${pid}:${row.seed}:sa-level2`)) }
 	);
 }
 
@@ -154,6 +157,19 @@ function hasMarker(pid: string, name: string): boolean {
 	return !!getDb().prepare('SELECT 1 FROM phases WHERE pid = ? AND phase = ? LIMIT 1').get(pid, name);
 }
 
+/** Server time of the latest marker with this name, or null. */
+function markerAt(pid: string, name: string): number | null {
+	const r = getDb().prepare('SELECT MAX(started_at) AS at FROM phases WHERE pid = ? AND phase = ?').get(pid, name) as { at: number | null };
+	return r.at;
+}
+
+/** True once the board's play time (from its latest `.play` marker) has run out, allowing for slack. */
+function timeLimitReached(s: SessionRow, phase: Phase, now: number): boolean {
+	const limit = timers(experiment(), !!s.dev_timers).time_limit_ms;
+	const play = markerAt(s.pid, `${phase}.play`);
+	return limit > 0 && play !== null && now - play >= limit - TIME_LIMIT_SLACK_MS;
+}
+
 function boardClicks(pid: string, board: string): ClickRecord[] {
 	return getDb()
 		.prepare('SELECT seq, card_index, object_id, outcome, client_ts FROM clicks WHERE pid = ? AND board = ? ORDER BY seq')
@@ -193,6 +209,7 @@ export function buildState(s: SessionRow): SessionState {
 		confidenceScale: config.confidence_scale,
 		confidenceLabels: config.confidence_labels ?? ['Not at all sure', 'Completely sure'],
 		oralQuestions: config.oral_sa_questions ?? [],
+		level2Hex: config.sa_level2_neutral_hex ?? LEVEL2_NEUTRAL_HEX,
 		manifests: {
 			[practiceTheme]: exp.manifests[practiceTheme],
 			[s.board_a_theme]: exp.manifests[s.board_a_theme],
@@ -225,7 +242,9 @@ export function advance(pid: string, from: Phase, opts: { facilitator: boolean; 
 		const b = BOARD_OF[from];
 		if (b) {
 			const m = computeBoardMetrics(boardClicks(pid, b), boardCards(b === 'A' ? s.board_a_theme : s.board_b_theme), null);
-			if (!m.cleared) error(409, 'Board is not cleared yet');
+			if (!m.cleared && !(hasMarker(pid, `${from}.timeout`) && timeLimitReached(s, from, Date.now()))) {
+				error(409, 'Board is not cleared yet');
+			}
 		}
 		if (from === 'sa') {
 			const plan: SaStep[] = JSON.parse(s.sa_plan);
@@ -256,6 +275,7 @@ export function mark(pid: string, phase: Phase, name: string, clientTs: number |
 	if (s.phase !== phase) error(409, `Session is in ${s.phase}, not ${phase}`);
 	if (!MARKERS[phase]?.includes(name)) error(400, `Unknown marker ${phase}.${name}`);
 	const now = Date.now();
+	if (name === 'timeout' && !timeLimitReached(s, phase, now)) error(409, 'The time limit has not been reached');
 	insertPhase(pid, `${phase}.${name}`, now, clientTs);
 	getDb().prepare('UPDATE sessions SET updated_at = ? WHERE pid = ?').run(now, pid);
 	return now;
@@ -323,9 +343,10 @@ export function recordSa(pid: string, a: SaAnswer): { answered: number } {
 		);
 		const grid = step.type === 'objects';
 		const resp = String(a.response);
-		// "I don't remember" (scored incorrect) and "I'm color blind" (color only; excluded from
-		// color accuracy) carry no confidence rating.
-		const special = !grid && (resp === DONT_REMEMBER || (resp === COLOR_BLIND && step.type === 'color'));
+		// "I don't remember" (scored incorrect) and "I'm color blind" (color and Level 2
+		// color-pair only; excluded from accuracy) carry no confidence rating.
+		const colorQ = step.type === 'color' || step.type === 'level2_color';
+		const special = !grid && (resp === DONT_REMEMBER || (resp === COLOR_BLIND && colorQ));
 		const noConf = grid || special;
 		const row = (item: string, target: string, response: string, correct: boolean, presented: unknown) =>
 			insert.run(pid, step.seq, step.board, step.theme, step.type, item, target, response, correct ? 1 : 0,
@@ -349,7 +370,18 @@ export function recordSa(pid: string, a: SaAnswer): { answered: number } {
 			const q = (exp.config.oral_sa_questions ?? []).find((x) => x.id === step.item);
 			if (!q) error(500, `oral question "${step.item}" is no longer in the config`);
 			if (!special && !q.options.some((o) => o.id === resp)) error(400, 'unknown option');
-			row(step.item, q.answer, resp, resp === q.answer, { prompt: q.prompt, options: q.options.map((o) => o.id) });
+			// answer null = not decided yet: target '' marks the response as unscored.
+			row(step.item, q.answer ?? '', resp, q.answer !== null && resp === q.answer, { prompt: q.prompt, options: q.options.map((o) => o.id) });
+		} else if (step.type === 'level2_color' || step.type === 'level2_count') {
+			const q = (exp.config.sa_level2_questions?.[step.theme] ?? []).find((x) => x.id === step.item);
+			if (!q) error(500, `Level 2 question "${step.item}" is no longer in the config`);
+			const options = step.type === 'level2_color' ? step.options : step.options.map((o) => o.id);
+			if (!special && !options.includes(resp)) error(400, 'unknown option');
+			const presented =
+				step.type === 'level2_color'
+					? { prompt: step.prompt, cue: step.cue, options, hex: exp.config.sa_level2_neutral_hex ?? LEVEL2_NEUTRAL_HEX }
+					: { prompt: step.prompt, options };
+			row(step.item, q.answer, resp, resp === q.answer, presented);
 		} else {
 			const obj = m.objects.find((o) => o.id === step.item)!;
 			if (step.type === 'color') {

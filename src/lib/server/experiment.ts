@@ -1,5 +1,5 @@
 import type { ExperimentConfig, LayoutsFile, ThemeManifest } from '../types';
-import { validateExperiment } from '../validate';
+import { experimentWarnings, validateExperiment } from '../validate';
 import { loadConfig, loadLayouts, loadManifests, themeFileExists } from './files';
 
 export interface Experiment {
@@ -19,6 +19,7 @@ export function experiment(): Experiment {
 	const layouts = loadLayouts();
 	const errs = validateExperiment(config, manifests, layouts, themeFileExists);
 	if (errs.length) throw new Error('Experiment setup is invalid:\n' + errs.map((e) => ' - ' + e).join('\n'));
+	for (const w of experimentWarnings(config)) console.warn('warning: ' + w);
 	cached = {
 		config,
 		manifests: manifests as Record<string, ThemeManifest>,
@@ -35,6 +36,8 @@ export function timers(exp: Experiment, fast = false) {
 	const dev = 5000;
 	return {
 		preview_ms: devTimers ? dev : config.preview_s * 1000,
-		mismatch_flip_ms: config.mismatch_flip_ms
+		mismatch_flip_ms: config.mismatch_flip_ms,
+		/** Play time allowed per board; 0 = no limit. Not shortened by fast timers. */
+		time_limit_ms: Math.round((config.board_time_limit_s ?? 0) * 1000)
 	};
 }

@@ -1,7 +1,7 @@
 import { error, type Cookies } from '@sveltejs/kit';
 import crypto from 'node:crypto';
 import { toCsv } from '../csv';
-import { buildSummary } from '../metrics';
+import { buildSummary, rescoreFixedAnswers } from '../metrics';
 import { PHASES } from '../types';
 import { getDb, TABLES } from './db';
 import { experiment } from './experiment';
@@ -62,27 +62,42 @@ export function tableCsv(name: string): string {
 	if (name === 'summary') return toCsv(summaryRows());
 	if (!(TABLES as readonly string[]).includes(name)) error(404, 'unknown table');
 	const cols = (db.prepare(`PRAGMA table_info(${name})`).all() as { name: string }[]).map((c) => c.name);
-	const rows = db.prepare(`SELECT * FROM ${name} WHERE ${REAL} ORDER BY rowid`).all() as Record<string, unknown>[];
+	let rows = db.prepare(`SELECT * FROM ${name} WHERE ${REAL} ORDER BY rowid`).all() as Record<string, unknown>[];
+	if (name === 'sa_responses') rows = rescore(rows as any[]);
 	const isoRows = withIso(rows);
 	const header = rows.length ? Object.keys(isoRows[0]) : cols;
 	return toCsv(isoRows, header);
 }
 
-export function summaryRows(): Record<string, unknown>[] {
+/** One summary row per participant. Test sessions are left out unless `includeTests`. */
+export function summaryRows(includeTests = false): Record<string, unknown>[] {
 	const db = getDb();
 	const exp = experiment();
+	const where = includeTests ? '1 = 1' : REAL;
 	const all = (sql: string) => db.prepare(sql).all() as any[];
 	const layouts = Object.fromEntries(Object.entries(exp.layouts.layouts).map(([t, l]) => [t, l.cards]));
 	return buildSummary({
-		sessions: all(`SELECT * FROM sessions WHERE ${REAL} ORDER BY pid`),
-		phases: all(`SELECT pid, phase, client_started_at FROM phases WHERE ${REAL} ORDER BY id`),
-		clicks: all(`SELECT pid, board, seq, card_index, object_id, outcome, client_ts FROM clicks WHERE ${REAL}`),
-		sa: all(`SELECT pid, board, question_type, target, response, correct, confidence FROM sa_responses WHERE ${REAL}`),
-		survey: all(`SELECT * FROM survey WHERE ${REAL}`),
-		bouts: all(`SELECT pid, bout, rpe, peak_hr FROM bouts WHERE ${REAL}`),
+		sessions: all(`SELECT * FROM sessions WHERE ${where} ORDER BY pid`),
+		phases: all(`SELECT pid, phase, client_started_at FROM phases WHERE ${where} ORDER BY id`),
+		clicks: all(`SELECT pid, board, seq, card_index, object_id, outcome, client_ts FROM clicks WHERE ${where}`),
+		sa: rescore(all(`SELECT pid, board, theme, item, question_type, target, response, correct, confidence FROM sa_responses WHERE ${where}`)),
+		survey: all(`SELECT * FROM survey WHERE ${where}`),
+		bouts: all(`SELECT pid, bout, rpe, peak_hr FROM bouts WHERE ${where}`),
 		layouts,
-		saTypes: [...exp.config.sa_questions, ...(exp.config.oral_sa_questions?.length ? ['oral'] : [])]
+		saTypes: [...exp.config.sa_questions, ...level2Types(), ...(exp.config.oral_sa_questions?.length ? ['oral'] : [])]
 	});
+}
+
+/** Level 2 question types present in the config (level2_color, level2_count). */
+function level2Types(): string[] {
+	const qs = Object.values(experiment().config.sa_level2_questions ?? {}).flat();
+	return (['color_pair', 'count'] as const).filter((k) => qs.some((q) => q.kind === k)).map((k) => (k === 'color_pair' ? 'level2_color' : 'level2_count'));
+}
+
+/** Score oral and Level 2 answers against the current config (answers may be filled in later). */
+function rescore<T extends Parameters<typeof rescoreFixedAnswers>[0][number]>(rows: T[]): T[] {
+	const { config } = experiment();
+	return rescoreFixedAnswers(rows, config.oral_sa_questions, config.sa_level2_questions);
 }
 
 export function status() {
@@ -111,5 +126,33 @@ export function status() {
 			themeOrders: experiment().config.theme_orders,
 			phases: PHASES
 		}
+	};
+}
+
+/** Everything recorded for one participant, for the data explorer. */
+export function participantDetail(pid: string) {
+	const db = getDb();
+	const exp = experiment();
+	const session = db.prepare('SELECT * FROM sessions WHERE pid = ?').get(pid) as Record<string, any> | undefined;
+	if (!session) return null;
+	const rows = (sql: string) => db.prepare(sql).all(pid) as any[];
+	const themes = [exp.config.practice_board.theme, session.board_a_theme, session.board_b_theme];
+	return {
+		session: { ...session, sa_plan: undefined },
+		phases: rows('SELECT phase, started_at, ended_at, client_started_at FROM phases WHERE pid = ? ORDER BY id'),
+		clicks: rows('SELECT board, seq, card_index, object_id, outcome, client_ts FROM clicks WHERE pid = ? ORDER BY board, seq'),
+		sa: rescore(
+			rows(
+				`SELECT seq, board, theme, question_type, item, target, response, correct, confidence, rt_ms
+				 FROM sa_responses WHERE pid = ? ORDER BY seq, id`
+			)
+		),
+		bouts: rows('SELECT bout, rpe, peak_hr, server_ts FROM bouts WHERE pid = ? ORDER BY bout'),
+		survey: (db.prepare('SELECT * FROM survey WHERE pid = ?').get(pid) as Record<string, unknown> | undefined) ?? null,
+		summary: summaryRows(true).find((r) => r.pid === pid) ?? null,
+		layouts: Object.fromEntries(themes.map((t) => [t, exp.layouts.layouts[t]])),
+		manifests: Object.fromEntries(themes.map((t) => [t, exp.manifests[t]])),
+		colors: exp.config.colors,
+		orientations: exp.config.orientations
 	};
 }

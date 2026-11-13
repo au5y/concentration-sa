@@ -5,6 +5,7 @@ import { buildSaPlan } from '../sa-plan';
 import { mulberry32 } from '../rng';
 import { experiment } from './experiment';
 import { paths } from './files';
+import { LEVEL2_NEUTRAL_HEX } from '../types';
 
 export interface Candidate {
 	file: string;
@@ -40,13 +41,15 @@ export function previewData() {
 		mulberry32(Date.now() & 0xffff),
 		config.sa_random_per_theme,
 		config.sa_foils_per_theme,
-		(config.oral_sa_questions ?? []).map((q) => q.id)
+		(config.oral_sa_questions ?? []).map((q) => q.id),
+		{ questions: config.sa_level2_questions ?? {}, rand: mulberry32((Date.now() + 1) & 0xffff) }
 	);
 	return {
 		themes,
 		manifests: Object.fromEntries(themes.map((t) => [t, manifests[t]])),
 		colors: config.colors,
 		oralQuestions: config.oral_sa_questions ?? [],
+		level2Hex: config.sa_level2_neutral_hex ?? LEVEL2_NEUTRAL_HEX,
 		orientations: config.orientations,
 		confidenceScale: config.confidence_scale,
 		confidenceLabels: config.confidence_labels ?? (['Not at all sure', 'Completely sure'] as [string, string]),

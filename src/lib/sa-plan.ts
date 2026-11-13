@@ -1,10 +1,14 @@
 import { shuffle } from './rng';
-import type { ManifestItem, SaQuestionType, ThemeManifest } from './types';
+import type { Level2Question, ManifestItem, SaQuestionType, ThemeManifest } from './types';
 
 export type SaStep =
 	| { seq: number; type: 'objects'; board: string; theme: string; items: string[] }
 	| { seq: number; type: 'color' | 'orientation'; board: string; theme: string; item: string }
 	| { seq: number; type: 'side_by_side'; board: string; theme: string; item: string; original_side: 'left' | 'right' }
+	/** Level 2 color pair: item = question id; options = 4 seen object ids (answer + 3 others, never the cue). */
+	| { seq: number; type: 'level2_color'; board: string; theme: string; item: string; prompt: string; cue: string; options: string[] }
+	/** Level 2 count: item = question id; text options. */
+	| { seq: number; type: 'level2_count'; board: string; theme: string; item: string; prompt: string; options: { id: string; label: string }[] }
 	/** Environment SA question read aloud by the facilitator (board/theme are "env"). */
 	| { seq: number; type: 'oral'; board: 'env'; theme: 'env'; item: string };
 
@@ -19,6 +23,9 @@ type ItemType = Exclude<SaQuestionType, 'objects'>;
  * Color questions are only asked about recolorable (mask) objects, not original images;
  * side-by-side questions only about objects that have a variant.
  * foilsPerTheme limits the grid to a random subset of the foils.
+ * Level 2 questions for the theme (if any) close each block, in config order. They draw from
+ * their own random stream (level2.rand), so adding them leaves the Level 1 questions unchanged.
+ * Oral environment questions come last, after both blocks.
  */
 export function buildSaPlan(
 	boards: { board: string; theme: string }[],
@@ -28,7 +35,8 @@ export function buildSaPlan(
 	perTheme?: number,
 	foilsPerTheme?: number,
 	/** Oral environment questions (ids), asked after both board blocks, in config order. */
-	oral: string[] = []
+	oral: string[] = [],
+	level2?: { questions: Record<string, Level2Question[]>; rand: () => number }
 ): SaStep[] {
 	const steps: SaStep[] = [];
 	let seq = 0;
@@ -51,11 +59,25 @@ export function buildSaPlan(
 			if (foilsPerTheme !== undefined) foils = shuffle(foils, rand).slice(0, foilsPerTheme);
 			steps.push({ seq: seq++, type: 'objects', board, theme, items: shuffle([...seen, ...foils], rand) });
 		}
+		level1Items(board, theme, seen, eligible);
+		for (const q of level2?.questions[theme] ?? []) {
+			if (q.kind === 'color_pair') {
+				const options = level2ColorOptions(m, q, level2!.rand);
+				steps.push({ seq: seq++, type: 'level2_color', board, theme, item: q.id, prompt: q.prompt, cue: q.cue, options });
+			} else {
+				steps.push({ seq: seq++, type: 'level2_count', board, theme, item: q.id, prompt: q.prompt, options: q.options });
+			}
+		}
+	}
+	for (const item of oral) steps.push({ seq: seq++, type: 'oral', board: 'env', theme: 'env', item });
+	return steps;
+
+	function level1Items(board: string, theme: string, seen: string[], eligible: (type: ItemType, id: string) => boolean) {
 		if (perTheme === undefined) {
 			for (const type of itemTypes) for (const item of shuffle(seen, rand)) if (eligible(type, item)) push(board, theme, type, item);
-			continue;
+			return;
 		}
-		if (!itemTypes.length || perTheme <= 0) continue;
+		if (!itemTypes.length || perTheme <= 0) return;
 		const n = Math.min(perTheme, seen.length);
 		const typeList: ItemType[] = [];
 		while (typeList.length < n) typeList.push(...shuffle(itemTypes, rand));
@@ -75,8 +97,23 @@ export function buildSaPlan(
 			if (assigned[i]) push(board, theme, type, assigned[i]!);
 		});
 	}
-	for (const item of oral) steps.push({ seq: seq++, type: 'oral', board: 'env', theme: 'env', item });
-	return steps;
+}
+
+/**
+ * Seen objects that can be a wrong option for a color-pair question: drawable in the neutral
+ * color (not an original image or emoji), not the cue or the answer, and not the cue's color.
+ */
+export function level2Distractors(m: ThemeManifest, q: { cue: string; answer: string }): string[] {
+	const cueColor = m.objects.find((o) => o.id === q.cue)?.color;
+	return m.objects
+		.filter((o) => !o.emoji && o.render !== 'original' && o.id !== q.cue && o.id !== q.answer && o.color !== cueColor)
+		.map((o) => o.id);
+}
+
+/** The 4 options of a color-pair question: the answer plus 3 random distractors, in random order. */
+export function level2ColorOptions(m: ThemeManifest, q: { cue: string; answer: string }, rand: () => number, n = 4): string[] {
+	const wrong = shuffle(level2Distractors(m, q), rand).slice(0, n - 1);
+	return shuffle([q.answer, ...wrong], rand);
 }
 
 /** Color: only recolorable (mask) items. Side by side: only items with an altered variant. */

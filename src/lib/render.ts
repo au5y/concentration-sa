@@ -51,14 +51,15 @@ export function renderSpec(
 	item: ManifestItem,
 	colors: ColorOption[],
 	orientations: OrientationOption[],
-	opts: { variant?: boolean; color?: string; orientation?: string } = {}
+	/** hex: draw in this exact color (e.g. the neutral gray of Level 2 options), overriding color. */
+	opts: { variant?: boolean; color?: string; orientation?: string; hex?: string } = {}
 ): RenderSpec {
 	if (item.emoji) return { emoji: item.emoji, hex: 'inherit', transform: 'none' };
 	const color = colors.find((c) => c.id === (opts.color ?? item.color));
 	const orient = orientations.find((o) => o.id === (opts.orientation ?? item.orientation));
 	const v: VariantSpec = opts.variant ? (item.variant ?? {}) : {};
-	let hex = color?.hex ?? '#000000';
-	if (v.color_shift_deg) hex = shiftHue(hex, v.color_shift_deg);
+	let hex = opts.hex ?? color?.hex ?? '#000000';
+	if (v.color_shift_deg && !opts.hex) hex = shiftHue(hex, v.color_shift_deg);
 	const parts = [`rotate(${orient?.rotate_deg ?? 0}deg)`];
 	if (v.scale) parts.push(`scale(${v.scale})`);
 	if (v.mirror) parts.push('scaleX(-1)');

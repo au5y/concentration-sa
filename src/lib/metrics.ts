@@ -1,4 +1,4 @@
-import type { ClickRecord } from './types';
+import type { ClickRecord, Level2Question, OralQuestion } from './types';
 
 export interface BoardMetrics {
 	cleared: boolean;
@@ -121,6 +121,8 @@ export interface SummaryInput {
 	sa: {
 		pid: string;
 		board: string;
+		theme?: string;
+		item?: string;
 		question_type: string;
 		target: string;
 		response: string;
@@ -146,13 +148,40 @@ export interface SummaryInput {
 const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null);
 const diff = (b: number | null, a: number | null) => (a === null || b === null ? null : b - a);
 
-const BOARD_FIELDS = ['time_to_clear_ms', 'total_flips', 'moves', 'mismatches', 'efficiency', 'repeat_errors', 'missed_matches'] as const;
+const BOARD_FIELDS = ['pairs_found', 'time_to_clear_ms', 'total_flips', 'moves', 'mismatches', 'efficiency', 'repeat_errors', 'missed_matches'] as const;
 
-/** Question categories for the analysis: Memory = about the cards; SA = environment questions read aloud. */
+/**
+ * Question categories for the analysis: memory = Level 1 card questions; level2 = Level 2
+ * (comprehension) card questions; sa_env = environment questions read aloud.
+ */
 export const QUESTION_GROUPS: Record<string, string[]> = {
 	memory: ['color', 'orientation', 'side_by_side'],
+	level2: ['level2_color', 'level2_count'],
 	sa_env: ['oral']
 };
+/** Question types that are only answerable with color vision ("I'm color blind" is offered). */
+export const COLOR_TYPES = ['color', 'level2_color'];
+
+/**
+ * Re-score fixed-answer questions (oral, Level 2) against the current config, so answers the
+ * facilitator fills in or corrects after data collection apply to every session. Rows whose
+ * question has no answer yet (answer null) get target '' and are left out of the summary.
+ * Rows whose question is no longer in the config keep their stored score.
+ */
+export function rescoreFixedAnswers<
+	T extends { question_type: string; theme?: string; item?: string; target: string; response: string; correct: number }
+>(rows: T[], oral: OralQuestion[] = [], level2: Record<string, Level2Question[]> = {}): T[] {
+	return rows.map((r) => {
+		let answer: string | null | undefined;
+		if (r.question_type === 'oral') answer = oral.find((q) => q.id === r.item)?.answer;
+		else if (r.question_type.startsWith('level2_')) answer = level2[r.theme ?? '']?.find((q) => q.id === r.item)?.answer;
+		else return r;
+		if (answer === undefined) return r;
+		return { ...r, target: answer ?? '', correct: answer !== null && r.response === answer ? 1 : 0 };
+	});
+}
+/** An environment question whose answer is not set yet. */
+const unscored = (r: { question_type: string; target: string }) => r.question_type === 'oral' && r.target === '';
 const DONT_REMEMBER = 'dont_remember';
 const COLOR_BLIND = 'color_blind';
 
@@ -178,13 +207,14 @@ export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 			const m = computeBoardMetrics(clicks, input.layouts[theme] ?? [], play?.client_started_at ?? null);
 			boardMetrics[board] = m;
 			row[`${board}_cleared`] = m.cleared ? 1 : 0;
+			row[`${board}_timed_out`] = input.phases.some((p) => p.pid === s.pid && p.phase === `${key}.timeout`) ? 1 : 0;
 			for (const f of BOARD_FIELDS) row[`${board}_${f}`] = m[f];
 			row[`${board}_reloads`] = input.phases.filter((p) => p.pid === s.pid && p.phase === `${key}.resume`).length;
 		}
 		for (const f of BOARD_FIELDS) row[`delta_BminusA_${f}`] = diff(boardMetrics.B[f], boardMetrics.A[f]);
 
 		// "I'm color blind" answers are excluded from scoring; "I don't remember" counts as incorrect.
-		const sa = input.sa.filter((r) => r.pid === s.pid && r.response !== COLOR_BLIND);
+		const sa = input.sa.filter((r) => r.pid === s.pid && r.response !== COLOR_BLIND && !unscored(r));
 		row.color_blind_answers = input.sa.filter((r) => r.pid === s.pid && r.response === COLOR_BLIND).length;
 		for (const type of input.saTypes) {
 			for (const scope of ['all', 'A', 'B']) {
@@ -217,6 +247,9 @@ export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 			row[`${group}_dont_remember_rate`] = rows.length ? (rows.length - known.length) / rows.length : null;
 			row[`${group}_conf`] = mean(known.map((r) => r.confidence).filter((c): c is number => c !== null));
 		}
+		// Level 2 accuracy without the color-pair questions, for color-blind participants.
+		const l2NoColor = sa.filter((r) => QUESTION_GROUPS.level2.includes(r.question_type) && !COLOR_TYPES.includes(r.question_type));
+		row.level2_acc_excl_color = mean(l2NoColor.map((r) => r.correct));
 
 		const sv = input.survey.find((r) => r.pid === s.pid);
 		row.age = sv?.age ?? null;

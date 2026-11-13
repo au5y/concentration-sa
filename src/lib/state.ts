@@ -19,13 +19,15 @@ export interface SessionState {
 	devTimers: boolean;
 	/** Admin-created test session: shows the developer toolbar; excluded from exports. */
 	isTest: boolean;
-	timers: { preview_ms: number; mismatch_flip_ms: number };
+	timers: { preview_ms: number; mismatch_flip_ms: number; time_limit_ms: number };
 	text: { interval1: PhaseText; interval2: PhaseText };
 	colors: ColorOption[];
 	orientations: OrientationOption[];
 	confidenceScale: number;
 	confidenceLabels: [string, string];
 	oralQuestions: OralQuestion[];
+	/** Neutral color for Level 2 color-pair options. */
+	level2Hex: string;
 	manifests: Record<string, ThemeManifest>;
 	boards: { practice: BoardInfo; A: BoardInfo; B: BoardInfo };
 	/** Progress within the current phase, for resuming after a reload. */
