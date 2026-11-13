@@ -11,9 +11,7 @@ export async function POST({ request }) {
 			age: b.age,
 			exercise_days: b.exercise_days,
 			fitness: b.fitness,
-			hours_slept: b.hours_slept,
-			caffeine: b.caffeine,
-			color_vision: b.color_vision
+			hours_slept: b.hours_slept
 		},
 		clientTs(b.client_ts)
 	);

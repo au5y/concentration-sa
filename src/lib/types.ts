@@ -166,6 +166,7 @@ export interface ClickRecord {
 
 /** Phases in session order. Interval phases are exercise or rest depending on condition. */
 export const PHASES = [
+	'survey',
 	'baseline',
 	'practice',
 	'interval1',
@@ -173,7 +174,6 @@ export const PHASES = [
 	'interval2',
 	'board_b',
 	'sa',
-	'survey',
 	'done'
 ] as const;
 export type Phase = (typeof PHASES)[number];

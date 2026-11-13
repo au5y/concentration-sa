@@ -66,15 +66,13 @@ CREATE TABLE IF NOT EXISTS sa_responses (
 	server_ts INTEGER NOT NULL,
 	UNIQUE (pid, seq, item)
 );
--- End-of-session questions, filled in by the facilitator.
+-- Questions at the start of the session, filled in by the facilitator.
 CREATE TABLE IF NOT EXISTS survey (
 	pid TEXT PRIMARY KEY,
 	age INTEGER NOT NULL,
 	exercise_days INTEGER NOT NULL,
 	fitness INTEGER NOT NULL,
 	hours_slept REAL NOT NULL,
-	caffeine TEXT NOT NULL,
-	color_vision TEXT NOT NULL,
 	server_ts INTEGER NOT NULL
 );
 -- Manipulation check per exercise/rest bout (interval1 = before Game A, interval2 = before Game B),
@@ -98,6 +96,8 @@ function migrate(d: Database.Database) {
 	if (cols('survey').includes('rpe')) {
 		d.exec('ALTER TABLE survey RENAME TO survey_v1');
 	}
+	// The caffeine and color-vision questions were removed from the survey.
+	for (const c of ['caffeine', 'color_vision']) if (cols('survey').includes(c)) d.exec(`ALTER TABLE survey DROP COLUMN ${c}`);
 }
 
 let db: Database.Database | null = null;

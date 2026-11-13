@@ -72,9 +72,9 @@ export function openSession(pid: string): SessionRow {
 	db.transaction(() => {
 		db.prepare(
 			`INSERT INTO sessions (pid, condition, board_a_theme, board_b_theme, schedule_seed, phase,
-			 phase_started_at, created_at, updated_at, dev_timers, sa_plan) VALUES (?, ?, ?, ?, ?, 'baseline', ?, ?, ?, ?, ?)`
-		).run(pid, row.condition, row.board_a_theme, row.board_b_theme, row.seed, now, now, now, exp.devTimers ? 1 : 0, JSON.stringify(plan));
-		insertPhase(pid, 'baseline', now, null);
+			 phase_started_at, created_at, updated_at, dev_timers, sa_plan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		).run(pid, row.condition, row.board_a_theme, row.board_b_theme, row.seed, PHASES[0], now, now, now, exp.devTimers ? 1 : 0, JSON.stringify(plan));
+		insertPhase(pid, PHASES[0], now, null);
 	})();
 	return getSession(pid)!;
 }
@@ -420,8 +420,6 @@ export interface SurveyAnswers {
 	exercise_days: number;
 	fitness: number;
 	hours_slept: number;
-	caffeine: string;
-	color_vision: string;
 }
 
 export function recordSurvey(pid: string, v: SurveyAnswers, clientTs: number | null): SessionRow {
@@ -431,14 +429,12 @@ export function recordSurvey(pid: string, v: SurveyAnswers, clientTs: number | n
 	if (!Number.isInteger(v.exercise_days) || v.exercise_days < 0 || v.exercise_days > 7) error(400, 'exercise days must be 0-7');
 	if (!Number.isInteger(v.fitness) || v.fitness < 1 || v.fitness > 5) error(400, 'fitness must be 1-5');
 	if (typeof v.hours_slept !== 'number' || v.hours_slept < 0 || v.hours_slept > 24) error(400, 'hours slept must be 0-24');
-	if (!['yes', 'no'].includes(v.caffeine)) error(400, 'caffeine must be yes/no');
-	if (!['yes', 'no', 'unsure'].includes(v.color_vision)) error(400, 'color vision must be yes/no/unsure');
 	getDb()
 		.prepare(
-			`INSERT OR REPLACE INTO survey (pid, age, exercise_days, fitness, hours_slept, caffeine, color_vision, server_ts)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+			`INSERT OR REPLACE INTO survey (pid, age, exercise_days, fitness, hours_slept, server_ts)
+			 VALUES (?, ?, ?, ?, ?, ?)`
 		)
-		.run(pid, v.age, v.exercise_days, v.fitness, v.hours_slept, v.caffeine, v.color_vision, Date.now());
+		.run(pid, v.age, v.exercise_days, v.fitness, v.hours_slept, Date.now());
 	return advance(pid, 'survey', { facilitator: false, clientTs });
 }
 

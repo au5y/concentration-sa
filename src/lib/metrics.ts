@@ -135,8 +135,6 @@ export interface SummaryInput {
 		exercise_days: number;
 		fitness: number;
 		hours_slept: number;
-		caffeine: string;
-		color_vision: string;
 	}[];
 	/** RPE / peak HR per exercise-rest bout (interval1 before Game A, interval2 before Game B). */
 	bouts: { pid: string; bout: string; rpe: number; peak_hr: number | null }[];
@@ -251,8 +249,6 @@ export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 		row.exercise_days = sv?.exercise_days ?? null;
 		row.fitness = sv?.fitness ?? null;
 		row.hours_slept = sv?.hours_slept ?? null;
-		row.caffeine = sv?.caffeine ?? null;
-		row.color_vision = sv?.color_vision ?? null;
 		// Manipulation check: bout 1 = before Game A (long bout), bout 2 = before Game B.
 		const hrMax = sv?.age ? 220 - sv.age : null;
 		for (const [n, bout] of [

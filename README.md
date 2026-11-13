@@ -1,9 +1,9 @@
 # Concentration + Situation Awareness study
 
-A web app for a one-session (~20 min) experiment. Each participant does a practice
-matching game, an exercise or standing-rest period, two themed Concentration boards
-with another exercise/rest period in between, then situation-awareness (SA) questions
-about both boards and a short survey. Several computers can run sessions in parallel against one
+A web app for a one-session (~20 min) experiment. Each participant starts with a short
+survey, then does a practice matching game, an exercise or standing-rest period, two themed
+Concentration boards with another exercise/rest period in between, then situation-awareness
+(SA) questions about both boards. Several computers can run sessions in parallel against one
 server on the local network. No external network calls are made at runtime.
 
 Stack: SvelteKit + TypeScript (Vite), SvelteKit server endpoints, SQLite
@@ -183,6 +183,7 @@ If you change a manifest's objects, regenerate the layouts **before** data colle
 
 | Phase | What happens | Facilitator |
 | --- | --- | --- |
+| Survey | First screen, **filled in by the facilitator**: ask each question aloud and tap the answer. Age, exercise days per week, fitness level (1–5 scale with descriptions), hours slept | Tap answers, then **Save & continue** |
 | Baseline | Shows the participant ID and **condition**. Fit the sensor, then click **START** at the same moment as the HR monitor's lap button. The timestamp is logged. | Click START (or press the shortcut), then press the shortcut to begin practice |
 | Practice | 3×4 emoji board with on-screen walkthrough hints and the same time limit. Clicks are not logged. | Shortcut when done (pressing early asks for a second press to skip) |
 | Exercise / rest 1 | Full-screen instructions for the condition and "Wait for facilitator". No clock: the facilitator times it. A facilitator strip at the bottom records **RPE** (Borg 6–20, show the card) and optional **peak HR** at the end of the bout | Tap RPE, then shortcut (pressing without RPE asks for a second press) |
@@ -190,7 +191,6 @@ If you change a manifest's objects, regenerate the layouts **before** data colle
 | Exercise / rest 2 | Same as above | Shortcut advances |
 | Board B | Same as Board A, with the other theme | — |
 | SA questions | Both theme blocks, in random order (see §6) | — |
-| Survey | One screen **filled in by the facilitator**: ask each question aloud and tap the answer. Age, exercise days per week, fitness level (1–5 scale with descriptions), hours slept, caffeine today, difficulty seeing colors | Tap answers, then **Save & finish** |
 | Done | Thank-you screen | Shortcut returns to the start page for the next participant |
 
 - The participant cannot go back: the browser Back button is suppressed, and the server
@@ -241,7 +241,7 @@ items + 3 Level 2), then 2 spoken environment questions:
    to your facilitator, who will ask you some questions about the environment." The facilitator presses
    <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> to show the controls, then for each question in
    `oral_sa_questions` asks it, reads the choices, and taps **Correct**, **Incorrect** or **Didn't
-   remember** (scored incorrect), then Next. No confidence rating. After the last one the session moves to the survey.
+   remember** (scored incorrect), then Next. No confidence rating. After the last one the session is done.
 
 Every single-item card question also offers **I don't remember** (scored incorrect,
 no confidence rating). Color and Level 2 color-pair questions also offer **I'm color blind** (excluded from scoring, no
@@ -288,7 +288,7 @@ Download links, each a full table as CSV (every epoch-ms column also gets an `_i
 | `clicks.csv` | Every card flip: pid, board, theme, seq, card index, object id, outcome (`first_flip` / `match` / `mismatch`), `client_ts` (`performance.timeOrigin + performance.now()`, fractional ms), `server_ts` |
 | `sa_responses.csv` | One row per answer (16 per objects grid): question type, item, target, response, correct, confidence, `rt_ms` (shown → final answer choice), `confidence_rt_ms` (shown → final confidence choice), `submit_rt_ms`, `answer_changes`, `confidence_changes`, what was presented (for Level 2 color pairs: the 4 option ids and the neutral color). Level 2 rows are re-scored against the current config on export. Environment rows: response `correct` / `incorrect` / `dont_remember` as marked by the facilitator |
 | `bouts.csv` | Per exercise/rest bout (`interval1` before Game A, `interval2` before Game B): RPE, peak HR |
-| `survey.csv` | Age, exercise days/week, fitness (1–5), hours slept, caffeine, color vision |
+| `survey.csv` | Age, exercise days/week, fitness (1–5), hours slept |
 | `summary.csv` | One row per participant (below) |
 
 **Summary columns**
@@ -319,10 +319,10 @@ Download links, each a full table as CSV (every epoch-ms column also gets an `_i
 - `level2_acc_excl_color`: Level 2 accuracy without the color-pair questions (only the count
   question remains), for color-blind participants.
 - `color_blind_answers`: how many "I'm color blind" answers were given. They are excluded from
-  every accuracy column. Use the `color_vision` survey answer to drop color questions entirely.
+  every accuracy column.
 - `rpe_1`, `peak_hr_1`, `pct_hrmax_1` (bout before Game A) and `_2` (bout before Game B):
   %HRmax = peak HR / (220 − age).
-- Survey fields: `age`, `exercise_days`, `fitness`, `hours_slept`, `caffeine`, `color_vision`.
+- Survey fields: `age`, `exercise_days`, `fitness`, `hours_slept`.
 
 The raw database is `data/experiment.db`. Back it up by copying it while the server is
 stopped, or with `sqlite3 data/experiment.db ".backup backup.db"`.

@@ -118,7 +118,7 @@
 	// ---------- participant detail ----------
 	// Rows come straight from SQLite, so treat them as plain records.
 	const d = $derived(data.detail as Row | null);
-	const MAIN = ['baseline', 'practice', 'interval1', 'board_a', 'interval2', 'board_b', 'sa', 'survey', 'done'];
+	const MAIN = ['survey', 'baseline', 'practice', 'interval1', 'board_a', 'interval2', 'board_b', 'sa', 'done'];
 	const PHASE_LABEL: Record<string, string> = {
 		baseline: 'Baseline',
 		practice: 'Practice',
@@ -362,8 +362,6 @@
 						<dt>Exercise days / week</dt><dd>{d.survey.exercise_days}</dd>
 						<dt>Fitness (1–5)</dt><dd>{d.survey.fitness}</dd>
 						<dt>Hours slept</dt><dd>{d.survey.hours_slept}</dd>
-						<dt>Caffeine today</dt><dd>{d.survey.caffeine}</dd>
-						<dt>Difficulty seeing colors</dt><dd>{d.survey.color_vision}</dd>
 					</dl>
 				{/if}
 			</section>

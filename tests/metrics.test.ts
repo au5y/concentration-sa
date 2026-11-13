@@ -124,7 +124,7 @@ describe('buildSummary', () => {
 			],
 			clicks: [...A.map((c) => ({ ...c, pid: 'P01', board: 'A' })), ...B.map((c) => ({ ...c, pid: 'P01', board: 'B' }))],
 			sa,
-			survey: [{ pid: 'P01', age: 20, exercise_days: 3, fitness: 3, hours_slept: 7, caffeine: 'no', color_vision: 'no' }],
+			survey: [{ pid: 'P01', age: 20, exercise_days: 3, fitness: 3, hours_slept: 7 }],
 			bouts: [{ pid: 'P01', bout: 'interval1', rpe: 17, peak_hr: 180 }],
 			layouts: { m: cards2, t: cards2 },
 			saTypes: ['objects', 'color', 'side_by_side', 'oral']

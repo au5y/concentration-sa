@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * End-of-session questions, filled in by the facilitator: they ask each question out
+	 * Questions at the start of the session, filled in by the facilitator: they ask each question out
 	 * loud and tap the participant's answer. RPE is recorded after each bout, not here.
 	 */
 	let { onSubmit }: { onSubmit: (v: Record<string, unknown>) => Promise<void> } = $props();
@@ -18,20 +18,18 @@
 	let days = $state<number | null>(null);
 	let fitness = $state<number | null>(null);
 	let hours = $state<number | null>(null);
-	let caffeine = $state<string | null>(null);
-	let cvd = $state<string | null>(null);
 	let busy = $state(false);
 	let err = $state('');
 	const valid = $derived(
 		age !== null && age >= 16 && age <= 99 && days !== null && fitness !== null &&
-			hours !== null && hours >= 0 && hours <= 24 && caffeine && cvd
+			hours !== null && hours >= 0 && hours <= 24
 	);
 
 	async function submit() {
 		busy = true;
 		err = '';
 		try {
-			await onSubmit({ age, exercise_days: days, fitness, hours_slept: hours, caffeine, color_vision: cvd });
+			await onSubmit({ age, exercise_days: days, fitness, hours_slept: hours });
 		} catch (e) {
 			err = e instanceof Error ? e.message : String(e);
 			busy = false;
@@ -101,28 +99,8 @@
 		</div>
 	</section>
 
-	<div class="pair">
-		<section>
-			<h2>5. Caffeine today?</h2>
-			<div class="choices">
-				{#each [['yes', 'Yes'], ['no', 'No']] as [v, l] (v)}
-					<button class:sel={caffeine === v} onclick={() => (caffeine = v)}>{l}</button>
-				{/each}
-			</div>
-		</section>
-
-		<section>
-			<h2>6. Any difficulty seeing colors?</h2>
-			<div class="choices">
-				{#each [['yes', 'Yes'], ['no', 'No'], ['unsure', 'Unsure']] as [v, l] (v)}
-					<button class:sel={cvd === v} onclick={() => (cvd = v)}>{l}</button>
-				{/each}
-			</div>
-		</section>
-	</div>
-
 	{#if err}<p class="err">{err}</p>{/if}
-	<button class="go" disabled={!valid || busy} onclick={submit}>Save &amp; finish</button>
+	<button class="go" disabled={!valid || busy} onclick={submit}>Save &amp; continue</button>
 </div>
 
 <style>

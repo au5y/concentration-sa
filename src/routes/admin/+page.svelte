@@ -43,7 +43,7 @@
 	// Test run-through
 	let tCondition = $state('');
 	let tOrder = $state(0);
-	let tPhase = $state('baseline');
+	let tPhase = $state('survey');
 	let tFast = $state(true);
 	async function testAction(payload: Record<string, unknown>) {
 		const r = await fetch('/admin/test', {
