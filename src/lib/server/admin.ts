@@ -6,7 +6,7 @@ import { PHASES } from '../types';
 import { getDb, TABLES } from './db';
 import { experiment } from './experiment';
 import { loadSchedule } from './files';
-import { TEST_PREFIX } from './session';
+import { sessionCards, TEST_PREFIX } from './session';
 
 const COOKIE = 'admin_token';
 /** SQL filter that leaves out admin test sessions (pid TEST-n) from exports and summaries. */
@@ -150,7 +150,16 @@ export function participantDetail(pid: string) {
 		bouts: rows('SELECT bout, rpe, peak_hr, server_ts FROM bouts WHERE pid = ? ORDER BY bout'),
 		survey: (db.prepare('SELECT * FROM survey WHERE pid = ?').get(pid) as Record<string, unknown> | undefined) ?? null,
 		summary: summaryRows(true).find((r) => r.pid === pid) ?? null,
-		layouts: Object.fromEntries(themes.map((t) => [t, exp.layouts.layouts[t]])),
+		// Game A/B use this participant's own layout (older sessions: the shared one).
+		layouts: {
+			...Object.fromEntries(themes.map((t) => [t, exp.layouts.layouts[t]])),
+			...Object.fromEntries(
+				(['A', 'B'] as const).map((b) => {
+					const theme = b === 'A' ? session.board_a_theme : session.board_b_theme;
+					return [theme, { ...exp.layouts.layouts[theme], rows: exp.config.board.rows, cols: exp.config.board.cols, cards: sessionCards(session as Parameters<typeof sessionCards>[0], b) }];
+				})
+			)
+		},
 		manifests: Object.fromEntries(themes.map((t) => [t, exp.manifests[t]])),
 		colors: exp.config.colors,
 		orientations: exp.config.orientations

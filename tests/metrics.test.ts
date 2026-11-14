@@ -111,8 +111,6 @@ describe('buildSummary', () => {
 		}));
 		sa.push({ pid: 'P01', board: 'B', question_type: 'color', target: 'red', response: 'red', correct: 1, confidence: 4 });
 		sa.push({ pid: 'P01', board: 'B', question_type: 'color', target: 'red', response: 'blue', correct: 0, confidence: 2 });
-		// excluded from scoring
-		sa.push({ pid: 'P01', board: 'B', question_type: 'color', target: 'red', response: 'color_blind', correct: 0, confidence: null });
 		sa.push({ pid: 'P01', board: 'A', question_type: 'side_by_side', target: 'left', response: 'dont_remember', correct: 0, confidence: null });
 		sa.push({ pid: 'P01', board: 'env', question_type: 'oral', target: 'yes', response: 'yes', correct: 1, confidence: 3 });
 
@@ -143,7 +141,6 @@ describe('buildSummary', () => {
 		expect(row.q_color_acc_B).toBe(0.5);
 		expect(row.q_color_acc_A).toBeNull();
 		expect(row.q_color_conf).toBe(3);
-		expect(row.color_blind_answers).toBe(1);
 		// memory = 2 color + 1 side-by-side (dont_remember counts as incorrect)
 		expect(row.memory_n).toBe(3);
 		expect(row.memory_acc).toBeCloseTo(1 / 3, 8);

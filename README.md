@@ -1,8 +1,8 @@
 # Concentration + Situation Awareness study
 
 A web app for a one-session (~20 min) experiment. Each participant starts with a short
-survey, then does a practice matching game, an exercise or standing-rest period, two themed
-Concentration boards with another exercise/rest period in between, then situation-awareness
+survey, then does a practice matching game, an exercise or standing-rest period (5 min), two themed
+Concentration boards with another exercise/rest period (1 min) in between, a short break, then situation-awareness
 (SA) questions about both boards. Several computers can run sessions in parallel against one
 server on the local network. No external network calls are made at runtime.
 
@@ -65,15 +65,18 @@ theme manifests.
 | `board` / `practice_board` | `{rows, cols}`; the practice board also names its `theme` |
 | `preview_s`, `mismatch_flip_ms` | Face-up preview length (currently 10 s); delay before a mismatch flips back |
 | `board_time_limit_s` | Seconds of play allowed on each matching board (practice, A and B), counted from when the cards flip face down. Currently 90. The clock is hidden; only the last 5 seconds count down in the top-right corner. When it runs out the board ends ("Time's up!") and the session moves on. `0` or omitted = no limit. Fast timers do not shorten it |
+| `interval_timer_s` | Countdown on the exercise/rest screens: `{"interval1": 300, "interval2": 60}` (5:00 before Game A, 1:00 before Game B), the same in both conditions. The facilitator can still continue early. `0` or omitted = no countdown. Fast timers shorten both to 10 s |
+| `rpe_conditions` | Conditions that record RPE at the end of each bout (currently `["elevated_hr"]`; the rest group is not asked). Omit to ask every condition |
 | `max_participants` | Default N for the schedule |
 | `sa_questions` | Question types. Currently `objects`, `color`, `side_by_side`; add `orientation` back to ask it |
-| `sa_random_per_theme` | Single-item questions per theme after the objects grid (currently 4; 18 questions in total with Level 2 and the environment questions, see §6). Remove it to ask every type about every object |
+| `sa_random_per_theme` | Random single-item questions per theme after the objects grid, not counting the fixed `sa_side_by_side` ones (currently 2, i.e. 2 color questions; 21 questions in total, see §6). Remove it to ask every type about every object |
+| `sa_side_by_side` | Side-by-side questions asked of **every** participant, per theme: `{"transport": ["car", "plane", "helicopter", "rocket"], "mit": ["beaver", "muddy_charles", "apollo_capsule"]}`. Each must be a seen object with a variant. They are mixed in random order with the random questions, which never use these objects |
 | `sa_foils_per_theme` | Foils shown in the objects grid (a random subset per participant; currently 4, so the grid is 8 + 4 = 12). Remove it to show every foil |
 | `confidence_scale`, `confidence_labels` | e.g. 4 and the two end labels. `0` turns the confidence rating off |
 | `colors` | The 4 colors: `{id, label, hex}` |
 | `orientations` | The 4 orientations: `{id, label, rotate_deg}`. `rotate_deg` is applied to the image as drawn. Every object is currently `up` (unrotated) |
 | `condition_text` | Per condition: the `interval1` / `interval2` screen title and body |
-| `oral_sa_questions` | Environment SA questions asked aloud by the facilitator after the on-screen questions: `{id, prompt, options: [{id, label}]}`. `options` are the choices the facilitator reads out. There is no answer key: the facilitator marks each answer correct or incorrect against what was really there that session (e.g. that day's hat) |
+| `oral_sa_questions` | At most 2 (currently the facilitator's hat and the sticky note). Environment SA questions asked aloud by the facilitator after the on-screen questions: `{id, prompt, options: [{id, label}]}`. `options` are the choices the facilitator reads out. There is no answer key: the facilitator marks each answer correct or incorrect against what was really there that session (e.g. that day's hat) |
 | `sa_level2_questions` | Level 2 questions per theme id, asked after that theme's Level 1 questions in the order listed. `{id, kind: "color_pair", prompt, cue, answer}` (cue and answer are seen object ids of the same color) or `{id, kind: "count", prompt, options: [{id, label}], answer}` |
 | `sa_level2_neutral_hex` | The single color all color-pair options are drawn in (default `#8c8c8c`) |
 
@@ -146,7 +149,11 @@ and orientation answers controlled.
   Green Building and Brass Rat photos.
 - `infinite_corridor.svg` (doorway + infinity sign) and `apollo_capsule_variant.svg` (window
   filled in) were made by hand. `npm run icons` never overwrites these or any non-SVG image.
+- `helicopter_variant.svg` (tail rotor added) and `rocket_variant.svg` (exhaust flame added) were drawn
+  here on top of the MDI icons, in the same 24×24 box so the size doesn't change.
 - An object without a `variant` is never asked about side by side (e.g. the symmetric DNA helix).
+  Variants must look clearly different: no color shifts, no 85% scale, and no mirror on a symmetric
+  icon (train, boat and rocket have no mirror variant for that reason).
 
 Run `npm run validate` and restart the server after changing images.
 
@@ -164,8 +171,14 @@ not used by the study until they are copied into a theme folder and the manifest
 control. That is fine because practice is not logged. Make sure the participant browsers have
 an emoji font (Windows, macOS and ChromeOS do; minimal Linux may not).
 
-**Card layouts** are fixed and identical for every participant. They are generated once
-into `assets/layouts.json`, with no pair placed side by side:
+**Card layouts.** Every participant sees the same 8 objects per theme (the manifest's
+`objects`), so e.g. "How many of the vehicles could fly?" is always 3. Where the cards sit on
+Game A and Game B is **random per participant**: generated when the session is created, seeded
+from pid + schedule seed, with no pair placed side by side, and stored in the session's `layouts`
+column (also in `sessions.csv`). Reloading keeps the same board.
+
+The practice board still uses the fixed layout in `assets/layouts.json`, and sessions started
+before per-participant layouts existed keep using it too. The file is generated once:
 
 ```bash
 npm run layouts -- --seed 20261025          # refuses to overwrite without --force
@@ -186,10 +199,11 @@ If you change a manifest's objects, regenerate the layouts **before** data colle
 | Survey | First screen, **filled in by the facilitator**: ask each question aloud and tap the answer. Age, exercise days per week, fitness level (1–5 scale with descriptions), hours slept | Tap answers, then **Save & continue** |
 | Baseline | Shows the participant ID and **condition**. Fit the sensor, then click **START** at the same moment as the HR monitor's lap button. The timestamp is logged. | Click START (or press the shortcut), then press the shortcut to begin practice |
 | Practice | 3×4 emoji board with on-screen walkthrough hints and the same time limit. Clicks are not logged. | Shortcut when done (pressing early asks for a second press to skip) |
-| Exercise / rest 1 | Full-screen instructions for the condition and "Wait for facilitator". No clock: the facilitator times it. A facilitator strip at the bottom records **RPE** (Borg 6–20, show the card) and optional **peak HR** at the end of the bout | Tap RPE, then shortcut (pressing without RPE asks for a second press) |
+| Exercise / rest 1 | Full-screen instructions for the condition and a **5:00 countdown** (`interval_timer_s`). At 0:00 it says "Time's up · Wait for facilitator" and, for the exercise group, opens the facilitator strip at the bottom: **Show Borg scale to participant** fills the screen with the 6–20 scale (verbal anchors, colored green to red) for the participant to point at; tap the number there or in the strip. Optional **peak HR**. The rest group gets no RPE | Exercise: tap RPE, then shortcut. Rest: shortcut. Pressing before 0:00 or without RPE asks for a second press |
 | Board A | Participant presses Start. Cards are face up for `preview_s` with a countdown, then flip down and the play clock (`board_time_limit_s`) starts. When the board is cleared or time runs out, the app advances automatically. | — |
-| Exercise / rest 2 | Same as above | Shortcut advances |
+| Exercise / rest 2 | Same as above, with a **1:00 countdown** | Same as above |
 | Board B | Same as Board A, with the other theme | — |
+| Break | "Short break · Wait for facilitator". Untimed | Shortcut starts the questions |
 | SA questions | Both theme blocks, in random order (see §6) | — |
 | Done | Thank-you screen | Shortcut returns to the start page for the next participant |
 
@@ -219,13 +233,15 @@ table when you're done.
 ## 6. SA questions
 
 The two theme blocks come in a random order per participant, seeded from
-`pid + schedule seed`. With the current config there are **18 questions**: 8 per board block (1 grid + 4 Level 1
-items + 3 Level 2), then 2 spoken environment questions:
+`pid + schedule seed`. With the current config there are **21 questions**: the transport block has 10 (1 grid + 2 color +
+4 side-by-side + 3 Level 2), the MIT block 9 (1 grid + 2 color + 3 side-by-side + 3 Level 2), then 2 spoken
+environment questions:
 
 1. **Objects**: a grid of the 8 seen objects and 4 randomly chosen foils. The participant taps exactly 8, then Next.
-2. Then 4 single-item questions, each about a different, randomly chosen seen object. The
-   types are spread as evenly as possible (2 color + 2 side-by-side), in random order. Color
-   questions only use mask items; side-by-side questions only use objects that have a variant:
+2. Then the single-item questions, in random order, each about a different seen object:
+   the fixed side-by-side questions (`sa_side_by_side`, the same objects for everyone: car, plane,
+   helicopter, rocket / beaver, Muddy Charles, Apollo capsule) plus 2 color questions about randomly
+   chosen other objects. Color questions only use mask items:
    - **Color**: "What color was the [object]?" The 4 options show the object in each color.
    - **Side by side**: "Which did you see?" The original and altered variant, with left/right randomized.
    - **Orientation** ("Which way was the [object] facing?") is off for now; add it to `sa_questions` to enable it.
@@ -244,8 +260,7 @@ items + 3 Level 2), then 2 spoken environment questions:
    remember** (scored incorrect), then Next. No confidence rating. After the last one the session is done.
 
 Every single-item card question also offers **I don't remember** (scored incorrect,
-no confidence rating). Color and Level 2 color-pair questions also offer **I'm color blind** (excluded from scoring, no
-confidence rating). The analysis groups Level 1 card questions as **Memory**, Level 2 card questions as **Level 2**,
+no confidence rating). The analysis groups Level 1 card questions as **Memory**, Level 2 card questions as **Level 2**,
 and environment questions as **SA**.
 
 Each single-item question has an answer and a confidence rating (1–`confidence_scale`).
@@ -283,11 +298,11 @@ Download links, each a full table as CSV (every epoch-ms column also gets an `_i
 
 | File | Contents |
 | --- | --- |
-| `sessions.csv` | One row per participant: assignment, current phase, timestamps, the SA plan |
+| `sessions.csv` | One row per participant: assignment, current phase, timestamps, the SA plan, the card layouts (`layouts`: JSON `{A, B}`, object id per card, row-major) |
 | `phases.csv` | Every phase start/end (server ms; client high-res ms where available), plus markers: `baseline.start` (HR lap), `board_a.preview`, `board_a.play` (cards flipped down), `board_a.timeout` (time limit ran out), `board_a.resume` |
 | `clicks.csv` | Every card flip: pid, board, theme, seq, card index, object id, outcome (`first_flip` / `match` / `mismatch`), `client_ts` (`performance.timeOrigin + performance.now()`, fractional ms), `server_ts` |
 | `sa_responses.csv` | One row per answer (16 per objects grid): question type, item, target, response, correct, confidence, `rt_ms` (shown → final answer choice), `confidence_rt_ms` (shown → final confidence choice), `submit_rt_ms`, `answer_changes`, `confidence_changes`, what was presented (for Level 2 color pairs: the 4 option ids and the neutral color). Level 2 rows are re-scored against the current config on export. Environment rows: response `correct` / `incorrect` / `dont_remember` as marked by the facilitator |
-| `bouts.csv` | Per exercise/rest bout (`interval1` before Game A, `interval2` before Game B): RPE, peak HR |
+| `bouts.csv` | Per exercise/rest bout (`interval1` before Game A, `interval2` before Game B): RPE, peak HR. Exercise group only |
 | `survey.csv` | Age, exercise days/week, fitness (1–5), hours slept |
 | `summary.csv` | One row per participant (below) |
 
@@ -317,9 +332,7 @@ Download links, each a full table as CSV (every epoch-ms column also gets an `_i
   - `_dont_remember_rate`
   - `_conf`: mean confidence
 - `level2_acc_excl_color`: Level 2 accuracy without the color-pair questions (only the count
-  question remains), for color-blind participants.
-- `color_blind_answers`: how many "I'm color blind" answers were given. They are excluded from
-  every accuracy column.
+  question remains), e.g. for a participant you know is color blind.
 - `rpe_1`, `peak_hr_1`, `pct_hrmax_1` (bout before Game A) and `_2` (bout before Game B):
   %HRmax = peak HR / (220 − age).
 - Survey fields: `age`, `exercise_days`, `fitness`, `hours_slept`.

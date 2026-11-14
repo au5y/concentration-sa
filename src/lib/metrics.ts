@@ -115,6 +115,8 @@ export interface SummaryInput {
 		board_b_theme: string;
 		phase: string;
 		completed_at: number | null;
+		/** This participant's layouts, JSON {A: cards, B: cards}; null/absent = the shared layout. */
+		layouts?: string | null;
 	}[];
 	phases: { pid: string; phase: string; client_started_at: number | null }[];
 	clicks: (ClickRecord & { pid: string; board: string })[];
@@ -138,7 +140,7 @@ export interface SummaryInput {
 	}[];
 	/** RPE / peak HR per exercise-rest bout (interval1 before Game A, interval2 before Game B). */
 	bouts: { pid: string; bout: string; rpe: number; peak_hr: number | null }[];
-	/** Board layout (object id per card) keyed by theme. */
+	/** Shared board layout (object id per card) keyed by theme; used for sessions without their own `layouts`. */
 	layouts: Record<string, string[]>;
 	saTypes: string[];
 }
@@ -157,7 +159,7 @@ export const QUESTION_GROUPS: Record<string, string[]> = {
 	level2: ['level2_color', 'level2_count'],
 	sa_env: ['oral']
 };
-/** Question types that are only answerable with color vision ("I'm color blind" is offered). */
+/** Question types that need color vision. */
 export const COLOR_TYPES = ['color', 'level2_color'];
 
 /**
@@ -176,7 +178,6 @@ export function rescoreFixedAnswers<
 	});
 }
 const DONT_REMEMBER = 'dont_remember';
-const COLOR_BLIND = 'color_blind';
 
 export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 	return input.sessions.map((s) => {
@@ -197,7 +198,8 @@ export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 			const key = board === 'A' ? 'board_a' : 'board_b';
 			const play = input.phases.find((p) => p.pid === s.pid && p.phase === `${key}.play`);
 			const clicks = input.clicks.filter((c) => c.pid === s.pid && c.board === board);
-			const m = computeBoardMetrics(clicks, input.layouts[theme] ?? [], play?.client_started_at ?? null);
+			const own = s.layouts ? (JSON.parse(s.layouts) as Record<string, string[]>)[board] : undefined;
+			const m = computeBoardMetrics(clicks, own ?? input.layouts[theme] ?? [], play?.client_started_at ?? null);
 			boardMetrics[board] = m;
 			row[`${board}_cleared`] = m.cleared ? 1 : 0;
 			row[`${board}_timed_out`] = input.phases.some((p) => p.pid === s.pid && p.phase === `${key}.timeout`) ? 1 : 0;
@@ -206,9 +208,8 @@ export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 		}
 		for (const f of BOARD_FIELDS) row[`delta_BminusA_${f}`] = diff(boardMetrics.B[f], boardMetrics.A[f]);
 
-		// "I'm color blind" answers are excluded from scoring; "I don't remember" counts as incorrect.
-		const sa = input.sa.filter((r) => r.pid === s.pid && r.response !== COLOR_BLIND);
-		row.color_blind_answers = input.sa.filter((r) => r.pid === s.pid && r.response === COLOR_BLIND).length;
+		// "I don't remember" counts as incorrect.
+		const sa = input.sa.filter((r) => r.pid === s.pid);
 		for (const type of input.saTypes) {
 			for (const scope of ['all', 'A', 'B']) {
 				if (type === 'oral' && scope !== 'all') continue;

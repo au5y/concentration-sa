@@ -7,10 +7,7 @@
 			"label": "train",
 			"image": "train.svg",
 			"color": "red",
-			"orientation": "up",
-			"variant": {
-				"scale": 0.85
-			}
+			"orientation": "up"
 		},
 		{
 			"id": "plane",
@@ -37,20 +34,14 @@
 			"label": "boat",
 			"image": "boat.svg",
 			"color": "yellow",
-			"orientation": "up",
-			"variant": {
-				"color_shift_deg": 25
-			}
+			"orientation": "up"
 		},
 		{
 			"id": "bike",
 			"label": "bike",
 			"image": "bike.svg",
 			"color": "red",
-			"orientation": "up",
-			"variant": {
-				"scale": 0.85
-			}
+			"orientation": "up"
 		},
 		{
 			"id": "scooter",
@@ -69,7 +60,7 @@
 			"color": "green",
 			"orientation": "up",
 			"variant": {
-				"color_shift_deg": 25
+				"image": "helicopter_variant.svg"
 			}
 		},
 		{
@@ -79,7 +70,7 @@
 			"color": "yellow",
 			"orientation": "up",
 			"variant": {
-				"scale": 0.85
+				"image": "rocket_variant.svg"
 			}
 		}
 	],

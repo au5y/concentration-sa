@@ -29,7 +29,8 @@ function plan(seed: number, order = config.theme_orders[seed % 2]): SaStep[] {
 		config.sa_random_per_theme,
 		config.sa_foils_per_theme,
 		(config.oral_sa_questions ?? []).map((q) => q.id),
-		{ questions: level2, rand: mulberry32(seed + 1000) }
+		{ questions: level2, rand: mulberry32(seed + 1000) },
+		config.sa_side_by_side
 	);
 }
 
@@ -37,16 +38,25 @@ const level1Item = ['color', 'orientation', 'side_by_side'];
 const isL2 = (s: SaStep) => s.type === 'level2_color' || s.type === 'level2_count';
 
 describe('SA plan from config.json', () => {
-	it('asks 18 questions: 2 grids, 8 Level 1 items, 6 Level 2, 2 environment', () => {
+	it('asks 21 questions: 2 grids, 11 Level 1 items (4 color + 7 fixed side-by-side), 6 Level 2, 2 environment', () => {
 		for (let seed = 0; seed < 50; seed++) {
 			const p = plan(seed);
-			expect(p).toHaveLength(18);
+			expect(p).toHaveLength(21);
 			expect(p.filter((s) => s.type === 'objects')).toHaveLength(2);
-			expect(p.filter((s) => level1Item.includes(s.type))).toHaveLength(8);
+			expect(p.filter((s) => level1Item.includes(s.type))).toHaveLength(11);
+			expect(p.filter((s) => s.type === 'color')).toHaveLength(4);
+			// the same side-by-side objects for everyone
+			const sbs = (t: string) => p.filter((s) => s.type === 'side_by_side' && s.theme === t).map((s) => ('item' in s ? s.item : '')).sort();
+			expect(sbs('transport')).toEqual(['car', 'helicopter', 'plane', 'rocket']);
+			expect(sbs('mit')).toEqual(['apollo_capsule', 'beaver', 'muddy_charles']);
+			// color questions are about other objects, never one asked side by side
+			const colorItems = p.filter((s) => s.type === 'color').map((s) => (s as { item: string }).item);
+			for (const id of colorItems) expect([...sbs('transport'), ...sbs('mit')]).not.toContain(id);
+			expect(new Set(colorItems).size).toBe(4);
 			expect(p.filter(isL2)).toHaveLength(6);
 			expect(p.filter((s) => s.type === 'level2_color')).toHaveLength(5);
 			expect(p.filter((s) => s.type === 'level2_count')).toHaveLength(1);
-			expect(p.filter((s) => s.type === 'oral').map((s) => s.item)).toEqual(['env_facilitator_hat', 'env_laptop_sticky_note']);
+			expect(p.filter((s) => s.type === 'oral').map((s) => s.item)).toEqual(['env_facilitator_hat', 'env_sticky_note']);
 			expect(p.map((s) => s.seq)).toEqual(p.map((_, i) => i));
 		}
 	});
@@ -55,13 +65,15 @@ describe('SA plan from config.json', () => {
 		const firsts = new Set<string>();
 		for (let seed = 0; seed < 50; seed++) {
 			const p = plan(seed);
-			expect(p.slice(16).every((s) => s.type === 'oral')).toBe(true);
-			for (const block of [p.slice(0, 8), p.slice(8, 16)]) {
+			expect(p.slice(-2).every((s) => s.type === 'oral')).toBe(true);
+			const split = p.findIndex((s) => s.theme !== p[0].theme);
+			for (const block of [p.slice(0, split), p.slice(split, -2)]) {
 				const theme = block[0].theme;
+				const nL1 = 2 + config.sa_side_by_side![theme].length;
 				expect(block.every((s) => s.theme === theme)).toBe(true);
 				expect(block[0].type).toBe('objects');
-				expect(block.slice(1, 5).every((s) => level1Item.includes(s.type))).toBe(true);
-				expect(block.slice(5).map((s) => ('item' in s ? s.item : ''))).toEqual(level2[theme].map((q) => q.id));
+				expect(block.slice(1, 1 + nL1).every((s) => level1Item.includes(s.type))).toBe(true);
+				expect(block.slice(1 + nL1).map((s) => ('item' in s ? s.item : ''))).toEqual(level2[theme].map((q) => q.id));
 			}
 			firsts.add(p[0].theme);
 		}
@@ -75,7 +87,7 @@ describe('SA plan from config.json', () => {
 				{ board: 'A', theme: order[0] },
 				{ board: 'B', theme: order[1] }
 			];
-			const without = buildSaPlan(boards, manifests, config.sa_questions, mulberry32(seed), config.sa_random_per_theme, config.sa_foils_per_theme);
+			const without = buildSaPlan(boards, manifests, config.sa_questions, mulberry32(seed), config.sa_random_per_theme, config.sa_foils_per_theme, [], undefined, config.sa_side_by_side);
 			const strip = (s: SaStep) => ({ ...s, seq: 0 });
 			expect(plan(seed).filter((s) => !isL2(s) && s.type !== 'oral').map(strip)).toEqual(without.map(strip));
 		}
@@ -84,7 +96,11 @@ describe('SA plan from config.json', () => {
 	it('passes validation', () => {
 		const layouts = JSON.parse(fs.readFileSync('assets/layouts.json', 'utf8'));
 		const practice = JSON.parse(fs.readFileSync(`assets/themes/${config.practice_board.theme}/manifest.json`, 'utf8'));
-		expect(validateExperiment(config, { ...manifests, [config.practice_board.theme]: practice }, layouts, () => true)).toEqual([]);
+		const all = { ...manifests, [config.practice_board.theme]: practice };
+		expect(validateExperiment(config, all, layouts, () => true)).toEqual([]);
+		// no more than 2 environment questions
+		const three = { ...config, oral_sa_questions: [...config.oral_sa_questions!, { id: 'env_third', prompt: 'x', options: config.oral_sa_questions![0].options }] };
+		expect(validateExperiment(three, all, layouts, () => true)).toEqual(['config.oral_sa_questions: at most 2 environment questions (hat and sticky note)']);
 	});
 });
 
@@ -134,7 +150,7 @@ describe('Level 2 color-pair options', () => {
 		}
 	});
 
-	it('renders in Sa.svelte with only the neutral color and the color-blind option', () => {
+	it('renders in Sa.svelte with only the neutral color and no color-blind option', () => {
 		const p = plan(3);
 		const at = p.findIndex((s) => s.type === 'level2_color');
 		const { body } = render(Sa, {
@@ -156,10 +172,10 @@ describe('Level 2 color-pair options', () => {
 		expect(new Set(fills)).toEqual(new Set([hex]));
 		for (const c of config.colors) expect(body).not.toContain(c.hex);
 		expect(body).toContain("I don't remember");
-		expect(body).toContain("I'm color blind");
+		expect(body).not.toContain('color blind');
 	});
 
-	it('renders the count question as text options without the color-blind option', () => {
+	it('renders the count question as text options', () => {
 		const p = plan(0, ['transport', 'mit']);
 		const at = p.findIndex((s) => s.type === 'level2_count');
 		const { body } = render(Sa, {
@@ -196,20 +212,19 @@ describe('Level 2 summary columns', () => {
 			saTypes: ['objects', 'color', 'side_by_side', 'level2_color', 'level2_count', 'oral']
 		})[0];
 
-	it('scores correct, incorrect, "I don\'t remember" and color-blind answers', () => {
+	it('scores correct, incorrect and "I don\'t remember" answers', () => {
 		const row = summarize([
 			// Level 1, kept separate
 			{ ...base, board: 'A', question_type: 'color', target: 'red', response: 'red', correct: 1 },
 			// Level 2
 			{ ...base, board: 'A', question_type: 'level2_color', target: 'mit_logo', response: 'mit_logo', correct: 1 },
 			{ ...base, board: 'A', question_type: 'level2_color', target: 'integral', response: 'dna_helix', correct: 0 },
-			{ ...base, board: 'A', question_type: 'level2_color', target: 'muddy_charles', response: 'color_blind', correct: 0, confidence: null },
 			{ ...base, board: 'B', question_type: 'level2_color', target: 'bike', response: 'dont_remember', correct: 0, confidence: null },
 			{ ...base, board: 'B', question_type: 'level2_count', target: '3', response: '3', correct: 1, confidence: 4 },
 			// environment, kept separate
 			{ ...base, board: 'env', question_type: 'oral', target: 'red', response: 'blue', correct: 0 }
 		]);
-		// 4 scored Level 2 answers (color blind excluded): 2 right, 1 wrong, 1 don't remember
+		// 4 Level 2 answers: 2 right, 1 wrong, 1 don't remember
 		expect(row.level2_n).toBe(4);
 		expect(row.level2_acc).toBe(0.5);
 		expect(row.level2_acc_known).toBeCloseTo(2 / 3, 8);
@@ -219,7 +234,6 @@ describe('Level 2 summary columns', () => {
 		expect(row.q_level2_color_acc_A).toBe(0.5);
 		expect(row.q_level2_color_acc_B).toBe(0);
 		expect(row.q_level2_count_acc).toBe(1);
-		expect(row.color_blind_answers).toBe(1);
 		expect(row.memory_acc).toBe(1);
 		expect(row.memory_n).toBe(1);
 		expect(row.sa_env_acc).toBe(0);
@@ -275,7 +289,7 @@ describe('environment question screen', () => {
 		for (const q of config.oral_sa_questions!) expect(q).not.toHaveProperty('answer');
 		expect(config.oral_sa_questions!.map((q) => q.prompt)).toEqual([
 			"What color was the facilitator's hat?",
-			'What color was the sticky note on the laptop?'
+			'What color was the sticky note?'
 		]);
 	});
 });

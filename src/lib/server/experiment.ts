@@ -37,6 +37,16 @@ export function timers(exp: Experiment, fast = false) {
 		preview_ms: devTimers ? dev : config.preview_s * 1000,
 		mismatch_flip_ms: config.mismatch_flip_ms,
 		/** Play time allowed per board; 0 = no limit. Not shortened by fast timers. */
-		time_limit_ms: Math.round((config.board_time_limit_s ?? 0) * 1000)
+		time_limit_ms: Math.round((config.board_time_limit_s ?? 0) * 1000),
+		/** Exercise/rest countdowns; 0 = none. Fast timers shorten them to 10 s for testing. */
+		interval_ms: {
+			interval1: intervalMs(config.interval_timer_s?.interval1, devTimers),
+			interval2: intervalMs(config.interval_timer_s?.interval2, devTimers)
+		}
 	};
+}
+
+function intervalMs(s: number | undefined, fast: boolean): number {
+	if (!s || s <= 0) return 0;
+	return fast ? Math.min(10_000, s * 1000) : Math.round(s * 1000);
 }

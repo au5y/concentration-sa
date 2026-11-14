@@ -33,8 +33,7 @@ function answer(step: SaStep): { response: unknown; confidence: number | null } 
 	if (step.type === 'objects') return { response: step.items.slice(0, 8), confidence: null };
 	if (step.type === 'level2_color') {
 		const q = config.sa_level2_questions![step.theme].find((x) => x.id === step.item)!;
-		// beaver: color blind; Apollo: don't remember; dome: wrong; others right
-		if (step.item === 'mit_same_color_beaver') return { response: 'color_blind', confidence: null };
+		// Apollo: don't remember; dome: wrong; others right
 		if (step.item === 'mit_same_color_apollo') return { response: 'dont_remember', confidence: null };
 		if (step.item === 'mit_same_color_dome') return { response: step.options.find((o) => o !== q.answer), confidence: 2 };
 		return { response: q.answer, confidence: 4 };
@@ -51,7 +50,7 @@ describe('Level 2 through a session', () => {
 	it('stores, scores and exports Level 2 answers', () => {
 		const pid = session.createTestSession({ condition: 'rest', board_a_theme: 'mit', board_b_theme: 'transport', phase: 'sa', fast: true });
 		const plan: SaStep[] = JSON.parse(session.getSession(pid)!.sa_plan);
-		expect(plan).toHaveLength(18);
+		expect(plan).toHaveLength(21);
 		for (const step of plan) session.recordSa(pid, { seq: step.seq, ...answer(step), ...timing } as any);
 
 		const rows = db.getDb().prepare("SELECT * FROM sa_responses WHERE pid = ? AND question_type LIKE 'level2_%' ORDER BY seq").all(pid) as any[];
@@ -59,7 +58,8 @@ describe('Level 2 through a session', () => {
 		const by = Object.fromEntries(rows.map((r) => [r.item, r]));
 		expect(by.transport_same_color_train).toMatchObject({ question_type: 'level2_color', board: 'B', target: 'bike', response: 'bike', correct: 1, confidence: 4, rt_ms: 1000, confidence_rt_ms: 1500, submit_rt_ms: 2000 });
 		expect(by.transport_count_fly).toMatchObject({ question_type: 'level2_count', target: '3', response: '4', correct: 0, confidence: 3 });
-		expect(by.mit_same_color_beaver).toMatchObject({ response: 'color_blind', correct: 0, confidence: null, confidence_rt_ms: null });
+		expect(by.mit_same_color_beaver).toMatchObject({ response: 'mit_logo', correct: 1, confidence: 4 });
+		expect(by.mit_same_color_apollo).toMatchObject({ confidence_rt_ms: null });
 		expect(by.mit_same_color_apollo).toMatchObject({ response: 'dont_remember', correct: 0, confidence: null });
 		expect(by.mit_same_color_dome).toMatchObject({ correct: 0, confidence: 2 });
 		const presented = JSON.parse(by.mit_same_color_dome.presented);
@@ -71,31 +71,32 @@ describe('Level 2 through a session', () => {
 		expect(admin.tableCsv('sa_responses')).not.toContain(pid); // test sessions stay out of exports
 
 		const summary = admin.summaryRows(true).find((r) => r.pid === pid)!;
-		// Level 2 scored: train ✓, plane ✓, count ✗, apollo don't remember ✗, dome ✗ (beaver color blind excluded)
-		expect(summary.level2_n).toBe(5);
-		expect(summary.level2_acc).toBe(0.4);
+		// Level 2: train ✓, plane ✓, beaver ✓, count ✗, apollo don't remember ✗, dome ✗
+		expect(summary.level2_n).toBe(6);
+		expect(summary.level2_acc).toBe(0.5);
 		expect(summary.level2_acc_excl_color).toBe(0);
 		expect(summary.q_level2_count_acc).toBe(0);
-		expect(summary.q_level2_color_acc).toBe(0.5);
-		expect(summary.color_blind_answers).toBe(1);
+		expect(summary.q_level2_color_acc).toBe(0.6);
 		// environment answers as marked by the facilitator
 		expect(summary.sa_env_n).toBe(2);
 		expect(summary.sa_env_acc).toBe(0.5);
 		const oral = db.getDb().prepare("SELECT item, target, response, correct, confidence FROM sa_responses WHERE pid = ? AND question_type = 'oral' ORDER BY seq").all(pid);
 		expect(oral).toEqual([
 			{ item: 'env_facilitator_hat', target: 'correct', response: 'correct', correct: 1, confidence: null },
-			{ item: 'env_laptop_sticky_note', target: 'correct', response: 'incorrect', correct: 0, confidence: null }
+			{ item: 'env_sticky_note', target: 'correct', response: 'incorrect', correct: 0, confidence: null }
 		]);
 	});
 
-	it('rejects "I\'m color blind" on the count question and unknown options', () => {
+	it('rejects "I\'m color blind" (no longer offered) on Level 1 and Level 2 questions', () => {
 		const pid = session.createTestSession({ condition: 'rest', board_a_theme: 'transport', board_b_theme: 'mit', phase: 'sa', fast: true });
 		const plan: SaStep[] = JSON.parse(session.getSession(pid)!.sa_plan);
-		const stop = plan.findIndex((s) => s.type === 'level2_count');
-		for (const step of plan.slice(0, stop)) session.recordSa(pid, { seq: step.seq, ...answer(step), ...timing } as any);
-		expect(() => session.recordSa(pid, { seq: stop, response: 'color_blind', confidence: null, ...timing } as any)).toThrow();
-		const color = plan.findIndex((s) => s.type === 'level2_color');
-		expect(color).toBeLessThan(stop);
+		for (const step of plan) {
+			if (step.type === 'color' || step.type === 'level2_color') {
+				expect(() => session.recordSa(pid, { seq: step.seq, response: 'color_blind', confidence: null, ...timing } as any)).toThrow();
+			}
+			session.recordSa(pid, { seq: step.seq, ...answer(step), ...timing } as any);
+		}
+		expect(plan.some((s) => s.type === 'level2_color')).toBe(true);
 	});
 
 	it('accepts only correct / incorrect / didn\'t remember for environment questions', () => {
@@ -113,9 +114,9 @@ describe('Level 2 through a session', () => {
 		const { toCsv, parseCsv } = await import('../src/lib/csv');
 		// summary.csv is toCsv(summaryRows()); test sessions are only included with includeTests.
 		const rows = parseCsv(toCsv(admin.summaryRows(true))) as Record<string, string>[];
-		const first = rows.find((r) => r.level2_n === '5')!;
+		const first = rows.find((r) => r.level2_n === '6')!;
 		expect(first).toBeDefined();
-		expect(first.level2_acc).toBe('0.4');
+		expect(first.level2_acc).toBe('0.5');
 		expect(first.level2_acc_excl_color).toBe('0');
 		for (const col of ['level2_acc_known', 'level2_dont_remember_rate', 'level2_conf', 'q_level2_color_acc', 'q_level2_count_acc', 'q_level2_color_acc_A', 'memory_acc', 'sa_env_acc']) {
 			expect(Object.keys(first)).toContain(col);

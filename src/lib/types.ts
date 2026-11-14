@@ -41,6 +41,11 @@ export interface ExperimentConfig {
 	 * Omit to ask every type about every seen object.
 	 */
 	sa_random_per_theme?: number;
+	/**
+	 * Side-by-side questions asked of every participant, per theme id: these seen objects (each
+	 * needs a variant). sa_random_per_theme then counts only the other, random questions.
+	 */
+	sa_side_by_side?: Record<string, string[]>;
 	/** Foils shown in the recognition grid per theme (random subset). Omit to show every foil. */
 	sa_foils_per_theme?: number;
 	/** Points on the confidence scale; 0 turns the confidence rating off. */
@@ -49,6 +54,13 @@ export interface ExperimentConfig {
 	colors: ColorOption[];
 	orientations: OrientationOption[];
 	condition_text: Record<string, { interval1: PhaseText; interval2: PhaseText }>;
+	/**
+	 * Countdown shown on the exercise/rest screens, in seconds (e.g. interval1: 300, interval2: 60).
+	 * The facilitator can still continue early. 0 or omitted = no countdown.
+	 */
+	interval_timer_s?: { interval1?: number; interval2?: number };
+	/** Conditions whose bouts get an RPE rating (Borg 6-20). Omit to ask every condition. */
+	rpe_conditions?: string[];
 	/**
 	 * Situation-awareness questions about the environment, asked aloud by the facilitator
 	 * after the on-screen questions. The participant's screen only asks them to talk to the
@@ -89,10 +101,8 @@ export interface OralQuestion {
 /** Facilitator's marks for an environment question. */
 export const ORAL_RESPONSES = ['correct', 'incorrect'] as const;
 
-/** Answers every single-item question offers besides its normal options. Scored as incorrect / excluded. */
+/** "I don't remember": offered by every single-item card question. Scored as incorrect. */
 export const DONT_REMEMBER = 'dont_remember';
-/** Color and Level 2 color-pair questions only: excluded from accuracy. */
-export const COLOR_BLIND = 'color_blind';
 
 export type SaQuestionType = 'objects' | 'color' | 'orientation' | 'side_by_side';
 
@@ -173,10 +183,11 @@ export const PHASES = [
 	'board_a',
 	'interval2',
 	'board_b',
+	'break',
 	'sa',
 	'done'
 ] as const;
 export type Phase = (typeof PHASES)[number];
 
 /** Phases that only the facilitator (keyboard shortcut) can advance out of. */
-export const FACILITATOR_PHASES: readonly Phase[] = ['baseline', 'practice', 'interval1', 'interval2'];
+export const FACILITATOR_PHASES: readonly Phase[] = ['baseline', 'practice', 'interval1', 'interval2', 'break'];

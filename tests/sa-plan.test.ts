@@ -117,3 +117,28 @@ describe('buildSaPlan shorter settings', () => {
 		}
 	});
 });
+
+describe('buildSaPlan with fixed side-by-side items', () => {
+	const manifests = { m: mk('m'), t: mk('t') };
+	const boards = [
+		{ board: 'A', theme: 'm' },
+		{ board: 'B', theme: 't' }
+	];
+	it('asks exactly the listed objects side by side, mixed in random order with the random questions', () => {
+		const orders = new Set<string>();
+		for (let seed = 0; seed < 30; seed++) {
+			const plan = buildSaPlan(boards, manifests, ['objects', 'color', 'side_by_side'], mulberry32(seed), 2, undefined, [], undefined, {
+				m: ['m0', 'm1']
+			});
+			const m = plan.filter((s) => s.theme === 'm' && s.type !== 'objects');
+			expect(m.filter((s) => s.type === 'side_by_side').map((s) => (s as { item: string }).item).sort()).toEqual(['m0', 'm1']);
+			const color = m.filter((s) => s.type === 'color');
+			expect(color).toHaveLength(2);
+			for (const s of color) expect(['m0', 'm1']).not.toContain((s as { item: string }).item);
+			orders.add(m.map((s) => s.type).join());
+			// a theme without a fixed list keeps the random mix
+			expect(plan.filter((s) => s.theme !== 'm' && s.type !== 'objects')).toHaveLength(2);
+		}
+		expect(orders.size).toBeGreaterThan(1);
+	});
+});

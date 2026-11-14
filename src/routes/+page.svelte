@@ -19,7 +19,7 @@
 	let confirmUntil = 0;
 	let busy = false;
 	/** Server clock minus this computer's clock, for resuming board timers after a reload. */
-	let clockOffset = 0;
+	let clockOffset = $state(0);
 
 	// Start-page form
 	let formPid = $state('');
@@ -105,8 +105,15 @@
 				else advance(true);
 				break;
 			case 'interval1':
-			case 'interval2':
-				confirmThen(!!s.progress.bout, 'continue without recording RPE');
+			case 'interval2': {
+				const running = Date.now() + clockOffset < s.phaseStartedAt + s.timers.interval_ms[s.phase];
+				const noRpe = s.recordRpe && !s.progress.bout;
+				const what = running ? (noRpe ? 'skip the timer and continue without RPE' : 'skip the rest of the timer') : 'continue without recording RPE';
+				confirmThen(!running && !noRpe, what);
+				break;
+			}
+			case 'break':
+				advance(true);
 				break;
 			case 'practice':
 				confirmThen(practiceDone, 'skip the rest of practice');
@@ -209,6 +216,10 @@
 			<Interval
 				text={s.text[s.phase]}
 				saved={s.progress.bout}
+				recordRpe={s.recordRpe}
+				durationMs={s.timers.interval_ms[bout]}
+				startedAt={s.phaseStartedAt}
+				{clockOffset}
 				onSave={async (rpe, peak) => {
 					await api.bout(s!.pid, bout, rpe, peak);
 					if (s && s.phase === bout) s.progress.bout = { rpe, peak_hr: peak };
@@ -233,6 +244,13 @@
 				onFlip={(c) => onFlip(key, c)}
 				onComplete={() => advance()}
 			/>
+		{:else if s.phase === 'break'}
+			<main class="start">
+				<h1>Short break</h1>
+				<p>Nice work. Take a moment to relax.</p>
+				<p class="waitbig">Wait for facilitator</p>
+				<p class="small">Facilitator: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> to start the questions.</p>
+			</main>
 		{:else if s.phase === 'sa'}
 			<Sa
 				plan={s.saPlan}
@@ -339,6 +357,12 @@
 		font-size: 2rem;
 		color: #2a9d3f;
 		font-weight: 700;
+	}
+	.waitbig {
+		margin: 2.5rem 0;
+		font-size: 2.4rem;
+		font-weight: 700;
+		color: #1f63d6;
 	}
 	.small {
 		font-size: 0.9rem;

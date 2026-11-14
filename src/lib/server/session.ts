@@ -1,9 +1,10 @@
 import { error } from '@sveltejs/kit';
+import { generateLayout } from '../layout';
 import { computeBoardMetrics } from '../metrics';
 import { hashString, mulberry32 } from '../rng';
 import { buildSaPlan, type SaStep } from '../sa-plan';
 import type { SessionState } from '../state';
-import { COLOR_BLIND, DONT_REMEMBER, FACILITATOR_PHASES, LEVEL2_NEUTRAL_HEX, ORAL_RESPONSES, PHASES, type ClickOutcome, type ClickRecord, type Phase } from '../types';
+import { DONT_REMEMBER, FACILITATOR_PHASES, LEVEL2_NEUTRAL_HEX, ORAL_RESPONSES, PHASES, type ClickOutcome, type ClickRecord, type Phase } from '../types';
 import { getDb } from './db';
 import { experiment, timers } from './experiment';
 import { loadSchedule } from './files';
@@ -21,6 +22,8 @@ export interface SessionRow {
 	completed_at: number | null;
 	dev_timers: number;
 	sa_plan: string;
+	/** JSON {A: cards, B: cards}; null for sessions started before layouts were per participant. */
+	layouts: string | null;
 }
 
 const BOARD_OF: Partial<Record<Phase, 'A' | 'B'>> = { board_a: 'A', board_b: 'B' };
@@ -72,8 +75,8 @@ export function openSession(pid: string): SessionRow {
 	db.transaction(() => {
 		db.prepare(
 			`INSERT INTO sessions (pid, condition, board_a_theme, board_b_theme, schedule_seed, phase,
-			 phase_started_at, created_at, updated_at, dev_timers, sa_plan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-		).run(pid, row.condition, row.board_a_theme, row.board_b_theme, row.seed, PHASES[0], now, now, now, exp.devTimers ? 1 : 0, JSON.stringify(plan));
+			 phase_started_at, created_at, updated_at, dev_timers, sa_plan, layouts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		).run(pid, row.condition, row.board_a_theme, row.board_b_theme, row.seed, PHASES[0], now, now, now, exp.devTimers ? 1 : 0, JSON.stringify(plan), JSON.stringify(makeLayouts(pid, row)));
 		insertPhase(pid, PHASES[0], now, null);
 	})();
 	return getSession(pid)!;
@@ -92,8 +95,32 @@ function makePlan(pid: string, row: { seed: number; board_a_theme: string; board
 		config.sa_random_per_theme,
 		config.sa_foils_per_theme,
 		(config.oral_sa_questions ?? []).map((q) => q.id),
-		{ questions: config.sa_level2_questions ?? {}, rand: mulberry32(hashString(`${pid}:${row.seed}:sa-level2`)) }
+		{ questions: config.sa_level2_questions ?? {}, rand: mulberry32(hashString(`${pid}:${row.seed}:sa-level2`)) },
+		config.sa_side_by_side
 	);
+}
+
+/**
+ * This participant's card layouts for Game A and Game B: the theme's 8 objects (the same for
+ * everyone) placed in a random order, seeded from pid + schedule seed so it never changes for
+ * the participant, with no pair side by side.
+ */
+export function makeLayouts(pid: string, row: { seed: number; board_a_theme: string; board_b_theme: string }): { A: string[]; B: string[] } {
+	const { config, manifests } = experiment();
+	const make = (board: 'A' | 'B', theme: string) =>
+		generateLayout(
+			manifests[theme].objects.map((o) => o.id),
+			config.board.rows,
+			config.board.cols,
+			mulberry32(hashString(`${pid}:${row.seed}:layout:${board}`))
+		);
+	return { A: make('A', row.board_a_theme), B: make('B', row.board_b_theme) };
+}
+
+/** Cards of Game A or B for this session (older sessions fall back to the shared assets/layouts.json). */
+export function sessionCards(s: Pick<SessionRow, 'layouts' | 'board_a_theme' | 'board_b_theme'>, board: 'A' | 'B'): string[] {
+	const own = s.layouts ? (JSON.parse(s.layouts) as Record<string, string[]>)[board] : undefined;
+	return own ?? experiment().layouts.layouts[board === 'A' ? s.board_a_theme : s.board_b_theme].cards;
 }
 
 /** Test sessions are created from /admin, never come from the schedule and are left out of exports. */
@@ -115,8 +142,8 @@ export function createTestSession(o: { condition: string; board_a_theme: string;
 	db.transaction(() => {
 		db.prepare(
 			`INSERT INTO sessions (pid, condition, board_a_theme, board_b_theme, schedule_seed, phase,
-			 phase_started_at, created_at, updated_at, dev_timers, sa_plan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-		).run(pid, o.condition, o.board_a_theme, o.board_b_theme, row.seed, o.phase, now, now, now, o.fast ? 1 : 0, JSON.stringify(makePlan(pid, row)));
+			 phase_started_at, created_at, updated_at, dev_timers, sa_plan, layouts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		).run(pid, o.condition, o.board_a_theme, o.board_b_theme, row.seed, o.phase, now, now, now, o.fast ? 1 : 0, JSON.stringify(makePlan(pid, row)), JSON.stringify(makeLayouts(pid, row)));
 		insertPhase(pid, o.phase, now, null);
 	})();
 	return pid;
@@ -181,15 +208,14 @@ function saAnswered(pid: string): number {
 	return r.n;
 }
 
-function boardCards(theme: string): string[] {
-	return experiment().layouts.layouts[theme].cards;
-}
-
 export function buildState(s: SessionRow): SessionState {
 	const exp = experiment();
 	const { config } = exp;
 	const practiceTheme = config.practice_board.theme;
-	const board = (key: 'practice' | 'A' | 'B', theme: string) => ({ key, theme, ...exp.layouts.layouts[theme] });
+	const board = (key: 'practice' | 'A' | 'B', theme: string) =>
+		key === 'practice'
+			? { key, theme, ...exp.layouts.layouts[theme] }
+			: { key, theme, rows: config.board.rows, cols: config.board.cols, cards: sessionCards(s, key) };
 	const markerRows = getDb()
 		.prepare('SELECT phase, started_at FROM phases WHERE pid = ? AND phase LIKE ? ORDER BY id')
 		.all(s.pid, `${s.phase}.%`) as { phase: string; started_at: number }[];
@@ -203,6 +229,7 @@ export function buildState(s: SessionRow): SessionState {
 		devTimers: exp.devTimers || !!s.dev_timers,
 		isTest: isTestPid(s.pid),
 		timers: timers(exp, !!s.dev_timers),
+		recordRpe: !config.rpe_conditions || config.rpe_conditions.includes(s.condition),
 		text: config.condition_text[s.condition],
 		colors: config.colors,
 		orientations: config.orientations,
@@ -241,7 +268,7 @@ export function advance(pid: string, from: Phase, opts: { facilitator: boolean; 
 		if (FACILITATOR_PHASES.includes(from) && !opts.facilitator) error(403, `Only the facilitator can advance from ${from}`);
 		const b = BOARD_OF[from];
 		if (b) {
-			const m = computeBoardMetrics(boardClicks(pid, b), boardCards(b === 'A' ? s.board_a_theme : s.board_b_theme), null);
+			const m = computeBoardMetrics(boardClicks(pid, b), sessionCards(s, b), null);
 			if (!m.cleared && !(hasMarker(pid, `${from}.timeout`) && timeLimitReached(s, from, Date.now()))) {
 				error(409, 'Board is not cleared yet');
 			}
@@ -291,7 +318,7 @@ export function recordClick(
 	const phase = c.board === 'A' ? 'board_a' : 'board_b';
 	if (s.phase !== phase) error(409, `Session is in ${s.phase}, not ${phase}`);
 	const theme = c.board === 'A' ? s.board_a_theme : s.board_b_theme;
-	const cards = boardCards(theme);
+	const cards = sessionCards(s, c.board);
 	if (!Number.isInteger(c.card_index) || c.card_index < 0 || c.card_index >= cards.length) error(400, 'bad card_index');
 	if (!Number.isInteger(c.seq) || c.seq < 0) error(400, 'bad seq');
 	if (!OUTCOMES.includes(c.outcome)) error(400, 'bad outcome');
@@ -343,10 +370,8 @@ export function recordSa(pid: string, a: SaAnswer): { answered: number } {
 		);
 		const grid = step.type === 'objects';
 		const resp = String(a.response);
-		// "I don't remember" (scored incorrect) and "I'm color blind" (color and Level 2
-		// color-pair only; excluded from accuracy) carry no confidence rating.
-		const colorQ = step.type === 'color' || step.type === 'level2_color';
-		const special = !grid && (resp === DONT_REMEMBER || (resp === COLOR_BLIND && colorQ));
+		// "I don't remember" (scored incorrect) carries no confidence rating.
+		const special = !grid && resp === DONT_REMEMBER;
 		// Environment questions are marked by the facilitator: no confidence rating.
 		const noConf = grid || special || step.type === 'oral';
 		const row = (item: string, target: string, response: string, correct: boolean, presented: unknown) =>

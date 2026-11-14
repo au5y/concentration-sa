@@ -59,7 +59,7 @@ describe('survey', () => {
 		const pid = session.createTestSession({ condition: 'rest', board_a_theme: 'mit', board_b_theme: 'transport', phase: 'sa', fast: true });
 		const plan = JSON.parse(session.getSession(pid)!.sa_plan) as { length: number };
 		db.getDb().prepare('UPDATE sessions SET sa_plan = ? WHERE pid = ?').run('[]', pid);
-		expect(plan.length).toBe(18);
+		expect(plan.length).toBe(21);
 		expect(session.advance(pid, 'sa', { facilitator: false, clientTs: null }).phase).toBe('done');
 	});
 });

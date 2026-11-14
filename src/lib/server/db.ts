@@ -17,7 +17,10 @@ CREATE TABLE IF NOT EXISTS sessions (
 	updated_at INTEGER NOT NULL,
 	completed_at INTEGER,
 	dev_timers INTEGER NOT NULL DEFAULT 0,
-	sa_plan TEXT NOT NULL
+	sa_plan TEXT NOT NULL,
+	-- This participant's card layouts, JSON {"A": [object id per card], "B": [...]}.
+	-- NULL for sessions started before layouts were per participant (they used assets/layouts.json).
+	layouts TEXT
 );
 -- One row per phase, plus marker rows such as baseline.start, board_a.preview,
 -- board_a.play (cards flipped face down) and board_a.resume (page reloaded).
@@ -98,6 +101,9 @@ function migrate(d: Database.Database) {
 	}
 	// The caffeine and color-vision questions were removed from the survey.
 	for (const c of ['caffeine', 'color_vision']) if (cols('survey').includes(c)) d.exec(`ALTER TABLE survey DROP COLUMN ${c}`);
+	// Card layouts became per participant.
+	const sessionCols = cols('sessions');
+	if (sessionCols.length && !sessionCols.includes('layouts')) d.exec('ALTER TABLE sessions ADD COLUMN layouts TEXT');
 }
 
 let db: Database.Database | null = null;

@@ -23,6 +23,9 @@ type ItemType = Exclude<SaQuestionType, 'objects'>;
  * Color questions are only asked about recolorable (mask) objects, not original images;
  * side-by-side questions only about objects that have a variant.
  * foilsPerTheme limits the grid to a random subset of the foils.
+ * fixedSideBySide (per theme): side-by-side questions about exactly these objects, for every
+ * participant. They are mixed in random order with the other single-item questions; perTheme then
+ * counts only those other (random) questions, which never use the fixed objects.
  * Level 2 questions for the theme (if any) close each block, in config order. They draw from
  * their own random stream (level2.rand), so adding them leaves the Level 1 questions unchanged.
  * Oral environment questions come last, after both blocks.
@@ -36,7 +39,8 @@ export function buildSaPlan(
 	foilsPerTheme?: number,
 	/** Oral environment questions (ids), asked after both board blocks, in config order. */
 	oral: string[] = [],
-	level2?: { questions: Record<string, Level2Question[]>; rand: () => number }
+	level2?: { questions: Record<string, Level2Question[]>; rand: () => number },
+	fixedSideBySide?: Record<string, string[]>
 ): SaStep[] {
 	const steps: SaStep[] = [];
 	let seq = 0;
@@ -59,7 +63,7 @@ export function buildSaPlan(
 			if (foilsPerTheme !== undefined) foils = shuffle(foils, rand).slice(0, foilsPerTheme);
 			steps.push({ seq: seq++, type: 'objects', board, theme, items: shuffle([...seen, ...foils], rand) });
 		}
-		level1Items(board, theme, seen, eligible);
+		level1Items(board, theme, seen, eligible, fixedSideBySide?.[theme]);
 		for (const q of level2?.questions[theme] ?? []) {
 			if (q.kind === 'color_pair') {
 				const options = level2ColorOptions(m, q, level2!.rand);
@@ -72,9 +76,25 @@ export function buildSaPlan(
 	for (const item of oral) steps.push({ seq: seq++, type: 'oral', board: 'env', theme: 'env', item });
 	return steps;
 
-	function level1Items(board: string, theme: string, seen: string[], eligible: (type: ItemType, id: string) => boolean) {
+	function level1Items(board: string, theme: string, seen: string[], eligible: (type: ItemType, id: string) => boolean, fixed?: string[]) {
+		if (!fixed || !itemTypes.includes('side_by_side')) return randomItems(board, theme, seen, eligible, itemTypes, (type, item) => push(board, theme, type, item));
+		// Fixed side-by-side questions plus the random ones about the other objects, all in random order.
+		const qs: [ItemType, string][] = fixed.map((item) => ['side_by_side', item]);
+		const rest = seen.filter((id) => !fixed.includes(id));
+		randomItems(board, theme, rest, eligible, itemTypes.filter((t) => t !== 'side_by_side'), (type, item) => qs.push([type, item]));
+		for (const [type, item] of shuffle(qs, rand)) push(board, theme, type, item);
+	}
+
+	function randomItems(
+		board: string,
+		theme: string,
+		seen: string[],
+		eligible: (type: ItemType, id: string) => boolean,
+		itemTypes: ItemType[],
+		emit: (type: ItemType, item: string) => void
+	) {
 		if (perTheme === undefined) {
-			for (const type of itemTypes) for (const item of shuffle(seen, rand)) if (eligible(type, item)) push(board, theme, type, item);
+			for (const type of itemTypes) for (const item of shuffle(seen, rand)) if (eligible(type, item)) emit(type, item);
 			return;
 		}
 		if (!itemTypes.length || perTheme <= 0) return;
@@ -94,7 +114,7 @@ export function buildSaPlan(
 			if (k >= 0) assigned[i] = pool.splice(k, 1)[0];
 		}
 		qTypes.forEach((type, i) => {
-			if (assigned[i]) push(board, theme, type, assigned[i]!);
+			if (assigned[i]) emit(type, assigned[i]!);
 		});
 	}
 }

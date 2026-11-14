@@ -118,7 +118,7 @@
 	// ---------- participant detail ----------
 	// Rows come straight from SQLite, so treat them as plain records.
 	const d = $derived(data.detail as Row | null);
-	const MAIN = ['survey', 'baseline', 'practice', 'interval1', 'board_a', 'interval2', 'board_b', 'sa', 'done'];
+	const MAIN = ['survey', 'baseline', 'practice', 'interval1', 'board_a', 'interval2', 'board_b', 'break', 'sa', 'done'];
 	const PHASE_LABEL: Record<string, string> = {
 		baseline: 'Baseline',
 		practice: 'Practice',
@@ -126,6 +126,7 @@
 		board_a: 'Board A',
 		interval2: 'Exercise / rest 2',
 		board_b: 'Board B',
+		break: 'Break',
 		sa: 'SA questions',
 		survey: 'Survey',
 		done: 'Done'
@@ -194,7 +195,7 @@
 		if (!d) return [];
 		const types = [...new Set(d.sa.map((r: Row) => r.question_type as string))];
 		return types.map((t) => {
-			const g = d.sa.filter((r: Row) => r.question_type === t && r.response !== 'color_blind');
+			const g = d.sa.filter((r: Row) => r.question_type === t);
 			return { type: t, n: g.length, acc: mean(g.map((r: Row) => r.correct)) };
 		});
 	});
@@ -217,7 +218,7 @@
 		});
 	});
 	const singles = $derived(d ? d.sa.filter((r: Row) => r.question_type !== 'objects') : []);
-	const RESPONSE_LABEL: Record<string, string> = { dont_remember: "don't remember", color_blind: 'color blind', not_selected: '—' };
+	const RESPONSE_LABEL: Record<string, string> = { dont_remember: "don't remember", not_selected: '—' };
 </script>
 
 <svelte:head><title>Data explorer · Concentration study</title></svelte:head>
@@ -398,7 +399,7 @@
 						<tr>
 							<td>{r.seq}</td><td>{r.board}</td><td>{r.question_type}</td><td>{r.item}</td><td>{r.question_type === 'oral' ? 'facilitator' : r.target}</td>
 							<td>{RESPONSE_LABEL[r.response] ?? r.response}</td>
-							<td class={r.response === 'color_blind' ? 'muted' : r.correct ? 'ok' : 'no'}>{r.response === 'color_blind' ? 'excl.' : r.correct ? '✓' : '✗'}</td>
+							<td class={r.correct ? 'ok' : 'no'}>{r.correct ? '✓' : '✗'}</td>
 							<td>{r.confidence ?? ''}</td><td>{isNum(r.rt_ms) ? `${(r.rt_ms / 1000).toFixed(1)} s` : ''}</td>
 						</tr>
 					{/each}

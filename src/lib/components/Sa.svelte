@@ -2,7 +2,7 @@
 	import { nowTs } from '$lib/client/api';
 	import { renderSpec } from '$lib/render';
 	import type { SaStep } from '$lib/sa-plan';
-	import { COLOR_BLIND, DONT_REMEMBER, LEVEL2_NEUTRAL_HEX, type ColorOption, type OralQuestion, type OrientationOption, type ThemeManifest } from '$lib/types';
+	import { DONT_REMEMBER, LEVEL2_NEUTRAL_HEX, type ColorOption, type OralQuestion, type OrientationOption, type ThemeManifest } from '$lib/types';
 	import Confidence from './Confidence.svelte';
 	import ObjectImage from './ObjectImage.svelte';
 
@@ -39,8 +39,8 @@
 	const step = $derived(plan[index]);
 	const manifest = $derived(step && step.type !== 'oral' ? manifests[step.theme] : null);
 	const oral = $derived(step?.type === 'oral' ? oralQuestions.find((q) => q.id === step.item) : undefined);
-	/** "I don't remember" / "I'm color blind": no confidence rating. */
-	const special = $derived(response === DONT_REMEMBER || response === COLOR_BLIND);
+	/** "I don't remember": no confidence rating. */
+	const special = $derived(response === DONT_REMEMBER);
 	/** Environment questions are marked by the facilitator: no confidence rating. */
 	const needConf = $derived(scale > 0 && !special && step?.type !== 'oral');
 	/** The facilitator has unlocked the environment-question controls (Ctrl+Shift+F). Stays on for the rest of them. */
@@ -117,12 +117,9 @@
 	}
 </script>
 
-{#snippet extras(colorBlind: boolean)}
+{#snippet extras()}
 	<div class="extras">
 		<button class="extra" class:sel={response === DONT_REMEMBER} onclick={() => pick(DONT_REMEMBER)}>I don't remember</button>
-		{#if colorBlind}
-			<button class="extra" class:sel={response === COLOR_BLIND} onclick={() => pick(COLOR_BLIND)}>I'm color blind</button>
-		{/if}
 	</div>
 {/snippet}
 
@@ -185,7 +182,7 @@
 						</button>
 					{/each}
 				</div>
-				{@render extras(true)}
+				{@render extras()}
 				{@render finish()}
 			{:else if step.type === 'level2_count'}
 				<h2>{step.prompt}</h2>
@@ -194,7 +191,7 @@
 						<button class="choice" class:sel={response === o.id} onclick={() => pick(o.id)}>{o.label}</button>
 					{/each}
 				</div>
-				{@render extras(false)}
+				{@render extras()}
 				{@render finish()}
 			{:else}
 				{@const item = find(step.item)}
@@ -208,7 +205,7 @@
 							</button>
 						{/each}
 					</div>
-					{@render extras(true)}
+					{@render extras()}
 				{:else if step.type === 'orientation'}
 					<h2>Which way did the {item.label} face?</h2>
 					<div class="row">
@@ -218,7 +215,7 @@
 							</button>
 						{/each}
 					</div>
-					{@render extras(false)}
+					{@render extras()}
 				{:else if step.type === 'side_by_side'}
 					<h2>Which one did you see?</h2>
 					<div class="row">
@@ -231,7 +228,7 @@
 							</button>
 						{/each}
 					</div>
-					{@render extras(false)}
+					{@render extras()}
 				{/if}
 				{@render finish()}
 			{/if}

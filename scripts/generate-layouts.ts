@@ -1,5 +1,6 @@
 /**
- * Generate the fixed card layouts (same for every participant) for every theme
+ * Generate the fixed card layouts for every theme (the practice board, and the fallback for
+ * sessions created before Game A/B layouts became per participant; see session.makeLayouts)
  * in the config, writing <assets>/layouts.json.
  *
  *   npm run layouts -- [--seed 1234] [--force]

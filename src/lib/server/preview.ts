@@ -42,7 +42,8 @@ export function previewData() {
 		config.sa_random_per_theme,
 		config.sa_foils_per_theme,
 		(config.oral_sa_questions ?? []).map((q) => q.id),
-		{ questions: config.sa_level2_questions ?? {}, rand: mulberry32((Date.now() + 1) & 0xffff) }
+		{ questions: config.sa_level2_questions ?? {}, rand: mulberry32((Date.now() + 1) & 0xffff) },
+		config.sa_side_by_side
 	);
 	return {
 		themes,

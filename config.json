@@ -9,9 +9,15 @@
 	"preview_s": 10,
 	"mismatch_flip_ms": 1000,
 	"board_time_limit_s": 90,
+	"interval_timer_s": { "interval1": 300, "interval2": 60 },
+	"rpe_conditions": ["elevated_hr"],
 	"max_participants": 30,
 	"sa_questions": ["objects", "color", "side_by_side"],
-	"sa_random_per_theme": 4,
+	"sa_random_per_theme": 2,
+	"sa_side_by_side": {
+		"transport": ["car", "plane", "helicopter", "rocket"],
+		"mit": ["beaver", "muddy_charles", "apollo_capsule"]
+	},
 	"sa_foils_per_theme": 4,
 	"confidence_scale": 4,
 	"confidence_labels": ["Guessing", "Very sure"],
@@ -41,8 +47,8 @@
 			]
 		},
 		{
-			"id": "env_laptop_sticky_note",
-			"prompt": "What color was the sticky note on the laptop?",
+			"id": "env_sticky_note",
+			"prompt": "What color was the sticky note?",
 			"options": [
 				{ "id": "yellow", "label": "Yellow" },
 				{ "id": "pink", "label": "Pink" },

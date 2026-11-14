@@ -1,5 +1,5 @@
 import { hasVariant, level2Distractors } from './sa-plan';
-import { COLOR_BLIND, DONT_REMEMBER } from './types';
+import { DONT_REMEMBER } from './types';
 import type { ExperimentConfig, LayoutsFile, ThemeManifest } from './types';
 
 export function experimentThemes(config: ExperimentConfig): { sa: string[]; practice: string } {
@@ -85,9 +85,27 @@ export function validateExperiment(
 	if (config.board_time_limit_s !== undefined && (typeof config.board_time_limit_s !== 'number' || config.board_time_limit_s < 0)) {
 		errs.push('config.board_time_limit_s must be a number of seconds >= 0 (0 = no limit)');
 	}
+	for (const [k, v] of Object.entries(config.interval_timer_s ?? {})) {
+		if (k !== 'interval1' && k !== 'interval2') errs.push(`config.interval_timer_s: unknown key "${k}" (interval1 or interval2)`);
+		else if (typeof v !== 'number' || v < 0) errs.push(`config.interval_timer_s.${k} must be a number of seconds >= 0 (0 = no countdown)`);
+	}
+	for (const [theme, items] of Object.entries(config.sa_side_by_side ?? {})) {
+		const m = manifests[theme];
+		if (!m) errs.push(`config.sa_side_by_side: unknown theme "${theme}"`);
+		else for (const id of items) {
+			const o = m.objects.find((x) => x.id === id);
+			if (!o) errs.push(`config.sa_side_by_side.${theme}: "${id}" is not a seen object`);
+			else if (!hasVariant(o)) errs.push(`config.sa_side_by_side.${theme}: "${id}" has no variant`);
+		}
+		if (!config.sa_questions.includes('side_by_side')) errs.push('config.sa_side_by_side is set but "side_by_side" is not in sa_questions');
+	}
+	for (const c of config.rpe_conditions ?? []) {
+		if (!config.conditions.includes(c)) errs.push(`config.rpe_conditions: "${c}" is not one of config.conditions`);
+	}
 	if (!Number.isInteger(config.confidence_scale) || config.confidence_scale < 0) {
 		errs.push('config.confidence_scale must be a whole number (0 turns confidence off)');
 	}
+	if ((config.oral_sa_questions?.length ?? 0) > 2) errs.push('config.oral_sa_questions: at most 2 environment questions (hat and sticky note)');
 	const oralIds = new Set<string>();
 	for (const q of config.oral_sa_questions ?? []) {
 		const where = `oral_sa_questions "${q.id}"`;
@@ -95,7 +113,7 @@ export function validateExperiment(
 		oralIds.add(q.id);
 		if (!q.prompt) errs.push(`${where}: no prompt`);
 		if (!Array.isArray(q.options) || q.options.length < 2) errs.push(`${where}: needs at least 2 options`);
-		if (q.options?.some((o) => o.id === DONT_REMEMBER || o.id === COLOR_BLIND)) errs.push(`${where}: option ids "${DONT_REMEMBER}"/"${COLOR_BLIND}" are reserved`);
+		if (q.options?.some((o) => o.id === DONT_REMEMBER)) errs.push(`${where}: option id "${DONT_REMEMBER}" is reserved`);
 	}
 	const level2Ids = new Set<string>();
 	for (const [theme, qs] of Object.entries(config.sa_level2_questions ?? {})) {
@@ -121,7 +139,7 @@ export function validateExperiment(
 			} else if (q.kind === 'count') {
 				if (!Array.isArray(q.options) || q.options.length < 2) errs.push(`${where}: needs at least 2 options`);
 				else if (!q.options.some((o) => o.id === q.answer)) errs.push(`${where}: answer "${q.answer}" is not one of its option ids`);
-				if (q.options?.some((o) => o.id === DONT_REMEMBER || o.id === COLOR_BLIND)) errs.push(`${where}: option ids "${DONT_REMEMBER}"/"${COLOR_BLIND}" are reserved`);
+				if (q.options?.some((o) => o.id === DONT_REMEMBER)) errs.push(`${where}: option id "${DONT_REMEMBER}" is reserved`);
 			} else {
 				errs.push(`${where}: kind must be "color_pair" or "count"`);
 			}
