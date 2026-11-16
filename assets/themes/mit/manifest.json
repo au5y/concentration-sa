@@ -57,9 +57,9 @@
 			}
 		},
 		{
-			"id": "caret",
-			"label": "caret symbol",
-			"image": "caret.svg",
+			"id": "infinite_corridor",
+			"label": "Infinite Corridor",
+			"image": "infinite_corridor.svg",
 			"color": "green",
 			"orientation": "up"
 		},
@@ -94,13 +94,6 @@
 			"label": "Brass Rat ring",
 			"image": "brass_rat.svg",
 			"color": "red",
-			"orientation": "up"
-		},
-		{
-			"id": "infinite_corridor",
-			"label": "Infinite Corridor",
-			"image": "infinite_corridor.svg",
-			"color": "blue",
 			"orientation": "up"
 		},
 		{

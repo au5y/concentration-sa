@@ -19,8 +19,10 @@
 		level2Hex?: string;
 		onAnswer: (a: Record<string, unknown>) => Promise<unknown>;
 		onDone: () => void;
+		/** Test sessions: show a Skip button that moves on without answering. */
+		skippable?: boolean;
 	}
-	let { plan, answered, manifests, colors, orientations, scale, labels, oralQuestions = [], level2Hex = LEVEL2_NEUTRAL_HEX, onAnswer, onDone }: Props = $props();
+	let { plan, answered, manifests, colors, orientations, scale, labels, oralQuestions = [], level2Hex = LEVEL2_NEUTRAL_HEX, onAnswer, onDone, skippable = false }: Props = $props();
 
 	// Props are read once on purpose: the component is re-created per phase.
 	// svelte-ignore state_referenced_locally
@@ -108,6 +110,20 @@
 		submit({ response: selected, rt_ms: selectedAt - shownAt, submit_rt_ms: t - shownAt, answer_changes: answerChanges });
 	}
 
+	/** Test sessions only: record the step as "I don't remember" (grid: nothing selected) and move on. */
+	function skip() {
+		if (!step || busy) return;
+		submit({
+			response: step.type === 'objects' ? [] : DONT_REMEMBER,
+			confidence: null,
+			rt_ms: 0,
+			confidence_rt_ms: null,
+			submit_rt_ms: 0,
+			answer_changes: 0,
+			confidence_changes: 0
+		});
+	}
+
 	function toggle(id: string) {
 		if (selected.includes(id)) {
 			selected = selected.filter((x) => x !== id);
@@ -116,6 +132,10 @@
 		selectedAt = nowTs();
 	}
 </script>
+
+{#if skippable && step}
+	<button class="skip" onclick={skip} title="Test sessions only: records 'I don't remember'">Skip ▸</button>
+{/if}
 
 {#snippet extras()}
 	<div class="extras">
@@ -356,5 +376,18 @@
 	.go:disabled {
 		background: #9ab;
 		cursor: default;
+	}
+	.skip {
+		position: fixed;
+		left: 0.75rem;
+		bottom: 0.75rem;
+		z-index: 40;
+		padding: 0.4rem 0.9rem;
+		font: 600 0.95rem system-ui, sans-serif;
+		color: #fff;
+		background: #7b3fd6;
+		border: none;
+		border-radius: 999px;
+		cursor: pointer;
 	}
 </style>

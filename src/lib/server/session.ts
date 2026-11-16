@@ -127,6 +127,40 @@ export function sessionCards(s: Pick<SessionRow, 'layouts' | 'board_a_theme' | '
 export const TEST_PREFIX = 'TEST-';
 export const isTestPid = (pid: string) => pid.startsWith(TEST_PREFIX);
 
+/**
+ * Archived sessions (ARCHIVE-<tag>-<pid>) are kept, with all their data, but left out of the
+ * normal exports and summaries. Used when the test changes after someone has taken it.
+ */
+export const ARCHIVE_PREFIX = 'ARCHIVE-';
+export const isArchivedPid = (pid: string) => pid.startsWith(ARCHIVE_PREFIX);
+
+/**
+ * Archive a participant: rename their rows in every table to ARCHIVE-<tag>-<pid>, which frees
+ * the pid so the schedule slot can be run again on the current version. A session without its
+ * own layout (started before layouts were per participant) gets `layouts` (default: the shared
+ * one in force now) stored with it, so the record no longer depends on assets/layouts.json.
+ */
+export function archiveParticipant(pid: string, tag: string, layouts?: { A: string[]; B: string[] }): string {
+	if (isTestPid(pid) || isArchivedPid(pid)) error(400, `${pid} is a test or already archived`);
+	if (!/^[A-Za-z0-9]{1,12}$/.test(tag)) error(400, 'tag must be 1-12 letters or digits');
+	const db = getDb();
+	const to = `${ARCHIVE_PREFIX}${tag}-${pid}`;
+	return db.transaction(() => {
+		const s = requireSession(pid);
+		if (getSession(to)) error(409, `${to} already exists`);
+		if (!s.layouts) {
+			const own = layouts ?? { A: sessionCards(s, 'A'), B: sessionCards(s, 'B') };
+			db.prepare('UPDATE sessions SET layouts = ? WHERE pid = ?').run(JSON.stringify(own), pid);
+		}
+		const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map((t) => t.name);
+		for (const t of tables) {
+			const cols = (db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).map((c) => c.name);
+			if (cols.includes('pid')) db.prepare(`UPDATE ${t} SET pid = ? WHERE pid = ?`).run(to, pid);
+		}
+		return to;
+	})();
+}
+
 /** Create a throwaway test session that starts in any phase. Returns its pid. */
 export function createTestSession(o: { condition: string; board_a_theme: string; board_b_theme: string; phase: Phase; fast: boolean }): string {
 	const db = getDb();

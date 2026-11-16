@@ -42,7 +42,7 @@ export const ICON_MAP: Record<string, string> = {
 	skateboard: 'mdi:skateboard',
 	tractor: 'mdi:tractor',
 	// MIT. Not listed (hand-supplied, never overwritten): mit_logo (Wikimedia), muddy_charles (Twemoji),
-	// caret (drawn here), infinite_corridor (composed doorway + infinity),
+	// infinite_corridor (composed doorway + infinity),
 	// apollo_capsule_variant.svg, integral (MathJax). Transport: helicopter_variant.svg and
 	// rocket_variant.svg (hand-drawn additions). See assets/ATTRIBUTION.md.
 	beaver: 'gi:beaver',

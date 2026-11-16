@@ -8,7 +8,6 @@
 | mit/muddy_charles.svg | [IconPark](https://github.com/bytedance/IconPark) beer-mug, solid (via Iconify) | Apache-2.0 |
 | mit/infinite_corridor.svg | Composed: game-icons.net doorway (Delapouite) + Material Design Icons infinity | CC BY 3.0 + Apache-2.0 |
 | transport/helicopter_variant.svg (diagonal tail rotor added), rocket_variant.svg (exhaust flame added) | Material Design Icons helicopter / rocket with one shape drawn here | Apache-2.0 |
-| mit/caret.svg | Drawn here (a plain "^", not the Draper logo) | n/a |
 | mit/integral.svg | Typeset here with MathJax (glyph outlines, no font file) | MathJax fonts: Apache-2.0 |
 
 Icons are copied from the bundled npm sets by `npm run icons` (scripts/import-icons.ts).

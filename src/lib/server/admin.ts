@@ -6,11 +6,14 @@ import { PHASES } from '../types';
 import { getDb, TABLES } from './db';
 import { experiment } from './experiment';
 import { loadSchedule } from './files';
-import { sessionCards, TEST_PREFIX } from './session';
+import { ARCHIVE_PREFIX, sessionCards, TEST_PREFIX } from './session';
 
 const COOKIE = 'admin_token';
-/** SQL filter that leaves out admin test sessions (pid TEST-n) from exports and summaries. */
-const REAL = `pid NOT LIKE '${TEST_PREFIX}%'`;
+/** SQL filters: real participants (no TEST-n, no ARCHIVE-…), and archived ones only. */
+const REAL = `pid NOT LIKE '${TEST_PREFIX}%' AND pid NOT LIKE '${ARCHIVE_PREFIX}%'`;
+const ARCHIVED = `pid LIKE '${ARCHIVE_PREFIX}%'`;
+export type Scope = 'real' | 'archive' | 'all';
+const WHERE: Record<Scope, string> = { real: REAL, archive: ARCHIVED, all: '1 = 1' };
 
 function token(): string | null {
 	const pw = process.env.ADMIN_PASSWORD;
@@ -57,23 +60,26 @@ function withIso(rows: Record<string, unknown>[]): Record<string, unknown>[] {
 	});
 }
 
+/** CSV of one table, or the summary. `archive_<name>` exports the archived sessions instead. */
 export function tableCsv(name: string): string {
 	const db = getDb();
-	if (name === 'summary') return toCsv(summaryRows());
+	let scope: Scope = 'real';
+	if (name.startsWith('archive_')) [scope, name] = ['archive', name.slice('archive_'.length)];
+	if (name === 'summary') return toCsv(summaryRows(scope));
 	if (!(TABLES as readonly string[]).includes(name)) error(404, 'unknown table');
 	const cols = (db.prepare(`PRAGMA table_info(${name})`).all() as { name: string }[]).map((c) => c.name);
-	let rows = db.prepare(`SELECT * FROM ${name} WHERE ${REAL} ORDER BY rowid`).all() as Record<string, unknown>[];
+	let rows = db.prepare(`SELECT * FROM ${name} WHERE ${WHERE[scope]} ORDER BY rowid`).all() as Record<string, unknown>[];
 	if (name === 'sa_responses') rows = rescore(rows as any[]);
 	const isoRows = withIso(rows);
 	const header = rows.length ? Object.keys(isoRows[0]) : cols;
 	return toCsv(isoRows, header);
 }
 
-/** One summary row per participant. Test sessions are left out unless `includeTests`. */
-export function summaryRows(includeTests = false): Record<string, unknown>[] {
+/** One summary row per participant: real ones (default), archived ones, or all incl. tests. */
+export function summaryRows(scope: Scope | boolean = 'real'): Record<string, unknown>[] {
 	const db = getDb();
 	const exp = experiment();
-	const where = includeTests ? '1 = 1' : REAL;
+	const where = WHERE[scope === true ? 'all' : scope === false ? 'real' : scope];
 	const all = (sql: string) => db.prepare(sql).all() as any[];
 	const layouts = Object.fromEntries(Object.entries(exp.layouts.layouts).map(([t, l]) => [t, l.cards]));
 	return buildSummary({

@@ -21,6 +21,7 @@ const manifest = (t: string): ThemeManifest => JSON.parse(fs.readFileSync(`asset
 beforeAll(async () => {
 	dir = fs.mkdtempSync(path.join(os.tmpdir(), 'csa-breaks-'));
 	process.env.DATA_DIR = dir;
+	fs.writeFileSync(path.join(dir, 'schedule.csv'), 'pid,condition,board_a_theme,board_b_theme,seed\nP07,rest,mit,transport,1\nP08,rest,mit,transport,1\n');
 	session = await import('../src/lib/server/session');
 	admin = await import('../src/lib/server/admin');
 	db = await import('../src/lib/server/db');
@@ -118,5 +119,33 @@ describe('side-by-side variants', () => {
 				expect(o.render).toBeUndefined();
 				expect(o.image).toMatch(/\.svg$/);
 			}
+	});
+});
+
+describe('archive', () => {
+	it('keeps the data under ARCHIVE-<tag>-<pid>, out of the normal exports, and frees the pid', () => {
+		const pid = session.openSession('P07').pid;
+		db.getDb().prepare("INSERT INTO clicks (pid, board, theme, seq, card_index, object_id, outcome, client_ts, server_ts) VALUES (?, 'A', 'mit', 0, 0, 'beaver', 'first_flip', 1, 1)").run(pid);
+		const cards = state(pid).boards.A.cards;
+		const to = session.archiveParticipant(pid, 'v1');
+		expect(to).toBe('ARCHIVE-v1-P07');
+		expect(session.getSession(pid)).toBeUndefined();
+		expect(db.getDb().prepare('SELECT COUNT(*) n FROM clicks WHERE pid = ?').get(to)).toEqual({ n: 1 });
+		expect(state(to).boards.A.cards).toEqual(cards);
+		expect(admin.tableCsv('clicks')).not.toContain(to);
+		expect(admin.tableCsv('archive_clicks')).toContain(to);
+		expect(admin.summaryRows().some((r) => r.pid === to)).toBe(false);
+		expect(admin.summaryRows('archive').map((r) => r.pid)).toEqual([to]);
+		// the schedule slot can be run again
+		expect(session.openSession('P07').pid).toBe('P07');
+		expect(() => session.archiveParticipant(to, 'v2')).toThrow();
+	});
+
+	it('stores the given layout for a session that used the shared one', () => {
+		const pid = session.openSession('P08').pid;
+		db.getDb().prepare('UPDATE sessions SET layouts = NULL WHERE pid = ?').run(pid);
+		const old = { A: Array(16).fill('x'), B: Array(16).fill('y') };
+		const to = session.archiveParticipant(pid, 'v1', old);
+		expect(JSON.parse(session.getSession(to)!.layouts!)).toEqual(old);
 	});
 });

@@ -35,6 +35,16 @@
 		if (!confirm(`Delete ALL data for ${pids.join(', ')}? They can then start over from the beginning. This cannot be undone.`)) return;
 		if (await dataAction({ action: 'delete', pids })) notice = `Deleted ${pids.join(', ')}.`;
 	}
+	async function archivePid(pid: string) {
+		const tag = prompt(
+			`Archive ${pid}? Their data is kept (renamed ARCHIVE-<tag>-${pid}), shown here and in the archive exports, ` +
+				`but left out of the normal exports. ${pid} can then be run again.\n\nTag for this version of the test (e.g. v1):`,
+			'v1'
+		);
+		if (!tag) return;
+		const r = await dataAction({ action: 'archive', pid, tag });
+		if (r) notice = `Archived ${pid}.`;
+	}
 	async function resetAll() {
 		const typed = prompt('This deletes every session, click, answer and survey (the schedule is kept).\nDownload the CSVs first if you need them.\n\nType RESET to confirm:');
 		if (typed !== 'RESET') return;
@@ -76,6 +86,7 @@
 		if (await testAction({ action: 'jump', pid, phase })) notice = `${pid} moved to ${phase}.`;
 	}
 	const isTest = (pid: string) => pid.startsWith('TEST-');
+	const isArchived = (pid: string) => pid.startsWith('ARCHIVE-');
 
 	const toggle = (pid: string) =>
 		(selected = selected.includes(pid) ? selected.filter((p) => p !== pid) : [...selected, pid]);
@@ -169,6 +180,15 @@
 				<a href="/admin/export/{name}.csv" download>{name}.csv</a>
 			{/each}
 		</p>
+		{#if data.sessions.some((r) => isArchived(r.pid))}
+			<h3>Archive</h3>
+			<p class="muted small">Sessions from earlier versions of the test (ARCHIVE-…). Kept, but not in the exports above.</p>
+			<p class="exports">
+				{#each EXPORTS as name (name)}
+					<a href="/admin/export/archive_{name}.csv" download>archive_{name}.csv</a>
+				{/each}
+			</p>
+		{/if}
 
 		<h2>Sessions ({data.sessions.length})</h2>
 		<p class="tools">
@@ -186,7 +206,7 @@
 				{#each data.sessions as r (r.pid)}
 					<tr>
 						<td><input type="checkbox" checked={selected.includes(r.pid)} onchange={() => toggle(r.pid)} /></td>
-						<td><a href="/admin/explore?pid={encodeURIComponent(r.pid)}">{r.pid}</a>{#if isTest(r.pid)} <span class="tag">test</span>{/if}</td><td>{r.condition}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
+						<td><a href="/admin/explore?pid={encodeURIComponent(r.pid)}">{r.pid}</a>{#if isTest(r.pid)} <span class="tag">test</span>{:else if isArchived(r.pid)} <span class="tag">archived</span>{/if}</td><td>{r.condition}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
 						<td>{r.phase}</td><td>{r.clicks}</td><td>{r.sa_answered}/{r.sa_total}</td>
 						<td class:warnc={r.reloads > 0}>{r.reloads}</td><td>{time(r.created_at)}</td><td>{time(r.completed_at)}</td>
 						<td class="nowrap">
@@ -196,6 +216,8 @@
 									<option value="" disabled>Jump to…</option>
 									{#each data.test.phases as p (p)}<option value={p}>{p}</option>{/each}
 								</select>
+							{:else if !isArchived(r.pid)}
+								<button class="small" onclick={() => archivePid(r.pid)}>Archive</button>
 							{/if}
 							<button class="small" onclick={() => deletePids([r.pid])}>Delete</button>
 						</td>

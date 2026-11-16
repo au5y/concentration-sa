@@ -264,6 +264,7 @@
 				level2Hex={s.level2Hex}
 				onAnswer={(a) => api.sa(s!.pid, a).catch((e) => say(`Answer not saved: ${e.message}`, 6000))}
 				onDone={() => advance()}
+				skippable={s.isTest}
 			/>
 		{:else if s.phase === 'survey'}
 			<Survey onSubmit={async (v) => setState(await api.survey(s!.pid, v))} />

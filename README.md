@@ -145,15 +145,15 @@ and orientation answers controlled.
   `scripts/import-icons.ts`. To swap an icon, change the map and run
   `npm run icons -- --force`, or simply replace the SVG file.
 - `mit_logo.svg` is the public-domain MIT logo from Wikimedia Commons.
-- No photos: every object and foil is a flat icon so none stands out. `caret.svg` (a plain
-  "^", not the Draper logo) was drawn here; the Brass Rat is the game-icons diamond ring.
+- No photos: every object and foil is a flat icon so none stands out. The Brass Rat is the
+  game-icons diamond ring.
 - `infinite_corridor.svg` (doorway + infinity sign) and `apollo_capsule_variant.svg` (window
   filled in) were made by hand. `npm run icons` never overwrites these or any non-SVG image.
 - `helicopter_variant.svg` (diagonal tail rotor added) and `rocket_variant.svg` (exhaust flame added) were drawn
   here on top of the MDI icons, in the same 24×24 box so the size doesn't change.
 - An object without a `variant` is never asked about side by side (e.g. the symmetric DNA helix).
   Variants must look clearly different: no color shifts, no 85% scale, and no mirror on a symmetric
-  icon (train, boat, rocket and the caret have no mirror variant for that reason). The car has none because
+  icon (train, boat and rocket have no mirror variant for that reason). The car has none because
   its direction was too hard to tell.
 
 Run `npm run validate` and restart the server after changing images.
