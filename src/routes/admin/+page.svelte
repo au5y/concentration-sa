@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
+	import HeartRatePanel from '$lib/components/HeartRatePanel.svelte';
 
 	let { data } = $props();
 	let password = $state('');
@@ -106,7 +107,7 @@
 		return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 	};
 	const time = (ms: number | null) => (ms ? new Date(ms).toLocaleString() : '');
-	const EXPORTS = ['summary', 'sessions', 'phases', 'clicks', 'sa_responses', 'bouts', 'survey'];
+	const EXPORTS = ['summary', 'sessions', 'phases', 'clicks', 'sa_responses', 'bouts', 'survey', 'hr_samples'];
 </script>
 
 <svelte:head><title>Admin · Concentration study</title></svelte:head>
@@ -145,6 +146,8 @@
 				</div>
 			{/each}
 		</div>
+
+		<HeartRatePanel pids={data.active.map((a) => a.pid)} heard={data.straps} now={data.now} />
 
 		<h2>Test run</h2>
 		<div class="testrun">

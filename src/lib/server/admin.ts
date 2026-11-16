@@ -1,6 +1,7 @@
 import { error, type Cookies } from '@sveltejs/kit';
 import crypto from 'node:crypto';
 import { toCsv } from '../csv';
+import { hrByPhase, type PhaseSpan } from '../hr';
 import { buildSummary, rescoreFixedAnswers } from '../metrics';
 import { PHASES } from '../types';
 import { getDb, TABLES } from './db';
@@ -54,7 +55,7 @@ function withIso(rows: Record<string, unknown>[]): Record<string, unknown>[] {
 		const out: Record<string, unknown> = {};
 		for (const [k, v] of Object.entries(r)) {
 			out[k] = v;
-			if (/(_at|_ts)$/.test(k)) out[`${k}_iso`] = typeof v === 'number' && v > 1e12 ? new Date(v).toISOString() : '';
+			if (/(^ts|_at|_ts)$/.test(k)) out[`${k}_iso`] = typeof v === 'number' && v > 1e12 ? new Date(v).toISOString() : '';
 		}
 		return out;
 	});
@@ -68,7 +69,7 @@ export function tableCsv(name: string): string {
 	if (name === 'summary') return toCsv(summaryRows(scope));
 	if (!(TABLES as readonly string[]).includes(name)) error(404, 'unknown table');
 	const cols = (db.prepare(`PRAGMA table_info(${name})`).all() as { name: string }[]).map((c) => c.name);
-	let rows = db.prepare(`SELECT * FROM ${name} WHERE ${WHERE[scope]} ORDER BY rowid`).all() as Record<string, unknown>[];
+	let rows = db.prepare(`SELECT * FROM ${name} WHERE ${name === 'hr_samples' && scope === 'real' ? `(${REAL} OR pid IS NULL)` : WHERE[scope]} ORDER BY rowid`).all() as Record<string, unknown>[];
 	if (name === 'sa_responses') rows = rescore(rows as any[]);
 	const isoRows = withIso(rows);
 	const header = rows.length ? Object.keys(isoRows[0]) : cols;
@@ -82,7 +83,7 @@ export function summaryRows(scope: Scope | boolean = 'real'): Record<string, unk
 	const where = WHERE[scope === true ? 'all' : scope === false ? 'real' : scope];
 	const all = (sql: string) => db.prepare(sql).all() as any[];
 	const layouts = Object.fromEntries(Object.entries(exp.layouts.layouts).map(([t, l]) => [t, l.cards]));
-	return buildSummary({
+	const rows = buildSummary({
 		sessions: all(`SELECT * FROM sessions WHERE ${where} ORDER BY pid`),
 		phases: all(`SELECT pid, phase, client_started_at FROM phases WHERE ${where} ORDER BY id`),
 		clicks: all(`SELECT pid, board, seq, card_index, object_id, outcome, client_ts FROM clicks WHERE ${where}`),
@@ -92,6 +93,14 @@ export function summaryRows(scope: Scope | boolean = 'real'): Record<string, unk
 		layouts,
 		saTypes: [...exp.config.sa_questions, ...level2Types(), ...(exp.config.oral_sa_questions?.length ? ['oral'] : [])]
 	});
+	// Heart rate per phase from the Bluetooth straps (columns only when there is any HR data).
+	const hr = hrByPhase(
+		all(`SELECT pid, ts, bpm, contact FROM hr_samples WHERE pid IS NOT NULL AND ${where}`),
+		all(`SELECT pid, phase, started_at, ended_at FROM phases WHERE ${where}`) as PhaseSpan[]
+	);
+	if (!Object.keys(hr).length) return rows;
+	const blank = Object.fromEntries(Object.keys(Object.values(hr)[0]).map((k) => [k, null]));
+	return rows.map((r) => ({ ...r, ...blank, ...hr[r.pid as string] }));
 }
 
 /** Level 2 question types present in the config (level2_color, level2_count). */
@@ -121,11 +130,20 @@ export function status() {
 		.all() as any[];
 	const schedule = loadSchedule();
 	const started = new Set(sessions.map((s) => s.pid));
+	// Straps heard from in the last minute (latest reading each), for the live panel.
+	const straps = db
+		.prepare(
+			`SELECT h.strap, h.strap_name, h.pid, h.bpm, h.contact, h.ts FROM hr_samples h
+			 JOIN (SELECT strap, MAX(ts) AS ts FROM hr_samples WHERE ts > ? GROUP BY strap) l ON l.strap = h.strap AND l.ts = h.ts
+			 ORDER BY h.strap_name`
+		)
+		.all(Date.now() - 60_000) as { strap: string; strap_name: string | null; pid: string | null; bpm: number; contact: number | null; ts: number }[];
 	return {
 		now: Date.now(),
 		active: sessions.filter((s) => s.phase !== 'done'),
 		sessions,
 		schedule: schedule.map((r) => ({ ...r, started: started.has(r.pid) })),
+		straps,
 		devTimers: experiment().devTimers,
 		test: {
 			conditions: experiment().config.conditions,
@@ -154,6 +172,7 @@ export function participantDetail(pid: string) {
 			)
 		),
 		bouts: rows('SELECT bout, rpe, peak_hr, server_ts FROM bouts WHERE pid = ? ORDER BY bout'),
+		hr: rows('SELECT ts, bpm, contact FROM hr_samples WHERE pid = ? ORDER BY ts'),
 		survey: (db.prepare('SELECT * FROM survey WHERE pid = ?').get(pid) as Record<string, unknown> | undefined) ?? null,
 		summary: summaryRows(true).find((r) => r.pid === pid) ?? null,
 		// Game A/B use this participant's own layout (older sessions: the shared one).

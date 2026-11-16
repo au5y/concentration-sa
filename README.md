@@ -277,6 +277,21 @@ Go to `/admin` and log in with `ADMIN_PASSWORD`. The page shows a live card for 
 session in progress (phase, time in phase, last activity), every session's progress, and
 the schedule. It refreshes every 3 s.
 
+**Heart-rate straps** (Bluetooth, from the admin page):
+- Needs Chrome or Edge (Windows, macOS, ChromeOS) and the admin page on **HTTPS** (or
+  `http://localhost`); Web Bluetooth is blocked on plain-HTTP addresses like `http://<ip>:8383`.
+- Any strap that works with phone apps (standard Heart Rate service) works: Polar H10/H9,
+  Garmin HRM-Dual, Wahoo TICKR, Coospo, …. Several straps at once are fine.
+- Wet the electrodes, put the strap on, click **+ Connect strap** and pick it in Chrome's list,
+  then choose the participant for that strap. Each card shows live bpm, a short trace, and
+  warnings for lost skin contact or no readings.
+- Readings go to the server every 2 s. If the network drops they are kept in the browser and
+  sent when it's back. A dropped strap reconnects by itself. Reloading or closing the admin tab
+  disconnects the straps (the page asks first), so keep it open during sessions.
+- Readings before a strap is assigned are stored without a pid. The summary gets mean / peak /
+  count per phase (`hr_mean_<phase>`, `hr_peak_<phase>`, `hr_n_<phase>`; no-contact readings
+  left out), and the explorer shows a heart-rate trace with the phases marked.
+
 **Data explorer** (`/admin/explore`, or click a PID in the sessions table):
 - Overview: participants, completed sessions, boards that timed out, and a table of means per
   condition (board times, errors, timeouts, memory / SA accuracy, d′, RPE, peak HR).
@@ -305,6 +320,7 @@ Download links, each a full table as CSV (every epoch-ms column also gets an `_i
 | `sa_responses.csv` | One row per answer (16 per objects grid): question type, item, target, response, correct, confidence, `rt_ms` (shown → final answer choice), `confidence_rt_ms` (shown → final confidence choice), `submit_rt_ms`, `answer_changes`, `confidence_changes`, what was presented (for Level 2 color pairs: the 4 option ids and the neutral color). Level 2 rows are re-scored against the current config on export. Environment rows: response `correct` / `incorrect` / `dont_remember` as marked by the facilitator |
 | `bouts.csv` | Per exercise/rest bout (`interval1` before Game A, `interval2` before Game B): RPE, peak HR. Exercise group only |
 | `survey.csv` | Age, exercise days/week, fitness (1–5), hours slept |
+| `hr_samples.csv` | Every heart-rate strap reading (about 1/s per strap): pid (blank until the strap is assigned), strap id and name, `ts` (server clock, lines up with `phases`), `client_ts`, bpm, `rr_ms` (beat-to-beat intervals, space separated), `contact` (1 / 0 / blank if not reported) |
 | `summary.csv` | One row per participant (below) |
 
 **Summary columns**

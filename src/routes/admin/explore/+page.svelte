@@ -131,6 +131,26 @@
 		survey: 'Survey',
 		done: 'Done'
 	};
+	// Heart rate from the Bluetooth straps: line over the whole session, phase starts marked.
+	const hrChart = $derived.by(() => {
+		const pts = (d?.hr ?? []).filter((r: Row) => r.contact !== 0 && r.bpm > 0) as Row[];
+		if (pts.length < 2) return null;
+		const t0 = pts[0].ts;
+		const t1 = pts[pts.length - 1].ts;
+		const lo = Math.min(...pts.map((p) => p.bpm)) - 5;
+		const hi = Math.max(...pts.map((p) => p.bpm)) + 5;
+		const x = (t: number) => ((t - t0) / Math.max(1, t1 - t0)) * 1000;
+		const y = (b: number) => 200 - ((b - lo) / (hi - lo)) * 200;
+		return {
+			line: pts.map((p) => `${x(p.ts).toFixed(1)},${y(p.bpm).toFixed(1)}`).join(' '),
+			lo,
+			hi,
+			marks: d!.phases
+				.filter((p: Row) => MAIN.includes(p.phase) && p.started_at >= t0 && p.started_at <= t1)
+				.map((p: Row) => ({ x: x(p.started_at), label: PHASE_LABEL[p.phase] ?? p.phase }))
+		};
+	});
+	const HR_ROWS = ['survey', 'baseline', 'practice', 'interval1', 'board_a', 'interval2', 'board_b', 'break', 'sa'];
 	const timeline = $derived.by(() => {
 		if (!d) return [];
 		return d.phases
@@ -350,6 +370,22 @@
 									<td>{b.peak_hr ?? dash}</td>
 									<td>{b.peak_hr && hrMax ? pct(b.peak_hr / hrMax) : dash}</td>
 								</tr>
+							{/each}
+						</tbody>
+					</table>
+				{/if}
+				{#if hrChart}
+					<h3>Heart rate (strap)</h3>
+					<svg class="hrchart" viewBox="0 0 1000 200" preserveAspectRatio="none" role="img" aria-label="Heart rate over the session">
+						{#each hrChart.marks as m (m.x + m.label)}<line x1={m.x} x2={m.x} y1="0" y2="200" />{/each}
+						<polyline points={hrChart.line} />
+					</svg>
+					<p class="muted small">{hrChart.lo + 5}–{hrChart.hi - 5} bpm{#if hrChart.marks.length} · dashed lines mark phase starts: {hrChart.marks.map((m: Row) => m.label).join(', ')}{/if}</p>
+					<table>
+						<thead><tr><th>Phase</th><th>Mean HR</th><th>Peak HR</th><th>Readings</th></tr></thead>
+						<tbody>
+							{#each HR_ROWS.filter((p) => s[`hr_n_${p}`]) as p (p)}
+								<tr><td>{PHASE_LABEL[p]}</td><td>{s[`hr_mean_${p}`]}</td><td>{s[`hr_peak_${p}`]}</td><td>{s[`hr_n_${p}`]}</td></tr>
 							{/each}
 						</tbody>
 					</table>
@@ -784,5 +820,23 @@
 		.metrics {
 			grid-template-columns: repeat(2, 1fr);
 		}
+	}
+	.hrchart {
+		width: 100%;
+		height: 9rem;
+		background: #fafafa;
+		border: 1px solid #ddd;
+		border-radius: 6px;
+	}
+	.hrchart polyline {
+		fill: none;
+		stroke: #c0392b;
+		stroke-width: 1.5;
+		vector-effect: non-scaling-stroke;
+	}
+	.hrchart line {
+		stroke: #bbb;
+		stroke-dasharray: 4 4;
+		vector-effect: non-scaling-stroke;
 	}
 </style>

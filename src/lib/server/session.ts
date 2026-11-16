@@ -503,7 +503,7 @@ export function deleteParticipants(pids: string[]): number {
 	return db.transaction(() => {
 		let n = 0;
 		for (const pid of pids) {
-			for (const t of ['clicks', 'sa_responses', 'bouts', 'survey', 'phases']) db.prepare(`DELETE FROM ${t} WHERE pid = ?`).run(pid);
+			for (const t of ['clicks', 'sa_responses', 'bouts', 'survey', 'phases', 'hr_samples']) db.prepare(`DELETE FROM ${t} WHERE pid = ?`).run(pid);
 			n += db.prepare('DELETE FROM sessions WHERE pid = ?').run(pid).changes;
 		}
 		return n;
@@ -514,6 +514,6 @@ export function deleteParticipants(pids: string[]): number {
 export function resetAllData(): void {
 	const db = getDb();
 	db.transaction(() => {
-		for (const t of ['clicks', 'sa_responses', 'bouts', 'survey', 'phases', 'sessions']) db.prepare(`DELETE FROM ${t}`).run();
+		for (const t of ['clicks', 'sa_responses', 'bouts', 'survey', 'phases', 'hr_samples', 'sessions']) db.prepare(`DELETE FROM ${t}`).run();
 	})();
 }

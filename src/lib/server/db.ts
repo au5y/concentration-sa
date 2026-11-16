@@ -88,9 +88,28 @@ CREATE TABLE IF NOT EXISTS bouts (
 	server_ts INTEGER NOT NULL,
 	PRIMARY KEY (pid, bout)
 );
+-- Heart-rate strap readings (Bluetooth, sent from the admin page about every 2 s).
+-- ts is on the server clock (the facilitator computer's clock corrected by the offset measured
+-- at each upload) so it lines up with phases.started_at. pid is NULL until the strap is assigned.
+CREATE TABLE IF NOT EXISTS hr_samples (
+	id INTEGER PRIMARY KEY,
+	pid TEXT,
+	strap TEXT NOT NULL,
+	strap_name TEXT,
+	ts INTEGER NOT NULL,
+	client_ts REAL NOT NULL,
+	bpm INTEGER NOT NULL,
+	-- beat-to-beat intervals in ms, space separated ("812 790"); empty if the strap sent none
+	rr_ms TEXT,
+	-- skin contact: 1 / 0, NULL if the strap doesn't report it
+	contact INTEGER,
+	server_ts INTEGER NOT NULL,
+	UNIQUE (strap, client_ts)
+);
+CREATE INDEX IF NOT EXISTS hr_samples_pid_ts ON hr_samples(pid, ts);
 `;
 
-export const TABLES = ['sessions', 'phases', 'clicks', 'sa_responses', 'bouts', 'survey'] as const;
+export const TABLES = ['sessions', 'phases', 'clicks', 'sa_responses', 'bouts', 'survey', 'hr_samples'] as const;
 
 /** Bring older database files up to the current schema. */
 function migrate(d: Database.Database) {
