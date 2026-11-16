@@ -38,7 +38,7 @@ export const ICON_MAP: Record<string, string> = {
 	motorcycle: 'mdi:motorbike',
 	truck: 'mdi:truck',
 	submarine: 'mdi:submarine',
-	hot_air_balloon: 'mdi:airballoon',
+	ambulance: 'mdi:ambulance',
 	skateboard: 'mdi:skateboard',
 	tractor: 'mdi:tractor',
 	// MIT. Not listed (hand-supplied, never overwritten): mit_logo (Wikimedia), muddy_charles (Twemoji),

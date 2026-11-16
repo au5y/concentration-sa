@@ -113,6 +113,12 @@ describe('side-by-side variants', () => {
 		expect(withVariant('mit')).toEqual(['beaver', 'apollo_capsule', 'mit_logo', 'muddy_charles', 'integral']);
 	});
 
+	it('has no flying foil in transport, so "how many could fly" is only about the game', () => {
+		const flying = ['plane', 'helicopter', 'rocket', 'hot_air_balloon'];
+		expect(manifest('transport').foils.filter((o) => flying.includes(o.id))).toEqual([]);
+		expect(manifest('transport').objects.filter((o) => flying.includes(o.id))).toHaveLength(3);
+	});
+
 	it('uses flat icons only, no photos', () => {
 		for (const t of ['mit', 'transport'])
 			for (const o of [...manifest(t).objects, ...manifest(t).foils]) {

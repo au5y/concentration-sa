@@ -108,9 +108,9 @@
 			"orientation": "up"
 		},
 		{
-			"id": "hot_air_balloon",
-			"label": "hot air balloon",
-			"image": "hot_air_balloon.svg",
+			"id": "ambulance",
+			"label": "ambulance",
+			"image": "ambulance.svg",
 			"color": "blue",
 			"orientation": "up"
 		},
