@@ -69,8 +69,8 @@ theme manifests.
 | `rpe_conditions` | Conditions that record RPE at the end of each bout (currently `["elevated_hr"]`; the rest group is not asked). Omit to ask every condition |
 | `max_participants` | Default N for the schedule |
 | `sa_questions` | Question types. Currently `objects`, `color`, `side_by_side`; add `orientation` back to ask it |
-| `sa_random_per_theme` | Random single-item questions per theme after the objects grid, not counting the fixed `sa_side_by_side` ones (currently 2, i.e. 2 color questions; 21 questions in total, see §6). Remove it to ask every type about every object |
-| `sa_side_by_side` | Side-by-side questions asked of **every** participant, per theme: `{"transport": ["car", "plane", "helicopter", "rocket"], "mit": ["beaver", "muddy_charles", "apollo_capsule"]}`. Each must be a seen object with a variant. They are mixed in random order with the random questions, which never use these objects |
+| `sa_random_per_theme` | Random single-item questions per theme after the objects grid, not counting the fixed `sa_side_by_side` ones (currently 2, i.e. 2 color questions; 20 questions in total, see §6). Remove it to ask every type about every object |
+| `sa_side_by_side` | Side-by-side questions asked of **every** participant, per theme: `{"transport": ["plane", "helicopter", "rocket"], "mit": ["beaver", "muddy_charles", "apollo_capsule"]}`. Each must be a seen object with a variant. They are mixed in random order with the random questions, which never use these objects |
 | `sa_foils_per_theme` | Foils shown in the objects grid (a random subset per participant; currently 4, so the grid is 8 + 4 = 12). Remove it to show every foil |
 | `confidence_scale`, `confidence_labels` | e.g. 4 and the two end labels. `0` turns the confidence rating off |
 | `colors` | The 4 colors: `{id, label, hex}` |
@@ -145,15 +145,16 @@ and orientation answers controlled.
   `scripts/import-icons.ts`. To swap an icon, change the map and run
   `npm run icons -- --force`, or simply replace the SVG file.
 - `mit_logo.svg` is the public-domain MIT logo from Wikimedia Commons.
-- Drawn as-is (`"render": "original"`): the square-cropped Boston skyline, Stata Center,
-  Green Building and Brass Rat photos.
+- No photos: every object and foil is a flat icon so none stands out. `caret.svg` (a plain
+  "^", not the Draper logo) was drawn here; the Brass Rat is the game-icons diamond ring.
 - `infinite_corridor.svg` (doorway + infinity sign) and `apollo_capsule_variant.svg` (window
   filled in) were made by hand. `npm run icons` never overwrites these or any non-SVG image.
-- `helicopter_variant.svg` (tail rotor added) and `rocket_variant.svg` (exhaust flame added) were drawn
+- `helicopter_variant.svg` (diagonal tail rotor added) and `rocket_variant.svg` (exhaust flame added) were drawn
   here on top of the MDI icons, in the same 24×24 box so the size doesn't change.
 - An object without a `variant` is never asked about side by side (e.g. the symmetric DNA helix).
   Variants must look clearly different: no color shifts, no 85% scale, and no mirror on a symmetric
-  icon (train, boat and rocket have no mirror variant for that reason).
+  icon (train, boat, rocket and the caret have no mirror variant for that reason). The car has none because
+  its direction was too hard to tell.
 
 Run `npm run validate` and restart the server after changing images.
 
@@ -233,13 +234,13 @@ table when you're done.
 ## 6. SA questions
 
 The two theme blocks come in a random order per participant, seeded from
-`pid + schedule seed`. With the current config there are **21 questions**: the transport block has 10 (1 grid + 2 color +
-4 side-by-side + 3 Level 2), the MIT block 9 (1 grid + 2 color + 3 side-by-side + 3 Level 2), then 2 spoken
+`pid + schedule seed`. With the current config there are **20 questions**: each board block has 9 (1 grid + 2 color +
+3 side-by-side + 3 Level 2) (1 grid + 2 color + 3 side-by-side + 3 Level 2), then 2 spoken
 environment questions:
 
 1. **Objects**: a grid of the 8 seen objects and 4 randomly chosen foils. The participant taps exactly 8, then Next.
 2. Then the single-item questions, in random order, each about a different seen object:
-   the fixed side-by-side questions (`sa_side_by_side`, the same objects for everyone: car, plane,
+   the fixed side-by-side questions (`sa_side_by_side`, the same objects for everyone: plane,
    helicopter, rocket / beaver, Muddy Charles, Apollo capsule) plus 2 color questions about randomly
    chosen other objects. Color questions only use mask items:
    - **Color**: "What color was the [object]?" The 4 options show the object in each color.

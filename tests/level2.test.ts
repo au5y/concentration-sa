@@ -38,16 +38,16 @@ const level1Item = ['color', 'orientation', 'side_by_side'];
 const isL2 = (s: SaStep) => s.type === 'level2_color' || s.type === 'level2_count';
 
 describe('SA plan from config.json', () => {
-	it('asks 21 questions: 2 grids, 11 Level 1 items (4 color + 7 fixed side-by-side), 6 Level 2, 2 environment', () => {
+	it('asks 20 questions: 2 grids, 10 Level 1 items (4 color + 6 fixed side-by-side), 6 Level 2, 2 environment', () => {
 		for (let seed = 0; seed < 50; seed++) {
 			const p = plan(seed);
-			expect(p).toHaveLength(21);
+			expect(p).toHaveLength(20);
 			expect(p.filter((s) => s.type === 'objects')).toHaveLength(2);
-			expect(p.filter((s) => level1Item.includes(s.type))).toHaveLength(11);
+			expect(p.filter((s) => level1Item.includes(s.type))).toHaveLength(10);
 			expect(p.filter((s) => s.type === 'color')).toHaveLength(4);
 			// the same side-by-side objects for everyone
 			const sbs = (t: string) => p.filter((s) => s.type === 'side_by_side' && s.theme === t).map((s) => ('item' in s ? s.item : '')).sort();
-			expect(sbs('transport')).toEqual(['car', 'helicopter', 'plane', 'rocket']);
+			expect(sbs('transport')).toEqual(['helicopter', 'plane', 'rocket']);
 			expect(sbs('mit')).toEqual(['apollo_capsule', 'beaver', 'muddy_charles']);
 			// color questions are about other objects, never one asked side by side
 			const colorItems = p.filter((s) => s.type === 'color').map((s) => (s as { item: string }).item);

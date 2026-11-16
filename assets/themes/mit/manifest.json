@@ -57,15 +57,11 @@
 			}
 		},
 		{
-			"id": "boston_skyline",
-			"label": "Boston skyline",
-			"image": "boston_skyline.jpg",
+			"id": "caret",
+			"label": "caret symbol",
+			"image": "caret.svg",
 			"color": "green",
-			"orientation": "up",
-			"variant": {
-				"mirror": true
-			},
-			"render": "original"
+			"orientation": "up"
 		},
 		{
 			"id": "integral",
@@ -79,22 +75,6 @@
 		}
 	],
 	"foils": [
-		{
-			"id": "stata_center",
-			"label": "Stata Center",
-			"image": "stata_center.jpg",
-			"color": "red",
-			"orientation": "up",
-			"render": "original"
-		},
-		{
-			"id": "green_building",
-			"label": "Green Building",
-			"image": "green_building.jpg",
-			"color": "blue",
-			"orientation": "up",
-			"render": "original"
-		},
 		{
 			"id": "kresge_auditorium",
 			"label": "Kresge Auditorium",
@@ -111,11 +91,10 @@
 		},
 		{
 			"id": "brass_rat",
-			"label": "Brass Rat",
-			"image": "brass_rat.jpg",
+			"label": "Brass Rat ring",
+			"image": "brass_rat.svg",
 			"color": "red",
-			"orientation": "up",
-			"render": "original"
+			"orientation": "up"
 		},
 		{
 			"id": "infinite_corridor",

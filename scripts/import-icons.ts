@@ -42,14 +42,13 @@ export const ICON_MAP: Record<string, string> = {
 	skateboard: 'mdi:skateboard',
 	tractor: 'mdi:tractor',
 	// MIT. Not listed (hand-supplied, never overwritten): mit_logo (Wikimedia), muddy_charles (Twemoji),
-	// boston_skyline / stata_center / green_building (photos), infinite_corridor (composed doorway + infinity),
+	// caret (drawn here), infinite_corridor (composed doorway + infinity),
 	// apollo_capsule_variant.svg, integral (MathJax). Transport: helicopter_variant.svg and
 	// rocket_variant.svg (hand-drawn additions). See assets/ATTRIBUTION.md.
 	beaver: 'gi:beaver',
 	great_dome: 'gi:capitol',
 	dna_helix: 'mdi:dna',
 	apollo_capsule: 'gi:apollo-capsule',
-	boston_skyline: 'gi:modern-city',
 	kresge_auditorium: 'gi:theater',
 	harvard_bridge: 'mdi:bridge',
 	brass_rat: 'gi:diamond-ring',

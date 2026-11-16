@@ -24,10 +24,7 @@
 			"label": "car",
 			"image": "car.svg",
 			"color": "green",
-			"orientation": "up",
-			"variant": {
-				"mirror": true
-			}
+			"orientation": "up"
 		},
 		{
 			"id": "boat",

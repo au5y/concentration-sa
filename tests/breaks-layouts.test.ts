@@ -106,8 +106,17 @@ describe('card layouts', () => {
 describe('side-by-side variants', () => {
 	it('are asked only about objects whose variant really looks different', () => {
 		const withVariant = (t: string) => manifest(t).objects.filter(hasVariant).map((o) => o.id);
-		expect(withVariant('transport')).toEqual(['plane', 'car', 'scooter', 'helicopter', 'rocket']);
+		expect(withVariant('transport')).toEqual(['plane', 'scooter', 'helicopter', 'rocket']);
 		// no color-shift variants left in either theme
 		for (const t of ['mit', 'transport']) for (const o of manifest(t).objects) expect(o.variant?.color_shift_deg).toBeUndefined();
+		expect(withVariant('mit')).toEqual(['beaver', 'apollo_capsule', 'mit_logo', 'muddy_charles', 'integral']);
+	});
+
+	it('uses flat icons only, no photos', () => {
+		for (const t of ['mit', 'transport'])
+			for (const o of [...manifest(t).objects, ...manifest(t).foils]) {
+				expect(o.render).toBeUndefined();
+				expect(o.image).toMatch(/\.svg$/);
+			}
 	});
 });

@@ -50,7 +50,7 @@ describe('Level 2 through a session', () => {
 	it('stores, scores and exports Level 2 answers', () => {
 		const pid = session.createTestSession({ condition: 'rest', board_a_theme: 'mit', board_b_theme: 'transport', phase: 'sa', fast: true });
 		const plan: SaStep[] = JSON.parse(session.getSession(pid)!.sa_plan);
-		expect(plan).toHaveLength(21);
+		expect(plan).toHaveLength(20);
 		for (const step of plan) session.recordSa(pid, { seq: step.seq, ...answer(step), ...timing } as any);
 
 		const rows = db.getDb().prepare("SELECT * FROM sa_responses WHERE pid = ? AND question_type LIKE 'level2_%' ORDER BY seq").all(pid) as any[];

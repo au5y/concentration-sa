@@ -15,7 +15,7 @@
 	"sa_questions": ["objects", "color", "side_by_side"],
 	"sa_random_per_theme": 2,
 	"sa_side_by_side": {
-		"transport": ["car", "plane", "helicopter", "rocket"],
+		"transport": ["plane", "helicopter", "rocket"],
 		"mit": ["beaver", "muddy_charles", "apollo_capsule"]
 	},
 	"sa_foils_per_theme": 4,
