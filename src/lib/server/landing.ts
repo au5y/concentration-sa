@@ -22,7 +22,7 @@ export const DEFAULT_LANDING: Landing = {
 		'Groups are assigned at random.',
 	facts: [
 		{ label: 'Time', text: 'About 20 minutes, one visit' },
-		{ label: 'Who', text: 'Adults 18+ who can climb stairs for a few minutes. No known heart conditions. Able to tell red, green, yellow and blue apart.' },
+		{ label: 'Who', text: 'Adults 18+ who can vigorously exercise for a few minutes. No known heart conditions. Able to tell red, green, yellow and blue apart.' },
 		{ label: 'Wear', text: 'Comfortable shoes and exercise clothes' },
 		{ label: 'Note', text: 'You can stop at any time' }
 	],
