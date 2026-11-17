@@ -119,7 +119,7 @@ export function status() {
 	const db = getDb();
 	const sessions = db
 		.prepare(
-			`SELECT s.pid, s.condition, s.board_a_theme, s.board_b_theme, s.phase, s.phase_started_at,
+			`SELECT s.pid, s.condition, s.tags, s.board_a_theme, s.board_b_theme, s.phase, s.phase_started_at,
 			        s.updated_at, s.completed_at, s.created_at,
 			        (SELECT COUNT(*) FROM clicks c WHERE c.pid = s.pid) AS clicks,
 			        (SELECT COUNT(DISTINCT seq) FROM sa_responses r WHERE r.pid = s.pid) AS sa_answered,
@@ -128,6 +128,19 @@ export function status() {
 			 FROM sessions s ORDER BY s.updated_at DESC`
 		)
 		.all() as any[];
+	// Survey and bout answers, for correcting them on the admin page.
+	const surveys = Object.fromEntries(
+		(db.prepare('SELECT pid, age, exercise_days, fitness, hours_slept FROM survey').all() as any[]).map(({ pid, ...v }) => [pid, v])
+	) as Record<string, { age: number; exercise_days: number; fitness: number; hours_slept: number }>;
+	const bouts: Record<string, Record<string, { rpe: number; peak_hr: number | null }>> = {};
+	for (const b of db.prepare('SELECT pid, bout, rpe, peak_hr FROM bouts').all() as any[]) (bouts[b.pid] ??= {})[b.bout] = { rpe: b.rpe, peak_hr: b.peak_hr };
+	const edits = db.prepare('SELECT pid, field, old_value, new_value, server_ts FROM edits ORDER BY id').all() as {
+		pid: string;
+		field: string;
+		old_value: string | null;
+		new_value: string | null;
+		server_ts: number;
+	}[];
 	const schedule = loadSchedule();
 	const started = new Set(sessions.map((s) => s.pid));
 	// Straps heard from in the last minute (latest reading each), for the live panel.
@@ -142,9 +155,13 @@ export function status() {
 		now: Date.now(),
 		active: sessions.filter((s) => s.phase !== 'done'),
 		sessions,
+		surveys,
+		bouts,
+		edits,
 		schedule: schedule.map((r) => ({ ...r, started: started.has(r.pid) })),
 		straps,
 		devTimers: experiment().devTimers,
+		conditions: experiment().config.conditions,
 		test: {
 			conditions: experiment().config.conditions,
 			themeOrders: experiment().config.theme_orders,
@@ -172,6 +189,7 @@ export function participantDetail(pid: string) {
 			)
 		),
 		bouts: rows('SELECT bout, rpe, peak_hr, server_ts FROM bouts WHERE pid = ? ORDER BY bout'),
+		edits: rows('SELECT field, old_value, new_value, server_ts FROM edits WHERE pid = ? ORDER BY id'),
 		hr: rows('SELECT ts, bpm, contact FROM hr_samples WHERE pid = ? ORDER BY ts'),
 		survey: (db.prepare('SELECT * FROM survey WHERE pid = ?').get(pid) as Record<string, unknown> | undefined) ?? null,
 		summary: summaryRows(true).find((r) => r.pid === pid) ?? null,

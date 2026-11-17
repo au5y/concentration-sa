@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS sessions (
 	sa_plan TEXT NOT NULL,
 	-- This participant's card layouts, JSON {"A": [object id per card], "B": [...]}.
 	-- NULL for sessions started before layouts were per participant (they used assets/layouts.json).
-	layouts TEXT
+	layouts TEXT,
+	-- Facilitator tags, comma separated ("stairs, late start"), set on the admin page.
+	tags TEXT NOT NULL DEFAULT ''
 );
 -- One row per phase, plus marker rows such as baseline.start, board_a.preview,
 -- board_a.play (cards flipped face down) and board_a.resume (page reloaded).
@@ -107,9 +109,20 @@ CREATE TABLE IF NOT EXISTS hr_samples (
 	UNIQUE (strap, client_ts)
 );
 CREATE INDEX IF NOT EXISTS hr_samples_pid_ts ON hr_samples(pid, ts);
+-- Corrections made on the admin page (wrong condition, survey typo, wrong PID, ...): one row per
+-- changed field, old and new value as text. pid is the participant's current pid.
+CREATE TABLE IF NOT EXISTS edits (
+	id INTEGER PRIMARY KEY,
+	pid TEXT NOT NULL,
+	field TEXT NOT NULL,
+	old_value TEXT,
+	new_value TEXT,
+	server_ts INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS edits_pid ON edits(pid);
 `;
 
-export const TABLES = ['sessions', 'phases', 'clicks', 'sa_responses', 'bouts', 'survey', 'hr_samples'] as const;
+export const TABLES = ['sessions', 'phases', 'clicks', 'sa_responses', 'bouts', 'survey', 'hr_samples', 'edits'] as const;
 
 /** Bring older database files up to the current schema. */
 function migrate(d: Database.Database) {
@@ -123,6 +136,8 @@ function migrate(d: Database.Database) {
 	// Card layouts became per participant.
 	const sessionCols = cols('sessions');
 	if (sessionCols.length && !sessionCols.includes('layouts')) d.exec('ALTER TABLE sessions ADD COLUMN layouts TEXT');
+	// Facilitator tags.
+	if (sessionCols.length && !sessionCols.includes('tags')) d.exec("ALTER TABLE sessions ADD COLUMN tags TEXT NOT NULL DEFAULT ''");
 }
 
 let db: Database.Database | null = null;

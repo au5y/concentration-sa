@@ -3,6 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import HeartRatePanel from '$lib/components/HeartRatePanel.svelte';
 	import LandingEditor from '$lib/components/LandingEditor.svelte';
+	import TagPresetsEditor from '$lib/components/TagPresetsEditor.svelte';
 
 	let { data } = $props();
 	let password = $state('');
@@ -87,6 +88,103 @@
 	async function jumpTest(pid: string, phase: string) {
 		if (await testAction({ action: 'jump', pid, phase })) notice = `${pid} moved to ${phase}.`;
 	}
+	// Editing a participant (corrections and tags). The form works on a copy so the 3 s refresh
+	// doesn't overwrite what is being typed.
+	type Bout = { rpe: number | null; peak_hr: number | null };
+	type Form = {
+		pid: string;
+		condition: string;
+		tags: string;
+		survey: { age: number; exercise_days: number; fitness: number; hours_slept: number } | null;
+		bouts: { interval1: Bout; interval2: Bout };
+	};
+	let editing = $state<string | null>(null);
+	let form = $state<Form | null>(null);
+	const splitTags = (t: string | null | undefined) => (t ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+	/** Tags on any session, and the suggested ones followed by any others in use (for the edit form). */
+	const usedTags = $derived(
+		data.authed ? [...new Set(data.sessions.flatMap((r) => splitTags(r.tags)))].sort((a, b) => a.localeCompare(b)) : []
+	);
+	const allTags = $derived(
+		data.authed
+			? [...data.tagPresets, ...usedTags.filter((t) => !data.tagPresets.some((p) => p.toLowerCase() === t.toLowerCase()))]
+			: []
+	);
+	function openEdit(r: { pid: string; condition: string; tags: string }) {
+		if (!data.authed) return;
+		const b = data.bouts[r.pid] ?? {};
+		const bout = (k: string): Bout => ({ rpe: b[k]?.rpe ?? null, peak_hr: b[k]?.peak_hr ?? null });
+		const sv = data.surveys[r.pid];
+		form = {
+			pid: r.pid,
+			condition: r.condition,
+			tags: splitTags(r.tags).join(', '),
+			survey: sv ? { ...sv } : null,
+			bouts: { interval1: bout('interval1'), interval2: bout('interval2') }
+		};
+		editing = r.pid;
+	}
+	function toggleTag(t: string) {
+		if (!form) return;
+		const cur = splitTags(form.tags);
+		const has = cur.some((c) => c.toLowerCase() === t.toLowerCase());
+		form.tags = (has ? cur.filter((c) => c.toLowerCase() !== t.toLowerCase()) : [...cur, t]).join(', ');
+	}
+	const hasTag = (t: string) => !!form && splitTags(form.tags).some((c) => c.toLowerCase() === t.toLowerCase());
+	/** What the schedule says about the new pid, if it differs from this session. */
+	function pidNote(r: { pid: string; condition: string; board_a_theme: string; board_b_theme: string }, to: string): string {
+		if (!data.authed || !to || to === r.pid) return '';
+		if (data.sessions.some((s) => s.pid === to)) return `${to} already has a session; pick another ID.`;
+		const sch = data.schedule.find((x) => x.pid === to);
+		if (!sch) return `${to} is not in the schedule (that's fine for the data, just so you know).`;
+		const diff = [
+			sch.condition !== (form?.condition ?? r.condition) && `condition ${sch.condition}`,
+			sch.board_a_theme !== r.board_a_theme && `Board A ${sch.board_a_theme}`,
+			sch.board_b_theme !== r.board_b_theme && `Board B ${sch.board_b_theme}`
+		].filter(Boolean);
+		return diff.length ? `The schedule has ${to} as ${diff.join(', ')}; this session keeps what was actually run.` : '';
+	}
+	async function saveEdit(r: { pid: string; phase: string }) {
+		if (!form || !data.authed) return;
+		const to = form.pid.trim();
+		const bouts: Record<string, { rpe: number; peak_hr: number | null } | null> = {};
+		for (const k of ['interval1', 'interval2'] as const) {
+			const v = form.bouts[k];
+			const had = !!data.bouts[r.pid]?.[k];
+			if (v.rpe === null && v.peak_hr === null) {
+				if (had) bouts[k] = null;
+			} else if (v.rpe === null) {
+				notice = `Failed: ${k === 'interval1' ? 'Bout 1' : 'Bout 2'} needs an RPE (or clear both fields to remove it).`;
+				return;
+			} else bouts[k] = { rpe: v.rpe, peak_hr: v.peak_hr };
+		}
+		if (to !== r.pid) {
+			const live = r.phase !== 'done';
+			const msg =
+				`Change participant ID ${r.pid} → ${to}? All of their data moves to ${to}, and ${r.pid} can be run again.` +
+				(live ? `\n\nThis session is still in progress: reopen the study page with ?pid=${to} and reassign their heart-rate strap.` : '');
+			if (!confirm(msg)) return;
+		}
+		const ok = await dataAction({
+			action: 'edit',
+			pid: r.pid,
+			changes: {
+				pid: to,
+				condition: form.condition,
+				tags: splitTags(form.tags),
+				...(form.survey ? { survey: form.survey } : {}),
+				bouts
+			}
+		});
+		if (ok) {
+			notice = `Saved ${to}.`;
+			editing = null;
+			form = null;
+		}
+	}
+	const editsFor = (pid: string) => (data.authed ? data.edits.filter((e) => e.pid === pid) : []);
+	const show = (v: string | null) => (v === null || v === '' ? '—' : v);
+
 	const isTest = (pid: string) => pid.startsWith('TEST-');
 	const isArchived = (pid: string) => pid.startsWith('ARCHIVE-');
 
@@ -108,7 +206,7 @@
 		return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 	};
 	const time = (ms: number | null) => (ms ? new Date(ms).toLocaleString() : '');
-	const EXPORTS = ['summary', 'sessions', 'phases', 'clicks', 'sa_responses', 'bouts', 'survey', 'hr_samples'];
+	const EXPORTS = ['summary', 'sessions', 'phases', 'clicks', 'sa_responses', 'bouts', 'survey', 'hr_samples', 'edits'];
 </script>
 
 <svelte:head><title>Admin · Pump Up the Memory: HSE Study</title></svelte:head>
@@ -204,7 +302,7 @@
 		<table>
 			<thead>
 				<tr>
-					<th></th><th>PID</th><th>Condition</th><th>Board A</th><th>Board B</th><th>Phase</th><th>Clicks</th>
+					<th></th><th>PID</th><th>Condition</th><th>Tags</th><th>Board A</th><th>Board B</th><th>Phase</th><th>Clicks</th>
 					<th>SA</th><th>Reloads</th><th>Started</th><th>Completed</th><th></th>
 				</tr>
 			</thead>
@@ -212,10 +310,12 @@
 				{#each data.sessions as r (r.pid)}
 					<tr>
 						<td><input type="checkbox" checked={selected.includes(r.pid)} onchange={() => toggle(r.pid)} /></td>
-						<td><a href="/admin/explore?pid={encodeURIComponent(r.pid)}">{r.pid}</a>{#if isTest(r.pid)} <span class="tag">test</span>{:else if isArchived(r.pid)} <span class="tag">archived</span>{/if}</td><td>{r.condition}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
+						<td><a href="/admin/explore?pid={encodeURIComponent(r.pid)}">{r.pid}</a>{#if isTest(r.pid)} <span class="tag">test</span>{:else if isArchived(r.pid)} <span class="tag">archived</span>{/if}</td><td>{r.condition}</td>
+						<td>{#each splitTags(r.tags) as t (t)}<span class="chip">{t}</span>{/each}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
 						<td>{r.phase}</td><td>{r.clicks}</td><td>{r.sa_answered}/{r.sa_total}</td>
 						<td class:warnc={r.reloads > 0}>{r.reloads}</td><td>{time(r.created_at)}</td><td>{time(r.completed_at)}</td>
 						<td class="nowrap">
+							<button class="small" onclick={() => (editing === r.pid ? (editing = null) : openEdit(r))}>{editing === r.pid ? 'Close' : 'Edit'}</button>
 							{#if isTest(r.pid)}
 								<a class="small" href="/run?pid={r.pid}" target="_blank">Open</a>
 								<select class="small" value="" onchange={(e) => jumpTest(r.pid, e.currentTarget.value)}>
@@ -228,6 +328,74 @@
 							<button class="small" onclick={() => deletePids([r.pid])}>Delete</button>
 						</td>
 					</tr>
+					{#if editing === r.pid && form}
+						<tr class="editrow">
+							<td colspan="13">
+								<form class="edit" onsubmit={(e) => (e.preventDefault(), saveEdit(r))}>
+									<fieldset>
+										<legend>Participant</legend>
+										<label>ID <input bind:value={form.pid} size="12" required /></label>
+										<label>Condition
+											<select bind:value={form.condition}>
+												{#each data.conditions as c (c)}<option value={c}>{c}</option>{/each}
+											</select>
+										</label>
+										{#if pidNote(r, form.pid.trim())}<p class="hint">{pidNote(r, form.pid.trim())}</p>{/if}
+									</fieldset>
+									<fieldset class="tags">
+										<legend>Tags</legend>
+										<input bind:value={form.tags} placeholder="e.g. stairs, late start" size="36" />
+										{#if allTags.length}
+											<div class="chips">
+												{#each allTags as t (t)}
+													<button type="button" class="chip" class:on={hasTag(t)} onclick={() => toggleTag(t)}>{t}</button>
+												{/each}
+											</div>
+										{/if}
+										<p class="hint">Click a suggestion or type your own, comma separated. Edit the suggestions at the bottom of this page.</p>
+									</fieldset>
+									<fieldset>
+										<legend>Survey</legend>
+										{#if form.survey}
+											<label>Age <input type="number" min="16" max="99" bind:value={form.survey.age} required /></label>
+											<label>Exercise days/wk <input type="number" min="0" max="7" bind:value={form.survey.exercise_days} required /></label>
+											<label>Fitness (1-5) <input type="number" min="1" max="5" bind:value={form.survey.fitness} required /></label>
+											<label>Hours slept <input type="number" min="0" max="24" step="any" bind:value={form.survey.hours_slept} required /></label>
+										{:else}
+											<p class="hint">Not filled in yet.</p>
+										{/if}
+									</fieldset>
+									<fieldset>
+										<legend>Exercise / rest bouts</legend>
+										{#each [['interval1', 'Bout 1 (before A)'], ['interval2', 'Bout 2 (before B)']] as [k, label] (k)}
+											<div class="bout">
+												<span>{label}</span>
+												<label>RPE <input type="number" min="6" max="20" bind:value={form.bouts[k as 'interval1'].rpe} /></label>
+												<label>Peak HR <input type="number" min="30" max="250" bind:value={form.bouts[k as 'interval1'].peak_hr} /></label>
+											</div>
+										{/each}
+										<p class="hint">Clear both fields to remove a bout's entry.</p>
+									</fieldset>
+									<div class="actions">
+										<button class="primary">Save changes</button>
+										<button type="button" onclick={() => ((editing = null), (form = null))}>Cancel</button>
+									</div>
+								</form>
+								{#if editsFor(r.pid).length}
+									<details class="history">
+										<summary>Change history ({editsFor(r.pid).length})</summary>
+										<table>
+											<tbody>
+												{#each editsFor(r.pid) as e, i (i)}
+													<tr><td>{time(e.server_ts)}</td><td>{e.field}</td><td>{show(e.old_value)} → {show(e.new_value)}</td></tr>
+												{/each}
+											</tbody>
+										</table>
+									</details>
+								{/if}
+							</td>
+						</tr>
+					{/if}
 				{/each}
 			</tbody>
 		</table>
@@ -247,6 +415,8 @@
 				{/each}
 			</tbody>
 		</table>
+
+		<TagPresetsEditor presets={data.tagPresets} inUse={usedTags} />
 	{/if}
 </main>
 
@@ -312,6 +482,78 @@
 	}
 	.small {
 		font-size: 0.8rem;
+	}
+	.chip {
+		display: inline-block;
+		background: #e6effc;
+		color: #1f4f9e;
+		border: 1px solid #c3d6f5;
+		border-radius: 999px;
+		font-size: 0.75rem;
+		padding: 0 0.5rem;
+		margin: 0 0.2rem 0.2rem 0;
+	}
+	button.chip {
+		cursor: pointer;
+		background: #fff;
+		color: #555;
+		border-color: #ccc;
+	}
+	button.chip.on {
+		background: #1f63d6;
+		color: #fff;
+		border-color: #1f63d6;
+	}
+	.editrow > td {
+		background: #f6f8fc;
+		padding: 0.8rem;
+	}
+	.edit {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.8rem;
+		align-items: flex-start;
+	}
+	.edit fieldset {
+		border: 1px solid #d5dbe6;
+		border-radius: 8px;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		max-width: 22rem;
+	}
+	.edit label {
+		display: flex;
+		justify-content: space-between;
+		gap: 0.5rem;
+		align-items: center;
+	}
+	.edit input[type='number'] {
+		width: 4.5rem;
+	}
+	.bout {
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	.bout > span {
+		min-width: 8rem;
+		font-size: 0.85rem;
+	}
+	.hint {
+		margin: 0;
+		color: #777;
+		font-size: 0.78rem;
+	}
+	.actions {
+		display: flex;
+		gap: 0.6rem;
+		align-self: flex-end;
+	}
+	.history {
+		margin-top: 0.6rem;
+		font-size: 0.85rem;
 	}
 	.nowrap {
 		white-space: nowrap;

@@ -24,6 +24,8 @@ export interface SessionRow {
 	sa_plan: string;
 	/** JSON {A: cards, B: cards}; null for sessions started before layouts were per participant. */
 	layouts: string | null;
+	/** Facilitator tags, comma separated ("stairs, late start"); '' for none. */
+	tags: string;
 }
 
 const BOARD_OF: Partial<Record<Phase, 'A' | 'B'>> = { board_a: 'A', board_b: 'B' };
@@ -154,13 +156,19 @@ export function archiveParticipant(pid: string, tag: string, layouts?: { A: stri
 			const own = layouts ?? { A: sessionCards(s, 'A'), B: sessionCards(s, 'B') };
 			db.prepare('UPDATE sessions SET layouts = ? WHERE pid = ?').run(JSON.stringify(own), pid);
 		}
-		const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map((t) => t.name);
-		for (const t of tables) {
-			const cols = (db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).map((c) => c.name);
-			if (cols.includes('pid')) db.prepare(`UPDATE ${t} SET pid = ? WHERE pid = ?`).run(to, pid);
-		}
+		renamePidRows(pid, to);
 		return to;
 	})();
+}
+
+/** Move every row of `from` (in every table with a pid column) to `to`. Call inside a transaction. */
+export function renamePidRows(from: string, to: string) {
+	const db = getDb();
+	const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map((t) => t.name);
+	for (const t of tables) {
+		const cols = (db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).map((c) => c.name);
+		if (cols.includes('pid')) db.prepare(`UPDATE ${t} SET pid = ? WHERE pid = ?`).run(to, from);
+	}
 }
 
 /** Create a throwaway test session that starts in any phase. Returns its pid. */
@@ -463,12 +471,16 @@ export function recordSa(pid: string, a: SaAnswer): { answered: number } {
 
 const isBout = (p: Phase) => p === 'interval1' || p === 'interval2';
 
+export function checkBout(rpe: number, peak_hr: number | null) {
+	if (!Number.isInteger(rpe) || rpe < 6 || rpe > 20) error(400, 'RPE must be 6-20');
+	if (peak_hr !== null && (!Number.isInteger(peak_hr) || peak_hr < 30 || peak_hr > 250)) error(400, 'peak HR must be 30-250 bpm');
+}
+
 /** Facilitator records RPE (Borg 6-20) and, optionally, peak HR at the end of an exercise/rest bout. */
 export function recordBout(pid: string, v: { phase: Phase; rpe: number; peak_hr: number | null }): void {
 	const s = requireSession(pid);
 	if (!isBout(v.phase) || s.phase !== v.phase) error(409, `Session is in ${s.phase}, not ${v.phase}`);
-	if (!Number.isInteger(v.rpe) || v.rpe < 6 || v.rpe > 20) error(400, 'RPE must be 6-20');
-	if (v.peak_hr !== null && (!Number.isInteger(v.peak_hr) || v.peak_hr < 30 || v.peak_hr > 250)) error(400, 'peak HR must be 30-250 bpm');
+	checkBout(v.rpe, v.peak_hr);
 	const now = Date.now();
 	getDb()
 		.prepare('INSERT OR REPLACE INTO bouts (pid, bout, rpe, peak_hr, server_ts) VALUES (?, ?, ?, ?, ?)')
@@ -483,13 +495,17 @@ export interface SurveyAnswers {
 	hours_slept: number;
 }
 
-export function recordSurvey(pid: string, v: SurveyAnswers, clientTs: number | null): SessionRow {
-	const s = requireSession(pid);
-	if (s.phase !== 'survey') error(409, `Session is in ${s.phase}, not survey`);
+export function checkSurvey(v: SurveyAnswers) {
 	if (!Number.isInteger(v.age) || v.age < 16 || v.age > 99) error(400, 'age must be 16-99');
 	if (!Number.isInteger(v.exercise_days) || v.exercise_days < 0 || v.exercise_days > 7) error(400, 'exercise days must be 0-7');
 	if (!Number.isInteger(v.fitness) || v.fitness < 1 || v.fitness > 5) error(400, 'fitness must be 1-5');
 	if (typeof v.hours_slept !== 'number' || v.hours_slept < 0 || v.hours_slept > 24) error(400, 'hours slept must be 0-24');
+}
+
+export function recordSurvey(pid: string, v: SurveyAnswers, clientTs: number | null): SessionRow {
+	const s = requireSession(pid);
+	if (s.phase !== 'survey') error(409, `Session is in ${s.phase}, not survey`);
+	checkSurvey(v);
 	getDb()
 		.prepare(
 			`INSERT OR REPLACE INTO survey (pid, age, exercise_days, fitness, hours_slept, server_ts)
@@ -505,7 +521,7 @@ export function deleteParticipants(pids: string[]): number {
 	return db.transaction(() => {
 		let n = 0;
 		for (const pid of pids) {
-			for (const t of ['clicks', 'sa_responses', 'bouts', 'survey', 'phases', 'hr_samples']) db.prepare(`DELETE FROM ${t} WHERE pid = ?`).run(pid);
+			for (const t of ['clicks', 'sa_responses', 'bouts', 'survey', 'phases', 'hr_samples', 'edits']) db.prepare(`DELETE FROM ${t} WHERE pid = ?`).run(pid);
 			n += db.prepare('DELETE FROM sessions WHERE pid = ?').run(pid).changes;
 		}
 		return n;
@@ -516,6 +532,6 @@ export function deleteParticipants(pids: string[]): number {
 export function resetAllData(): void {
 	const db = getDb();
 	db.transaction(() => {
-		for (const t of ['clicks', 'sa_responses', 'bouts', 'survey', 'phases', 'hr_samples', 'sessions']) db.prepare(`DELETE FROM ${t}`).run();
+		for (const t of ['clicks', 'sa_responses', 'bouts', 'survey', 'phases', 'hr_samples', 'edits', 'sessions']) db.prepare(`DELETE FROM ${t}`).run();
 	})();
 }

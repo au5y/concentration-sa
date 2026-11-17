@@ -271,7 +271,10 @@
 		<p><a href={qs({})}>← All participants</a></p>
 		<section class="hero">
 			<div>
-				<h2>{d.session.pid} {#if d.session.pid.startsWith('TEST-')}<span class="tag">test</span>{/if}</h2>
+				<h2>
+					{d.session.pid} {#if d.session.pid.startsWith('TEST-')}<span class="tag">test</span>{/if}
+					{#each (d.session.tags ?? '').split(',').map((t: string) => t.trim()).filter(Boolean) as t (t)}<span class="tag">{t}</span> {/each}
+				</h2>
 				<p class="muted">
 					Condition <b>{d.session.condition}</b> · Board A <b>{d.session.board_a_theme}</b> · Board B <b>{d.session.board_b_theme}</b>
 				</p>

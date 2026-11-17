@@ -314,6 +314,19 @@ the schedule. It refreshes every 3 s.
   every SA answer marked right or wrong.
 - Test sessions are hidden unless you tick **Include test sessions**.
 
+**Tags and corrections:** click **Edit** on a session row to
+- tag the participant with anything off-nominal (`stairs` vs `burpees`, `late start`, `exclude`, …):
+  click a suggested tag or type your own, comma separated. Tags show in the sessions table and the
+  explorer, and are a `tags` column in `summary.csv` and `sessions.csv`;
+- correct the condition, survey answers, or RPE / peak HR (clear both to remove a bout's entry);
+- change the participant ID. All their data moves to the new ID and the old one can be run
+  again. For a session in progress, reopen the study page with `?pid=<new>` and reassign the strap.
+
+Board A/B can't be edited: they are what the participant was actually shown. Every change is
+logged (field, old → new, time) in `edits.csv` and under **Change history** in the edit form.
+The suggested tags are edited under **Suggested tags** at the bottom of `/admin` (stored in
+`data/tags.json`).
+
 **Cleaning up test data:**
 - **Delete** on a session row, or tick several rows and click **Delete selected**, removes
   everything recorded for those participants. They can then start again from the beginning.
@@ -333,6 +346,7 @@ Download links, each a full table as CSV (every epoch-ms column also gets an `_i
 | `bouts.csv` | Per exercise/rest bout (`interval1` before Game A, `interval2` before Game B): RPE, peak HR. Exercise group only |
 | `survey.csv` | Age, exercise days/week, fitness (1–5), hours slept |
 | `hr_samples.csv` | Every heart-rate strap reading (about 1/s per strap): pid (blank until the strap is assigned), strap id and name, `ts` (server clock, lines up with `phases`), `client_ts`, bpm, `rr_ms` (beat-to-beat intervals, space separated), `contact` (1 / 0 / blank if not reported) |
+| `edits.csv` | Every correction made on the admin page: pid (current), field (`condition`, `tags`, `survey.age`, `interval1.rpe`, `pid`, …), old and new value, `server_ts` |
 | `summary.csv` | One row per participant (below) |
 
 **Summary columns**

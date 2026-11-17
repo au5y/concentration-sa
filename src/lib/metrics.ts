@@ -115,6 +115,8 @@ export interface SummaryInput {
 		board_b_theme: string;
 		phase: string;
 		completed_at: number | null;
+		/** Facilitator tags, comma separated. */
+		tags?: string | null;
 		/** This participant's layouts, JSON {A: cards, B: cards}; null/absent = the shared layout. */
 		layouts?: string | null;
 	}[];
@@ -184,6 +186,7 @@ export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 		const row: Record<string, unknown> = {
 			pid: s.pid,
 			condition: s.condition,
+			tags: s.tags ?? '',
 			board_a_theme: s.board_a_theme,
 			board_b_theme: s.board_b_theme,
 			final_phase: s.phase,
