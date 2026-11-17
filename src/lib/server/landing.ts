@@ -18,7 +18,7 @@ export const DEFAULT_LANDING: Landing = {
 	titleAccent: 'Your Game',
 	intro:
 		'Play two short computer matching games and answer some quick questions. ' +
-		'Between games, some people climb stairs at their own pace to raise their heart rate; others rest. ' +
+		'Between games, some people exercise to raise their heart rate; others rest. ' +
 		'Groups are assigned at random.',
 	facts: [
 		{ label: 'Time', text: 'About 20 minutes, one visit' },
