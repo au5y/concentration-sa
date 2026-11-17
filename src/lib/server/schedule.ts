@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit';
 import { extendSchedule } from '../schedule';
 import { randomSeed } from '../rng';
 import { getDb } from './db';
+import { editParticipant } from './edit';
 import { experiment } from './experiment';
 import { loadSchedule, saveSchedule } from './files';
 
@@ -37,5 +38,22 @@ export function setScheduleRemote(pid: string, remote: boolean): void {
 	const r = rows.find((x) => x.pid === pid);
 	if (!r) error(404, `${pid} is not in the schedule`);
 	r.remote = remote;
+	saveSchedule(rows);
+}
+
+/**
+ * Switch a participant's condition (e.g. elevated_hr ↔ rest). Updates the schedule row and, if they
+ * have started, the session (logged in the edits table). Board themes and order are unchanged.
+ */
+export function setCondition(pid: string, condition: string): void {
+	if (!experiment().config.conditions.includes(condition)) error(400, `Unknown condition "${condition}"`);
+	if (sessionPids().has(pid)) {
+		editParticipant(pid, { condition }); // also updates the schedule row
+		return;
+	}
+	const rows = loadSchedule();
+	const r = rows.find((x) => x.pid === pid);
+	if (!r) error(404, `${pid} is not in the schedule`);
+	r.condition = condition;
 	saveSchedule(rows);
 }

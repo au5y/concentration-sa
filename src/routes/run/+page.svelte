@@ -102,6 +102,12 @@
 				const have = new Set(s.progress.markers.map((m) => `${m.name}@${m.at}`));
 				if (next.progress.markers.some((m) => !have.has(`${m.name}@${m.at}`))) s.progress.markers = next.progress.markers;
 				if (JSON.stringify(next.progress.bout) !== JSON.stringify(s.progress.bout)) s.progress.bout = next.progress.bout;
+				// Condition switched on the admin page / console: new instructions and RPE form, same board order.
+				if (next.condition !== s.condition) {
+					s.condition = next.condition;
+					s.text = next.text;
+					s.recordRpe = next.recordRpe;
+				}
 			}
 		} catch {
 			// offline for a moment: try again next tick
@@ -349,7 +355,10 @@
 					practiceDone = true;
 					addMarker('timeout');
 				}}
-				onComplete={() => (practiceDone = true)}
+				onComplete={() => {
+					practiceDone = true;
+					addMarker('cleared'); // tells the facilitator console
+				}}
 			/>
 		{:else if s.phase === 'interval1' || s.phase === 'interval2'}
 			{@const bout = s.phase}

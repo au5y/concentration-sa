@@ -78,6 +78,18 @@
 	async function setRemote(pid: string, remote: boolean) {
 		if (await scheduleAction({ action: 'remote', pid, remote })) notice = `${pid} is now ${remote ? 'remote (RP)' : 'in person'}.`;
 	}
+	async function setCondition(r: { pid: string; condition: string; started: boolean }, el: HTMLSelectElement) {
+		const condition = el.value;
+		const msg = r.started
+			? `Switch ${r.pid} from ${r.condition} to ${condition}? Their session is already under way; this is logged as an edit. Board order stays the same.`
+			: `Switch ${r.pid} from ${r.condition} to ${condition}? Board order stays the same.`;
+		if (!confirm(msg)) {
+			el.value = r.condition;
+			return;
+		}
+		if (await scheduleAction({ action: 'condition', pid: r.pid, condition })) notice = `${r.pid} is now ${condition}.`;
+		else el.value = r.condition;
+	}
 	let copiedPid = $state('');
 	async function copyLink(pid: string) {
 		const key = data.authed ? data.remoteKeys[pid] : undefined;
@@ -467,7 +479,13 @@
 			<tbody>
 				{#each data.schedule as r (r.pid)}
 					<tr class:muted={r.started}>
-						<td>{r.pid}{#if isTest(r.pid)} <span class="tag">test</span>{/if}</td><td>{r.condition}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
+						<td>{r.pid}{#if isTest(r.pid)} <span class="tag">test</span>{/if}</td>
+						<td>
+							<select class="cond" value={r.condition} onchange={(e) => setCondition(r, e.currentTarget)} aria-label="Condition for {r.pid}">
+								{#each data.conditions as c (c)}<option value={c}>{c}</option>{/each}
+							</select>
+						</td>
+						<td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
 						<td>{#if isRemote(r.pid) || (!r.started && r.remote)}<span class="rp">RP</span>{:else}in person{/if}</td>
 						<td>{r.started ? 'started' : ''}</td>
 						<td class="nowrap">

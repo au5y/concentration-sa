@@ -7,6 +7,7 @@ import { FACILITATOR_PHASES, PHASES, type Phase } from '../types';
 import { getDb } from './db';
 import { experiment, timers } from './experiment';
 import { remoteKey } from './remote';
+import { setCondition } from './schedule';
 import { abortSession, advance, getSession, jumpSession, mark, recordBout, recordSurvey, sessionCards, type SurveyAnswers } from './session';
 
 /** Heart-rate history shown in the console. */
@@ -41,6 +42,21 @@ export function consoleState(pid: string) {
 		};
 		live = { key: board, theme: board === 'A' ? s.board_a_theme : s.board_b_theme, cols: exp.config.board.cols, cards, clicks };
 	}
+	// Boards they have finished (cleared, or time ran out), for the console's "board done" alert.
+	const practiceEnd = s.phase === 'practice' ? markers.find((m) => m.name === 'cleared' || m.name === 'timeout') : undefined;
+	const boardsDone: { key: 'practice' | 'A' | 'B'; phase: string; endedAt: number; pairs: number | null; total: number | null; clicks: number | null; cleared: boolean }[] =
+		practiceEnd ? [{ key: 'practice', phase: 'practice', endedAt: practiceEnd.at, pairs: null, total: null, clicks: null, cleared: practiceEnd.name === 'cleared' }] : [];
+	boardsDone.push(...(['A', 'B'] as const).flatMap((key) => {
+		const phase = key === 'A' ? 'board_a' : 'board_b';
+		const row = db.prepare('SELECT ended_at FROM phases WHERE pid = ? AND phase = ? AND ended_at IS NOT NULL ORDER BY id DESC LIMIT 1').get(pid, phase) as
+			| { ended_at: number }
+			| undefined;
+		if (!row || PHASES.indexOf(s.phase) <= PHASES.indexOf(phase) || s.aborted_at) return [];
+		const outcomes = db.prepare('SELECT outcome FROM clicks WHERE pid = ? AND board = ?').all(pid, key) as { outcome: string }[];
+		const pairs = outcomes.filter((c) => c.outcome === 'match').length;
+		const total = sessionCards(s, key).length / 2;
+		return [{ key, phase, endedAt: row.ended_at, pairs, total, clicks: outcomes.length, cleared: pairs >= total }];
+	}));
 	const plan: SaStep[] = JSON.parse(s.sa_plan);
 	const saAnswered = (db.prepare('SELECT COUNT(DISTINCT seq) AS n FROM sa_responses WHERE pid = ?').get(pid) as { n: number }).n;
 	const hr = db
@@ -61,6 +77,7 @@ export function consoleState(pid: string) {
 		remote: hasRemoteTag(s.tags),
 		key: hasRemoteTag(s.tags) ? remoteKey(pid) : null,
 		condition: s.condition,
+		conditions: exp.config.conditions,
 		tags: s.tags,
 		board_a_theme: s.board_a_theme,
 		board_b_theme: s.board_b_theme,
@@ -77,6 +94,7 @@ export function consoleState(pid: string) {
 		bout,
 		peak,
 		boardProgress,
+		boardsDone,
 		live,
 		manifest: live ? exp.manifests[live.theme] : null,
 		colors: exp.config.colors,
@@ -101,6 +119,7 @@ export function consoleAction(pid: string, b: Record<string, unknown>) {
 	if (b.action === 'abort') return abortSession(pid, typeof b.reason === 'string' ? b.reason : '');
 	// Admin override: any phase, forward or back (restart phase / from the beginning / skip / resume).
 	if (b.action === 'jump') return jumpSession(pid, b.to as Phase);
+	if (b.action === 'condition') return setCondition(pid, String(b.condition));
 	const phase = b.phase as Phase;
 	if (phase !== s.phase) error(409, `${pid} is now in ${s.phase}, not ${String(b.phase)}; the page will refresh`);
 	if (b.action === 'advance') return advance(pid, phase, { facilitator: true, clientTs: null });

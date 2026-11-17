@@ -37,7 +37,7 @@ const MARKERS: Partial<Record<Phase, string[]>> = {
 	baseline: ['start'],
 	interval1: ['start'],
 	interval2: ['start'],
-	practice: ['preview', 'play', 'timeout'],
+	practice: ['preview', 'play', 'timeout', 'cleared'],
 	board_a: ['preview', 'play', 'timeout'],
 	board_b: ['preview', 'play', 'timeout']
 };

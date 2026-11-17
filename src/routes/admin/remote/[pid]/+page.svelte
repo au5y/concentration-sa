@@ -106,6 +106,17 @@
 		await act({ action: 'abort', reason });
 	}
 
+	async function switchCondition(el: HTMLSelectElement) {
+		if (!s) return;
+		const to = el.value;
+		const past = s.phases.indexOf(s.phase) > s.phases.indexOf('interval1');
+		const msg =
+			`Switch ${data.pid} from ${s.condition} to ${to}? Board order stays the same; the change is logged.` +
+			(past ? `\n\nThey are already past the first exercise/rest interval (now in ${s.phase}).` : '');
+		el.value = s.condition; // shows the saved value until the refresh
+		await act({ action: 'condition', condition: to }, msg);
+	}
+
 	// Admin override: move the session to any phase (clears data from that phase on).
 	let jumpTo = $state('');
 	function jump(to: string, label: string) {
@@ -174,9 +185,76 @@
 		const warn = [running && 'the timer is still running', noRpe && 'no RPE has been recorded'].filter(Boolean).join(' and ');
 		act({ action: 'advance' }, warn ? `Continue although ${warn}?` : undefined);
 	}
+
+	// "Board done" alert: when they finish Game A or B (all pairs matched, or time ran out) while this
+	// page is open, show a banner, chime, flag the tab title and send a desktop notification.
+	type Done = NonNullable<typeof s>['boardsDone'][number];
+	let seen: Set<string> | null = null;
+	let alerts = $state<Done[]>([]);
+	const doneKey = (b: Done) => `${b.key}:${b.endedAt}`;
+	$effect(() => {
+		const done = s?.boardsDone ?? [];
+		if (!seen) {
+			seen = new Set(done.map(doneKey)); // already finished before the page opened: no alert
+			return;
+		}
+		for (const b of done) {
+			if (seen.has(doneKey(b))) continue;
+			seen.add(doneKey(b));
+			alerts = [...alerts.filter((a) => a.key !== b.key && a.key !== 'practice'), b];
+			chime();
+			notify(b);
+		}
+	});
+	const doneText = (b: Done) =>
+		b.key === 'practice'
+			? `${data.pid} ${b.cleared ? 'cleared the practice board' : 'ran out of time on the practice board'}`
+			: `${data.pid} finished Game ${b.key}: ${b.cleared ? `all ${b.total} pairs matched` : `time ran out at ${b.pairs} / ${b.total} pairs`} (${b.clicks} clicks)`;
+	const doneNext = (b: Done) =>
+		b.key === 'practice'
+			? 'They are waiting for you; end practice when ready.'
+			: b.key === 'A'
+				? 'Now on the second exercise/rest interval.'
+				: 'Now on the break; start the questions when ready.';
+	function chime() {
+		try {
+			const ac = new AudioContext();
+			[880, 1320].forEach((f, i) => {
+				const o = ac.createOscillator();
+				const g = ac.createGain();
+				o.frequency.value = f;
+				const t0 = ac.currentTime + i * 0.18;
+				g.gain.setValueAtTime(0.0001, t0);
+				g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.02);
+				g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.4);
+				o.connect(g).connect(ac.destination);
+				o.start(t0);
+				o.stop(t0 + 0.45);
+			});
+			setTimeout(() => ac.close(), 1500);
+		} catch {
+			/* no audio */
+		}
+	}
+	function notify(b: Done) {
+		if (typeof Notification === 'undefined' || Notification.permission !== 'granted' || !document.hidden) return;
+		try {
+			new Notification(doneText(b), { body: doneNext(b), tag: `${data.pid}-board` });
+		} catch {
+			/* not supported */
+		}
+	}
+	let canNotify = $state(typeof Notification !== 'undefined' && Notification.permission === 'default');
+	onMount(() => {
+		canNotify = typeof Notification !== 'undefined' && Notification.permission === 'default';
+	});
+	async function enableNotify() {
+		await Notification.requestPermission().catch(() => null);
+		canNotify = Notification.permission === 'default';
+	}
 </script>
 
-<svelte:head><title>{data.pid} console · Step Up Your Game (HSE Study)</title></svelte:head>
+<svelte:head><title>{alerts.length ? '🔔 ' : ''}{data.pid} console · Step Up Your Game (HSE Study)</title></svelte:head>
 
 <main>
 	<p class="back"><a href="/admin">← Admin</a></p>
@@ -190,6 +268,17 @@
 		{/if}
 	</header>
 	{#if notice}<p class="err">{notice}</p>{/if}
+	{#each alerts as b (b.key)}
+		<div class="done" class:timeout={!b.cleared} role="alert">
+			<span><b>{doneText(b)}.</b> {doneNext(b)}</span>
+			<button onclick={() => (alerts = alerts.filter((a) => a !== b))}>Got it</button>
+		</div>
+	{/each}
+	{#if canNotify && data.key}
+		<p class="muted small">
+			<button class="linkish" onclick={enableNotify}>Turn on desktop notifications</button> to hear about it when they finish a game while this tab is in the background.
+		</p>
+	{/if}
 
 	{#if !s}
 		<p class="big">Waiting for {data.pid} to open their link…</p>
@@ -199,7 +288,10 @@
 		</p>
 	{:else}
 		<p class="meta">
-			{s.condition} · A={s.board_a_theme} B={s.board_b_theme}
+			<select class="cond" value={s.condition} disabled={busy} aria-label="Condition" onchange={(e) => switchCondition(e.currentTarget)}>
+				{#each s.conditions as c (c)}<option value={c}>{c}</option>{/each}
+			</select>
+			· A={s.board_a_theme} B={s.board_b_theme}
 			{#if s.tags}· tags: {s.tags}{/if}
 			· last activity {ago(serverNow - s.updatedAt)} ago
 		</p>
@@ -244,7 +336,9 @@
 						<button class="go" disabled={busy} onclick={() => act({ action: 'advance' })}>{NEXT.baseline} →</button>
 					{/if}
 				{:else if s.phase === 'practice'}
-					<p>They are playing the practice board. When they say they're done (or to cut it short):</p>
+					{@const pEnd = s.boardsDone.find((b) => b.key === 'practice')}
+					{#if pEnd}<p class="big">{pEnd.cleared ? 'Practice board cleared ✓' : 'Practice time ran out'} · waiting for you</p>
+					{:else}<p>They are playing the practice board. When they say they're done (or to cut it short):</p>{/if}
 					<button class="go" disabled={busy} onclick={() => act({ action: 'advance' }, 'End practice and move on to the exercise/rest period?')}>{NEXT.practice} →</button>
 				{:else if s.phase === 'interval1' || s.phase === 'interval2'}
 					{@const ms = s.timers.interval_ms[s.phase]}
@@ -578,6 +672,42 @@
 	}
 	.muted {
 		color: #777;
+	}
+	.done {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin: 0.75rem 0;
+		padding: 0.85rem 1rem;
+		border-radius: 8px;
+		background: #e6f6ea;
+		border: 2px solid #2f9e55;
+		color: #14532d;
+		font-size: 1.05rem;
+		animation: pulse 1s ease-in-out 3;
+	}
+	.done.timeout {
+		background: #fff6e0;
+		border-color: #d9a21b;
+		color: #6b4a00;
+	}
+	.done button {
+		flex: none;
+	}
+	@keyframes pulse {
+		50% {
+			box-shadow: 0 0 0 6px rgb(47 158 85 / 0.25);
+		}
+	}
+	.linkish {
+		background: none;
+		border: 0;
+		padding: 0;
+		color: inherit;
+		text-decoration: underline;
+		cursor: pointer;
+		font: inherit;
 	}
 	.ended {
 		background: #fdecea;

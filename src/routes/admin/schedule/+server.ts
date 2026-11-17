@@ -1,12 +1,13 @@
 import { error, json } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/admin';
 import { body, checkPid } from '$lib/server/http';
-import { addToSchedule, removeFromSchedule, setScheduleRemote } from '$lib/server/schedule';
+import { addToSchedule, removeFromSchedule, setCondition, setScheduleRemote } from '$lib/server/schedule';
 
 /**
  * { add: number, remote?: boolean } -> { added: string[] }  add balanced participants at the end
  * { action: 'remove', pids: [...] } -> { removed }            drop participants who haven't started
  * { action: 'remote', pid, remote: boolean }                 switch a not-yet-started participant
+ * { action: 'condition', pid, condition }                   switch condition (schedule + session if started)
  */
 export async function POST({ request, cookies }) {
 	requireAdmin(cookies);
@@ -14,6 +15,10 @@ export async function POST({ request, cookies }) {
 	if (b.action === 'remove') {
 		if (!Array.isArray(b.pids) || !b.pids.length) error(400, 'pids required');
 		return json({ removed: removeFromSchedule(b.pids.map(checkPid)) });
+	}
+	if (b.action === 'condition') {
+		setCondition(checkPid(b.pid), String(b.condition));
+		return json({ ok: true });
 	}
 	if (b.action === 'remote') {
 		setScheduleRemote(checkPid(b.pid), b.remote === true);

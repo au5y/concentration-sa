@@ -185,4 +185,50 @@ describe('console override', () => {
 		const log = db.getDb().prepare("SELECT field FROM edits WHERE pid = ? AND field LIKE 'phase%'").all(pid);
 		expect(log.length).toBe(3);
 	});
+
+	it('reports a cleared board so the console can alert', () => {
+		const [pid] = sched.addToSchedule(1, true);
+		session.openSession(pid);
+		con.consoleAction(pid, { action: 'jump', to: 'practice' });
+		expect(con.consoleState(pid)!.boardsDone).toEqual([]);
+		session.mark(pid, 'practice', 'cleared', null);
+		expect(con.consoleState(pid)!.boardsDone).toMatchObject([{ key: 'practice', cleared: true }]);
+		con.consoleAction(pid, { action: 'jump', to: 'board_a' });
+		expect(con.consoleState(pid)!.boardsDone).toEqual([]);
+		session.mark(pid, 'board_a', 'preview', null);
+		session.mark(pid, 'board_a', 'play', null);
+		const cards = session.sessionCards(session.getSession(pid)!, 'A');
+		const seenAt = new Map<string, number>();
+		let seq = 0;
+		cards.forEach((id, i) => {
+			const first = seenAt.get(id);
+			if (first === undefined) return void seenAt.set(id, i);
+			session.recordClick(pid, { board: 'A', seq: seq++, card_index: first, outcome: 'first_flip', client_ts: seq });
+			session.recordClick(pid, { board: 'A', seq: seq++, card_index: i, outcome: 'match', client_ts: seq });
+		});
+		expect(con.consoleState(pid)!.boardsDone).toEqual([]); // still on the board until the game moves on
+		session.advance(pid, 'board_a', { facilitator: false, clientTs: null });
+		const done = con.consoleState(pid)!.boardsDone;
+		expect(done).toMatchObject([{ key: 'A', cleared: true, pairs: cards.length / 2, total: cards.length / 2, clicks: cards.length }]);
+		// Restarting the board clears it again.
+		con.consoleAction(pid, { action: 'jump', to: 'board_a' });
+		expect(con.consoleState(pid)!.boardsDone).toEqual([]);
+	});
+
+	it('switches condition before and after starting, keeping the board order', () => {
+		const [pid] = sched.addToSchedule(1, true);
+		const row = () => files.loadSchedule().find((r) => r.pid === pid)!;
+		const before = row();
+		const other = before.condition === 'rest' ? 'elevated_hr' : 'rest';
+		sched.setCondition(pid, other);
+		expect(row()).toMatchObject({ condition: other, board_a_theme: before.board_a_theme, board_b_theme: before.board_b_theme, seed: before.seed });
+		session.openSession(pid);
+		expect(session.getSession(pid)!.condition).toBe(other);
+		const layouts = session.getSession(pid)!.layouts;
+		con.consoleAction(pid, { action: 'condition', condition: before.condition });
+		expect(session.getSession(pid)!).toMatchObject({ condition: before.condition, layouts });
+		expect(row().condition).toBe(before.condition);
+		expect(db.getDb().prepare("SELECT old_value, new_value FROM edits WHERE pid = ? AND field = 'condition'").get(pid)).toEqual({ old_value: other, new_value: before.condition });
+		expect(status(() => sched.setCondition(pid, 'swimming'))).toBe(400);
+	});
 });

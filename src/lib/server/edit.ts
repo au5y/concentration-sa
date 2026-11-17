@@ -6,6 +6,7 @@
 import { error } from '@sveltejs/kit';
 import { getDb } from './db';
 import { experiment } from './experiment';
+import { loadSchedule, saveSchedule } from './files';
 import { checkPid } from './http';
 import { hasRemoteTag } from '../remote';
 import { checkBout, checkSurvey, getSession, makePlan, renamePidRows, type SurveyAnswers } from './session';
@@ -63,6 +64,13 @@ export function editParticipant(pid: string, e: ParticipantEdit): { pid: string;
 			if (!experiment().config.conditions.includes(e.condition)) error(400, `Unknown condition "${e.condition}"`);
 			db.prepare('UPDATE sessions SET condition = ? WHERE pid = ?').run(e.condition, pid);
 			log.push({ field: 'condition', old: s.condition, new: e.condition });
+			// Keep the schedule in step, so new participants are balanced on the condition actually run.
+			const rows = loadSchedule();
+			const row = rows.find((r) => r.pid === pid);
+			if (row && row.condition !== e.condition) {
+				row.condition = e.condition;
+				saveSchedule(rows);
+			}
 		}
 
 		if (e.tags !== undefined) {
