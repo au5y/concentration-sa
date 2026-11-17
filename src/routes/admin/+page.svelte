@@ -221,7 +221,7 @@
 	const EXPORTS = ['summary', 'sessions', 'phases', 'clicks', 'sa_responses', 'bouts', 'survey', 'hr_samples', 'edits'];
 </script>
 
-<svelte:head><title>Admin · Pump Up the Memory: HSE Study</title></svelte:head>
+<svelte:head><title>Admin · Step Up Your Game (HSE Study)</title></svelte:head>
 
 <main>
 	{#if !data.authed}

@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Pump Up the Memory: HSE Study</title>
+	<title>Step Up Your Game (HSE Study)</title>
 	<meta name="description" content="{data.landing.kicker}: {data.landing.title} {data.landing.titleAccent}. {data.landing.date}" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />

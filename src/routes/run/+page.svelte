@@ -180,7 +180,7 @@
 </script>
 
 <svelte:window onkeydown={onKey} />
-<svelte:head><title>Pump Up the Memory: HSE Study</title></svelte:head>
+<svelte:head><title>Step Up Your Game (HSE Study)</title></svelte:head>
 
 {#if !data.authed}
 	<main class="start">

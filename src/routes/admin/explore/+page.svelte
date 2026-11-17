@@ -241,7 +241,7 @@
 	const RESPONSE_LABEL: Record<string, string> = { dont_remember: "don't remember", not_selected: '—' };
 </script>
 
-<svelte:head><title>Data explorer · Pump Up the Memory: HSE Study</title></svelte:head>
+<svelte:head><title>Data explorer · Step Up Your Game (HSE Study)</title></svelte:head>
 
 <main>
 	<header>

@@ -30,7 +30,7 @@ export const DEFAULT_LANDING: Landing = {
 	links: [],
 	signupNote: 'Sessions start every 15 minutes. Two people can run at the same time, so bring a friend.',
 	closed: 'Sign-ups are not open right now. Email us to hear about the next session.',
-	contact: 'pump-up-the-memory@mit.edu'
+	contact: 'step-up-your-game@mit.edu'
 };
 
 const file = () => path.join(paths.data, 'landing.json');
