@@ -1,7 +1,7 @@
 /** Filesystem loading shared by the server and the CLI scripts. */
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseCsv } from '../csv';
+import { parseCsv, toCsv } from '../csv';
 import type { ExperimentConfig, LayoutsFile, ScheduleRow, ThemeManifest } from '../types';
 import { experimentThemes } from '../validate';
 
@@ -59,4 +59,12 @@ export function loadSchedule(file = paths.schedule): ScheduleRow[] {
 		board_b_theme: r.board_b_theme,
 		seed: Number(r.seed)
 	}));
+}
+
+/** Write the schedule atomically (temp file + rename), so a reader never sees half a file. */
+export function saveSchedule(rows: ScheduleRow[], file = paths.schedule): void {
+	fs.mkdirSync(path.dirname(file), { recursive: true });
+	const tmp = `${file}.tmp`;
+	fs.writeFileSync(tmp, toCsv(rows as unknown as Record<string, unknown>[], ['pid', 'condition', 'board_a_theme', 'board_b_theme', 'seed']));
+	fs.renameSync(tmp, file);
 }

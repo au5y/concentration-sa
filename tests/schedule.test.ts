@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cellKey, generateSchedule, participantId } from '../src/lib/schedule';
+import { cellKey, extendSchedule, generateSchedule, participantId } from '../src/lib/schedule';
 
 const base = {
 	conditions: ['rest', 'elevated_hr'],
@@ -61,5 +61,35 @@ describe('generateSchedule', () => {
 	it('handles arbitrary numbers of conditions and orders', () => {
 		const rows = generateSchedule({ conditions: ['a', 'b', 'c'], theme_orders: [['x', 'y']], n: 9, seed: 5 });
 		expect([...counts(rows).values()]).toEqual([3, 3, 3]);
+	});
+});
+
+describe('extendSchedule', () => {
+	it('keeps existing rows and continues the numbering', () => {
+		const old = generateSchedule({ ...base, n: 30, seed: 5 });
+		const rows = extendSchedule(old, { ...base, add: 6 });
+		expect(rows.slice(0, 30)).toEqual(old);
+		expect(rows.slice(30).map((r) => r.pid)).toEqual(['P31', 'P32', 'P33', 'P34', 'P35', 'P36']);
+		expect(rows.every((r) => r.seed === 5)).toBe(true);
+	});
+
+	it('fills the incomplete block first and stays balanced', () => {
+		for (let n = 1; n <= 30; n++) {
+			const old = generateSchedule({ ...base, n, seed: n });
+			for (let add = 1; add <= 9; add++) {
+				const rows = extendSchedule(old, { ...base, add });
+				const c = [...counts(rows).values()];
+				if (rows.length >= 4) expect(c.length).toBe(4);
+				expect(Math.max(...c) - Math.min(...c)).toBeLessThanOrEqual(1);
+				for (let b = 0; b + 4 <= rows.length; b += 4) expect(new Set(rows.slice(b, b + 4).map(cellKey)).size).toBe(4);
+			}
+		}
+	});
+
+	it('can be added to repeatedly without duplicate IDs', () => {
+		let rows = generateSchedule({ ...base, n: 30, seed: 9 });
+		for (let i = 0; i < 20; i++) rows = extendSchedule(rows, { ...base, add: 1 + (i % 5) });
+		expect(new Set(rows.map((r) => r.pid)).size).toBe(rows.length);
+		expect(rows.at(-1)!.pid).toBe('P' + rows.length);
 	});
 });

@@ -48,6 +48,18 @@
 		const r = await dataAction({ action: 'archive', pid, tag });
 		if (r) notice = `Archived ${pid}.`;
 	}
+	let addCount = $state(4);
+	async function addParticipants() {
+		if (!confirm(`Add ${addCount} participant${addCount === 1 ? '' : 's'} to the end of the schedule? Existing IDs and assignments are not changed.`)) return;
+		const r = await fetch('/admin/schedule', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ add: addCount })
+		});
+		const res = await r.json().catch(() => ({}));
+		notice = r.ok ? `Added ${res.added.join(', ')}.` : `Failed: ${res.message ?? r.statusText}`;
+		await invalidateAll();
+	}
 	async function resetAll() {
 		const typed = prompt('This deletes every session, click, answer and survey (the schedule is kept).\nDownload the CSVs first if you need them.\n\nType RESET to confirm:');
 		if (typed !== 'RESET') return;
@@ -403,6 +415,12 @@
 		<h2>Schedule ({data.schedule.filter((r) => r.started).length}/{data.schedule.length} started)</h2>
 		{#if !data.schedule.length}
 			<p class="warn">No schedule found. Run <code>npm run schedule</code>.</p>
+		{:else}
+			<p class="add-participants">
+				<label>Add <input type="number" min="1" max="100" bind:value={addCount} /> participants</label>
+				<button onclick={addParticipants} disabled={!(addCount >= 1 && addCount <= 100)}>Add to schedule</button>
+				<span class="muted">New IDs continue after {data.schedule.at(-1)?.pid}, balanced across the {data.conditions.length * data.test.themeOrders.length} condition × theme-order groups. Add 4 at a time to keep the groups even.</span>
+			</p>
 		{/if}
 		<table>
 			<thead><tr><th>PID</th><th>Condition</th><th>Board A</th><th>Board B</th><th>Status</th></tr></thead>
@@ -426,6 +444,15 @@
 		font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 		background: #fff;
 		color: #111;
+	}
+	.add-participants {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		align-items: center;
+	}
+	.add-participants input {
+		width: 4rem;
 	}
 	main {
 		max-width: 70rem;

@@ -109,6 +109,12 @@ counts, and refuses to overwrite an existing schedule without `--force`. If you 
 The server reads the schedule when a participant ID is first opened. IDs not in the
 schedule are rejected.
 
+**Adding participants later.** On the admin page, under *Schedule*, enter a number and click
+**Add to schedule**. New IDs continue after the last one (P31, P32, ...) and are appended to
+`schedule.csv`; nobody already in the schedule changes. The incomplete last block of 4 is
+filled with the groups it is missing first, then new full blocks follow, so the groups stay
+within 1 of each other. Adding 4 at a time keeps them exactly even.
+
 ---
 
 ## 4. Themes and images
