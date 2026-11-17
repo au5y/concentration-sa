@@ -22,7 +22,11 @@ CREATE TABLE IF NOT EXISTS sessions (
 	-- NULL for sessions started before layouts were per participant (they used assets/layouts.json).
 	layouts TEXT,
 	-- Facilitator tags, comma separated ("stairs, late start"), set on the admin page.
-	tags TEXT NOT NULL DEFAULT ''
+	tags TEXT NOT NULL DEFAULT '',
+	-- Ended early by the facilitator (participant left, data unusable): when and why. The phase
+	-- stays where they stopped; nothing more is recorded for the session.
+	aborted_at INTEGER,
+	abort_reason TEXT
 );
 -- One row per phase, plus marker rows such as baseline.start, board_a.preview,
 -- board_a.play (cards flipped face down) and board_a.resume (page reloaded).
@@ -138,6 +142,8 @@ function migrate(d: Database.Database) {
 	if (sessionCols.length && !sessionCols.includes('layouts')) d.exec('ALTER TABLE sessions ADD COLUMN layouts TEXT');
 	// Facilitator tags.
 	if (sessionCols.length && !sessionCols.includes('tags')) d.exec("ALTER TABLE sessions ADD COLUMN tags TEXT NOT NULL DEFAULT ''");
+	// Sessions ended early by the facilitator.
+	if (sessionCols.length && !sessionCols.includes('aborted_at')) d.exec('ALTER TABLE sessions ADD COLUMN aborted_at INTEGER; ALTER TABLE sessions ADD COLUMN abort_reason TEXT');
 }
 
 let db: Database.Database | null = null;

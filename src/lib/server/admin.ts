@@ -122,7 +122,7 @@ export function status() {
 	const sessions = db
 		.prepare(
 			`SELECT s.pid, s.condition, s.tags, s.board_a_theme, s.board_b_theme, s.phase, s.phase_started_at,
-			        s.updated_at, s.completed_at, s.created_at,
+			        s.updated_at, s.completed_at, s.created_at, s.aborted_at, s.abort_reason,
 			        (SELECT COUNT(*) FROM clicks c WHERE c.pid = s.pid) AS clicks,
 			        (SELECT COUNT(DISTINCT seq) FROM sa_responses r WHERE r.pid = s.pid) AS sa_answered,
 			        json_array_length(s.sa_plan) AS sa_total,
@@ -160,7 +160,7 @@ export function status() {
 	return {
 		now: Date.now(),
 		remoteKeys,
-		active: sessions.filter((s) => s.phase !== 'done'),
+		active: sessions.filter((s) => s.phase !== 'done' && !s.aborted_at),
 		sessions,
 		surveys,
 		bouts,

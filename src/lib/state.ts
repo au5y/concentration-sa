@@ -21,6 +21,8 @@ export interface SessionState {
 	isTest: boolean;
 	/** Remote participant (RP tag): own computer, facilitator drives from /admin/remote. */
 	remote: boolean;
+	/** Ended early by the facilitator: the participant's screen just says the session is over. */
+	aborted: boolean;
 	timers: { preview_ms: number; mismatch_flip_ms: number; time_limit_ms: number; interval_ms: { interval1: number; interval2: number } };
 	/** This participant's condition records RPE at the end of each bout. */
 	recordRpe: boolean;

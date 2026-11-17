@@ -115,6 +115,8 @@ export interface SummaryInput {
 		board_b_theme: string;
 		phase: string;
 		completed_at: number | null;
+		/** Ended early by the facilitator. */
+		aborted_at?: number | null;
 		/** Facilitator tags, comma separated. */
 		tags?: string | null;
 		/** This participant's layouts, JSON {A: cards, B: cards}; null/absent = the shared layout. */
@@ -190,7 +192,8 @@ export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 			board_a_theme: s.board_a_theme,
 			board_b_theme: s.board_b_theme,
 			final_phase: s.phase,
-			completed: s.completed_at ? 1 : 0
+			completed: s.completed_at ? 1 : 0,
+			aborted: s.aborted_at ? 1 : 0
 		};
 
 		const boardMetrics: Record<string, BoardMetrics> = {};

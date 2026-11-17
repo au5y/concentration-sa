@@ -7,7 +7,7 @@ import { FACILITATOR_PHASES, PHASES, type Phase } from '../types';
 import { getDb } from './db';
 import { experiment, timers } from './experiment';
 import { remoteKey } from './remote';
-import { advance, getSession, mark, recordBout, sessionCards } from './session';
+import { abortSession, advance, getSession, jumpSession, mark, recordBout, recordSurvey, sessionCards, type SurveyAnswers } from './session';
 
 /** Heart-rate history shown in the console. */
 const HR_WINDOW_MS = 5 * 60_000;
@@ -27,6 +27,8 @@ export function consoleState(pid: string) {
 	).map((r) => ({ name: r.phase.slice(s.phase.length + 1), at: r.started_at }));
 	const board = s.phase === 'board_a' ? 'A' : s.phase === 'board_b' ? 'B' : null;
 	let boardProgress: { pairs: number; total: number; clicks: number } | null = null;
+	/** The board being played, for the read-only live view. */
+	let live: { key: 'A' | 'B'; theme: string; cols: number; cards: string[]; clicks: ClickRecord[] } | null = null;
 	if (board) {
 		const clicks = db
 			.prepare('SELECT seq, card_index, object_id, outcome, client_ts FROM clicks WHERE pid = ? AND board = ? ORDER BY seq')
@@ -37,6 +39,7 @@ export function consoleState(pid: string) {
 			total: cards.length / 2,
 			clicks: clicks.length
 		};
+		live = { key: board, theme: board === 'A' ? s.board_a_theme : s.board_b_theme, cols: exp.config.board.cols, cards, clicks };
 	}
 	const plan: SaStep[] = JSON.parse(s.sa_plan);
 	const saAnswered = (db.prepare('SELECT COUNT(DISTINCT seq) AS n FROM sa_responses WHERE pid = ?').get(pid) as { n: number }).n;
@@ -66,13 +69,26 @@ export function consoleState(pid: string) {
 		facilitatorPhases: FACILITATOR_PHASES,
 		phaseStartedAt: s.phase_started_at,
 		updatedAt: s.updated_at,
+		abortedAt: s.aborted_at,
+		abortReason: s.abort_reason,
 		markers,
 		timers: t,
 		recordRpe: !exp.config.rpe_conditions || exp.config.rpe_conditions.includes(s.condition),
 		bout,
 		peak,
 		boardProgress,
-		survey: !!db.prepare('SELECT 1 FROM survey WHERE pid = ?').get(pid),
+		live,
+		manifest: live ? exp.manifests[live.theme] : null,
+		colors: exp.config.colors,
+		orientations: exp.config.orientations,
+		survey: (db.prepare('SELECT age, exercise_days, fitness, hours_slept FROM survey WHERE pid = ?').get(pid) as SurveyAnswers | undefined) ?? null,
+		bouts: db.prepare('SELECT bout, rpe, peak_hr FROM bouts WHERE pid = ? ORDER BY bout').all(pid) as { bout: string; rpe: number; peak_hr: number | null }[],
+		answers: db
+			.prepare(
+				`SELECT seq, board, theme, question_type, item, target, response, correct, confidence, rt_ms
+				 FROM sa_responses WHERE pid = ? ORDER BY seq, id`
+			)
+			.all(pid) as { seq: number; board: string; theme: string; question_type: string; item: string; target: string; response: string; correct: number; confidence: number | null; rt_ms: number | null }[],
 		sa: { answered: saAnswered, total: plan.length },
 		hr
 	};
@@ -82,10 +98,17 @@ export function consoleState(pid: string) {
 export function consoleAction(pid: string, b: Record<string, unknown>) {
 	const s = getSession(pid);
 	if (!s) error(404, `No session for ${pid}`);
+	if (b.action === 'abort') return abortSession(pid, typeof b.reason === 'string' ? b.reason : '');
+	// Admin override: any phase, forward or back (restart phase / from the beginning / skip / resume).
+	if (b.action === 'jump') return jumpSession(pid, b.to as Phase);
 	const phase = b.phase as Phase;
 	if (phase !== s.phase) error(409, `${pid} is now in ${s.phase}, not ${String(b.phase)}; the page will refresh`);
 	if (b.action === 'advance') return advance(pid, phase, { facilitator: true, clientTs: null });
 	if (b.action === 'start') return mark(pid, phase, 'start', null);
+	if (b.action === 'survey') {
+		const v = (b.answers ?? {}) as Record<string, unknown>;
+		return recordSurvey(pid, { age: Number(v.age), exercise_days: Number(v.exercise_days), fitness: Number(v.fitness), hours_slept: Number(v.hours_slept) }, null);
+	}
 	if (b.action === 'bout') {
 		recordBout(pid, { phase, rpe: Number(b.rpe), peak_hr: typeof b.peak_hr === 'number' ? b.peak_hr : null });
 		return { ok: true };

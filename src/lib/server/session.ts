@@ -27,6 +27,9 @@ export interface SessionRow {
 	layouts: string | null;
 	/** Facilitator tags, comma separated ("stairs, late start"); '' for none. */
 	tags: string;
+	/** Ended early by the facilitator (server ms), and why. */
+	aborted_at: number | null;
+	abort_reason: string | null;
 }
 
 const BOARD_OF: Partial<Record<Phase, 'A' | 'B'>> = { board_a: 'A', board_b: 'B' };
@@ -51,6 +54,39 @@ function requireSession(pid: string): SessionRow {
 	return s;
 }
 
+/** A session that can still record data: not ended early by the facilitator. */
+function requireLive(pid: string): SessionRow {
+	const s = requireSession(pid);
+	if (s.aborted_at) error(409, `${pid} was ended by the facilitator`);
+	return s;
+}
+
+/** Tag added to sessions ended early. */
+export const ABORTED_TAG = 'aborted';
+
+/**
+ * End a session early (participant left, data unusable). Open phases are closed, an
+ * `<phase>.abort` marker records where it stopped, the session is tagged "aborted" and nothing
+ * more can be recorded for it. The data is kept; delete or archive it from the admin page.
+ */
+export function abortSession(pid: string, reason: string): SessionRow {
+	const db = getDb();
+	const why = reason.trim().slice(0, 200);
+	return db.transaction(() => {
+		const s = requireSession(pid);
+		if (s.aborted_at) error(409, `${pid} was already ended`);
+		if (s.phase === 'done') error(409, `${pid} has already finished`);
+		const now = Date.now();
+		db.prepare('UPDATE phases SET ended_at = ? WHERE pid = ? AND ended_at IS NULL').run(now, pid);
+		db.prepare('INSERT INTO phases (pid, phase, started_at, ended_at) VALUES (?, ?, ?, ?)').run(pid, `${s.phase}.abort`, now, now);
+		const tags = s.tags.split(',').map((t) => t.trim()).filter(Boolean);
+		if (!tags.some((t) => t.toLowerCase() === ABORTED_TAG)) tags.push(ABORTED_TAG);
+		db.prepare('UPDATE sessions SET aborted_at = ?, abort_reason = ?, tags = ?, updated_at = ? WHERE pid = ?').run(now, why || null, tags.join(', '), now, pid);
+		db.prepare('INSERT INTO edits (pid, field, old_value, new_value, server_ts) VALUES (?, ?, ?, ?, ?)').run(pid, 'aborted', s.phase, why || 'ended by facilitator', now);
+		return getSession(pid)!;
+	})();
+}
+
 function insertPhase(pid: string, phase: string, now: number, clientTs: number | null) {
 	getDb().prepare('INSERT INTO phases (pid, phase, started_at, client_started_at) VALUES (?, ?, ?, ?)').run(pid, phase, now, clientTs);
 }
@@ -63,7 +99,7 @@ export function openSession(pid: string): SessionRow {
 	const now = Date.now();
 	if (existing) {
 		// A reload in the middle of a board is recorded so it can be excluded or flagged.
-		if (BOARD_OF[existing.phase] && hasMarker(pid, `${existing.phase}.play`)) {
+		if (!existing.aborted_at && BOARD_OF[existing.phase] && hasMarker(pid, `${existing.phase}.play`)) {
 			insertPhase(pid, `${existing.phase}.resume`, now, null);
 		}
 		return existing;
@@ -202,10 +238,29 @@ export function createTestSession(o: { condition: string; board_a_theme: string;
  */
 export function jumpTestSession(pid: string, phase: Phase, fast?: boolean): SessionRow {
 	if (!isTestPid(pid)) error(403, 'Only test sessions can jump between phases');
+	return jumpSession(pid, phase, fast);
+}
+
+/**
+ * Admin override (facilitator console): move any session to any phase, e.g. restart the current
+ * phase, restart from the beginning, skip ahead, or resume a session that was ended early. Data
+ * recorded in the target phase and later ones is cleared so it starts fresh (heart rate is kept).
+ * Real sessions get the move logged in the edits table; an ended session is reopened.
+ */
+export function jumpSession(pid: string, phase: Phase, fast?: boolean): SessionRow {
 	if (!PHASES.includes(phase)) error(400, 'bad phase');
 	const db = getDb();
 	return db.transaction(() => {
-		requireSession(pid);
+		const before = requireSession(pid);
+		const log = (field: string, from: string | null, to: string | null) =>
+			!isTestPid(pid) &&
+			db.prepare('INSERT INTO edits (pid, field, old_value, new_value, server_ts) VALUES (?, ?, ?, ?, ?)').run(pid, field, from, to, Date.now());
+		log('phase (jump)', before.phase, phase);
+		if (before.aborted_at) {
+			const tags = before.tags.split(',').map((t) => t.trim()).filter((t) => t && t.toLowerCase() !== ABORTED_TAG).join(', ');
+			db.prepare('UPDATE sessions SET aborted_at = NULL, abort_reason = NULL, tags = ? WHERE pid = ?').run(tags, pid);
+			log('aborted', 'ended', 'resumed');
+		}
 		const at = PHASES.indexOf(phase);
 		const del = (sql: string) => db.prepare(sql).run(pid);
 		if (at <= PHASES.indexOf('board_a')) del("DELETE FROM clicks WHERE pid = ? AND board = 'A'");
@@ -276,6 +331,7 @@ export function buildState(s: SessionRow): SessionState {
 		devTimers: exp.devTimers || !!s.dev_timers,
 		isTest: isTestPid(s.pid),
 		remote: hasRemoteTag(s.tags),
+		aborted: !!s.aborted_at,
 		timers: timers(exp, !!s.dev_timers),
 		recordRpe: !config.rpe_conditions || config.rpe_conditions.includes(s.condition),
 		text: config.condition_text[s.condition],
@@ -309,7 +365,7 @@ export function buildState(s: SessionRow): SessionState {
 export function advance(pid: string, from: Phase, opts: { facilitator: boolean; clientTs: number | null }): SessionRow {
 	const db = getDb();
 	return db.transaction(() => {
-		const s = requireSession(pid);
+		const s = requireLive(pid);
 		if (s.phase !== from) return s;
 		const idx = PHASES.indexOf(from);
 		if (idx < 0 || idx === PHASES.length - 1) error(400, `Cannot advance from ${from}`);
@@ -346,7 +402,7 @@ export function advance(pid: string, from: Phase, opts: { facilitator: boolean; 
 
 /** Record a timestamp marker inside the current phase (e.g. baseline START, board preview / play start). */
 export function mark(pid: string, phase: Phase, name: string, clientTs: number | null): number {
-	const s = requireSession(pid);
+	const s = requireLive(pid);
 	if (s.phase !== phase) error(409, `Session is in ${s.phase}, not ${phase}`);
 	if (!MARKERS[phase]?.includes(name)) error(400, `Unknown marker ${phase}.${name}`);
 	const now = Date.now();
@@ -362,7 +418,7 @@ export function recordClick(
 	pid: string,
 	c: { board: 'A' | 'B'; seq: number; card_index: number; outcome: ClickOutcome; client_ts: number }
 ): void {
-	const s = requireSession(pid);
+	const s = requireLive(pid);
 	const phase = c.board === 'A' ? 'board_a' : 'board_b';
 	if (s.phase !== phase) error(409, `Session is in ${s.phase}, not ${phase}`);
 	const theme = c.board === 'A' ? s.board_a_theme : s.board_b_theme;
@@ -402,7 +458,7 @@ export function recordSa(pid: string, a: SaAnswer): { answered: number } {
 	const db = getDb();
 	const exp = experiment();
 	return db.transaction(() => {
-		const s = requireSession(pid);
+		const s = requireLive(pid);
 		if (s.phase !== 'sa') error(409, `Session is in ${s.phase}, not sa`);
 		const plan: SaStep[] = JSON.parse(s.sa_plan);
 		const answered = saAnswered(pid);
@@ -482,7 +538,7 @@ export function checkBout(rpe: number, peak_hr: number | null) {
 
 /** Facilitator records RPE (Borg 6-20) and, optionally, peak HR at the end of an exercise/rest bout. */
 export function recordBout(pid: string, v: { phase: Phase; rpe: number; peak_hr: number | null }): void {
-	const s = requireSession(pid);
+	const s = requireLive(pid);
 	if (!isBout(v.phase) || s.phase !== v.phase) error(409, `Session is in ${s.phase}, not ${v.phase}`);
 	checkBout(v.rpe, v.peak_hr);
 	const now = Date.now();
@@ -507,7 +563,7 @@ export function checkSurvey(v: SurveyAnswers) {
 }
 
 export function recordSurvey(pid: string, v: SurveyAnswers, clientTs: number | null): SessionRow {
-	const s = requireSession(pid);
+	const s = requireLive(pid);
 	if (s.phase !== 'survey') error(409, `Session is in ${s.phase}, not survey`);
 	checkSurvey(v);
 	getDb()

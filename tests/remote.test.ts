@@ -138,3 +138,51 @@ describe('remote sessions', () => {
 		expect(con.consoleState(rp)!.peak).toBe(101);
 	});
 });
+
+describe('ending a session early', () => {
+	it('closes it, tags it and refuses further data', () => {
+		const [pid] = sched.addToSchedule(1);
+		session.openSession(pid);
+		session.recordSurvey(pid, { age: 30, exercise_days: 1, fitness: 2, hours_slept: 6 }, null);
+		con.consoleAction(pid, { action: 'abort', reason: 'left during baseline' });
+		const s = session.getSession(pid)!;
+		expect(s.aborted_at).toBeTruthy();
+		expect(s.abort_reason).toBe('left during baseline');
+		expect(s.tags).toContain('aborted');
+		expect(session.buildState(s).aborted).toBe(true);
+		expect(status(() => session.mark(pid, 'baseline', 'start', null))).toBe(409);
+		expect(status(() => con.consoleAction(pid, { action: 'advance', phase: 'baseline' }))).toBe(409);
+		expect(status(() => con.consoleAction(pid, { action: 'abort' }))).toBe(409);
+		const open = db.getDb().prepare('SELECT COUNT(*) AS n FROM phases WHERE pid = ? AND ended_at IS NULL').get(pid) as { n: number };
+		expect(open.n).toBe(0);
+	});
+});
+
+describe('console override', () => {
+	it('fills the survey, restarts from the beginning and resumes an ended session', () => {
+		const [pid] = sched.addToSchedule(1);
+		session.openSession(pid);
+		con.consoleAction(pid, { action: 'survey', phase: 'survey', answers: { age: 25, exercise_days: 4, fitness: 4, hours_slept: 8 } });
+		expect(con.consoleState(pid)!.survey).toEqual({ age: 25, exercise_days: 4, fitness: 4, hours_slept: 8 });
+		expect(session.getSession(pid)!.phase).toBe('baseline');
+
+		con.consoleAction(pid, { action: 'jump', to: 'board_a' });
+		session.mark(pid, 'board_a', 'preview', null);
+		session.recordClick(pid, { board: 'A', seq: 0, card_index: 0, outcome: 'first_flip', client_ts: 1 });
+		const st = con.consoleState(pid)!;
+		expect(st.live!.clicks).toHaveLength(1);
+		expect(st.manifest!.objects.length).toBeGreaterThan(0);
+
+		con.consoleAction(pid, { action: 'abort', reason: 'left' });
+		con.consoleAction(pid, { action: 'jump', to: 'board_a' });
+		const s = session.getSession(pid)!;
+		expect(s.aborted_at).toBeNull();
+		expect(s.tags).not.toContain('aborted');
+		expect(con.consoleState(pid)!.live!.clicks).toHaveLength(0);
+
+		con.consoleAction(pid, { action: 'jump', to: 'survey' });
+		expect(con.consoleState(pid)!.survey).toBeNull();
+		const log = db.getDb().prepare("SELECT field FROM edits WHERE pid = ? AND field LIKE 'phase%'").all(pid);
+		expect(log.length).toBe(3);
+	});
+});

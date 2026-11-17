@@ -356,12 +356,12 @@
 						<td><input type="checkbox" checked={selected.includes(r.pid)} onchange={() => toggle(r.pid)} /></td>
 						<td><a href="/admin/explore?pid={encodeURIComponent(r.pid)}">{r.pid}</a>{#if isTest(r.pid)} <span class="tag">test</span>{:else if isArchived(r.pid)} <span class="tag">archived</span>{/if}{#if hasRemoteTag(r.tags)} <span class="rp">RP</span>{/if}</td><td>{r.condition}</td>
 						<td>{#each splitTags(r.tags) as t (t)}<span class="chip">{t}</span>{/each}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
-						<td>{r.phase}</td><td>{r.clicks}</td><td>{r.sa_answered}/{r.sa_total}</td>
+						<td>{#if r.aborted_at}<span class="warnc" title={r.abort_reason ?? ''}>ended in {r.phase}</span>{:else}{r.phase}{/if}</td><td>{r.clicks}</td><td>{r.sa_answered}/{r.sa_total}</td>
 						<td class:warnc={r.reloads > 0}>{r.reloads}</td><td>{time(r.created_at)}</td><td>{time(r.completed_at)}</td>
 						<td class="nowrap">
 							<button class="small" onclick={() => (editing === r.pid ? (editing = null) : openEdit(r))}>{editing === r.pid ? 'Close' : 'Edit'}</button>
+							{#if !isArchived(r.pid)}<a class="small" href="/admin/remote/{encodeURIComponent(r.pid)}">Console</a>{/if}
 							{#if hasRemoteTag(r.tags) && !isArchived(r.pid)}
-								<a class="small" href="/admin/remote/{encodeURIComponent(r.pid)}">Console</a>
 								<button class="small" onclick={() => copyLink(r.pid)}>{copiedPid === r.pid ? 'Copied ✓' : 'Link'}</button>
 							{/if}
 							{#if isTest(r.pid)}

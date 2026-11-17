@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
+	import ObjectImage from '$lib/components/ObjectImage.svelte';
 	import { remotePath } from '$lib/remote';
+	import { renderSpec } from '$lib/render';
 
 	/**
 	 * Facilitator console for one participant, usually a remote one (RP) on a call: watch their
@@ -93,6 +95,76 @@
 	});
 	const saveBout = () => rpe !== null && act({ action: 'bout', rpe, peak_hr: peak ?? s?.peak ?? null });
 
+	async function endSession() {
+		if (!s) return;
+		const reason = prompt(
+			`End ${data.pid}'s session now? Their screen will say the session has ended and nothing more is recorded. ` +
+				`The data so far is kept and tagged "aborted" (delete or archive it on the admin page).\n\nReason (e.g. left during Game A):`,
+			'participant left'
+		);
+		if (reason === null) return;
+		await act({ action: 'abort', reason });
+	}
+
+	// Admin override: move the session to any phase (clears data from that phase on).
+	let jumpTo = $state('');
+	function jump(to: string, label: string) {
+		if (!s) return;
+		const idx = s.phases.indexOf(to as (typeof s.phases)[number]);
+		const clears = s.phases.slice(idx).filter((p) => ['survey', 'interval1', 'board_a', 'interval2', 'board_b', 'sa'].includes(p));
+		const msg =
+			`${label}: move ${data.pid} to "${to}"?` +
+			(clears.length ? `\n\nThis deletes what was recorded in ${clears.join(', ')} (heart rate is kept).` : '') +
+			(s.abortedAt ? '\n\nThe session was ended; this reopens it.' : '');
+		act({ action: 'jump', to }, msg);
+	}
+	const nextPhase = $derived(s ? s.phases[s.phases.indexOf(s.phase) + 1] : undefined);
+
+	// Survey filled in for them
+	let sv = $state({ age: null as number | null, exercise_days: null as number | null, fitness: null as number | null, hours_slept: null as number | null });
+	const svValid = $derived(
+		sv.age !== null && sv.age >= 16 && sv.age <= 99 && sv.exercise_days !== null && sv.exercise_days >= 0 && sv.exercise_days <= 7 &&
+			sv.fitness !== null && sv.fitness >= 1 && sv.fitness <= 5 && sv.hours_slept !== null && sv.hours_slept >= 0 && sv.hours_slept <= 24
+	);
+	const FITNESS = ['', 'Very low', 'Low', 'Moderate', 'High', 'Very high'];
+
+	// Live board (read only): what is face up on their screen, from the recorded flips.
+	const board = $derived.by(() => {
+		if (!s?.live || !s.manifest) return null;
+		const items = new Map(s.manifest.objects.map((o) => [o.id, o]));
+		const matched = new Set<number>();
+		let pending: number | null = null;
+		let lastMiss: [number, number] | null = null;
+		for (const c of s.live.clicks) {
+			if (c.outcome === 'first_flip') {
+				pending = c.card_index;
+				lastMiss = null;
+			} else {
+				if (c.outcome === 'match') {
+					matched.add(c.card_index);
+					if (pending !== null) matched.add(pending);
+					lastMiss = null;
+				} else if (pending !== null) lastMiss = [pending, c.card_index];
+				pending = null;
+			}
+		}
+		const last = s.live.clicks.at(-1);
+		return {
+			cols: s.live.cols,
+			cells: s.live.cards.map((id, i) => {
+				const item = items.get(id);
+				return {
+					label: item?.label ?? id,
+					spec: item ? renderSpec(s.live!.theme, item, s.colors, s.orientations) : null,
+					state: matched.has(i) ? 'matched' : pending === i ? 'up' : lastMiss?.includes(i) ? 'miss' : 'down'
+				};
+			}),
+			lastAt: last ? last.client_ts : null
+		};
+	});
+	let peek = $state(false);
+	const label = (t: string) => ({ objects: 'recognition grid', side_by_side: 'side by side', level2_color: 'same color as', level2_count: 'how many', oral: 'environment' })[t] ?? t;
+
 	function advanceBout() {
 		if (!s) return;
 		const ms = s.timers.interval_ms[s.phase as 'interval1'];
@@ -132,6 +204,10 @@
 			· last activity {ago(serverNow - s.updatedAt)} ago
 		</p>
 
+		{#if s.abortedAt}
+			<p class="ended">Ended early {new Date(s.abortedAt).toLocaleTimeString()} during <b>{s.phase}</b>{s.abortReason ? `: ${s.abortReason}` : ''}. Nothing more is recorded. Delete or archive it on the <a href="/admin">admin page</a>.</p>
+		{/if}
+
 		<ol class="phases">
 			{#each s.phases as p (p)}
 				<li class:cur={p === s.phase} class:past={s.phases.indexOf(p) < s.phases.indexOf(s.phase)}>{p}</li>
@@ -140,10 +216,24 @@
 
 		<div class="grid">
 			<section class="card now">
-				<h2>{s.phase} <small>· {ago(serverNow - s.phaseStartedAt)} in phase</small></h2>
+				<h2>{s.phase} <small>· {s.abortedAt ? 'ended' : `${ago(serverNow - s.phaseStartedAt)} in phase`}</small></h2>
 
-				{#if s.phase === 'survey'}
-					<p>They are answering the survey on their screen (age, exercise days, fitness, sleep). Read the questions out if they need help.</p>
+				{#if s.abortedAt}
+					<p class="muted">Session ended.</p>
+				{:else if s.phase === 'survey'}
+					<p>They are answering the survey on their screen. Or ask them and fill it in here (this moves them on to the baseline):</p>
+					<form class="svform" onsubmit={(e) => (e.preventDefault(), svValid && act({ action: 'survey', answers: sv }))}>
+						<label>Age <input type="number" min="16" max="99" bind:value={sv.age} /></label>
+						<label>Exercise days / week <input type="number" min="0" max="7" bind:value={sv.exercise_days} /></label>
+						<label>Fitness
+							<select bind:value={sv.fitness}>
+								<option value={null}>—</option>
+								{#each [1, 2, 3, 4, 5] as n (n)}<option value={n}>{n} · {FITNESS[n]}</option>{/each}
+							</select>
+						</label>
+						<label>Hours slept <input type="number" min="0" max="24" step="0.5" bind:value={sv.hours_slept} /></label>
+						<button class="go" disabled={busy || !svValid}>Save survey &amp; continue →</button>
+					</form>
 				{:else if s.phase === 'baseline'}
 					{@const st = marker('start')}
 					{#if !st}
@@ -193,6 +283,19 @@
 					{/if}
 					{#if !play}<p>Cards are face up (preview).</p>
 					{:else if s.timers.time_limit_ms > 0}<p>{fmt(play.at + s.timers.time_limit_ms - serverNow)} left</p>{/if}
+					{#if board}
+						<div class="live" style:--cols={board.cols}>
+							{#each board.cells as c, i (i)}
+								<div class="lc {c.state}" class:peek={peek && c.state === 'down'} title={c.label}>
+									{#if c.spec && (c.state !== 'down' || peek || !play)}<ObjectImage spec={c.spec} size="62%" />{/if}
+								</div>
+							{/each}
+						</div>
+						<p class="muted small">
+							Read only, from their recorded flips: <span class="k up">face up</span> <span class="k matched">matched</span> <span class="k miss">last mismatch</span>
+							<label class="peekl"><input type="checkbox" bind:checked={peek} /> show hidden cards</label>
+						</p>
+					{/if}
 					<p class="muted">The game moves on by itself when the board is cleared or time runs out.</p>
 				{:else if s.phase === 'break'}
 					<p>Short break. When they're ready:</p>
@@ -220,6 +323,68 @@
 				{/if}
 			</section>
 		</div>
+		<section class="card data">
+			<h2>Their answers</h2>
+			<div class="cols">
+				<div>
+					<h3>Survey</h3>
+					{#if s.survey}
+						<p>Age {s.survey.age} · exercise {s.survey.exercise_days} d/wk · fitness {s.survey.fitness} ({FITNESS[s.survey.fitness]}) · slept {s.survey.hours_slept} h</p>
+					{:else}<p class="muted">Not filled in yet.</p>{/if}
+					<h3>Exercise / rest</h3>
+					{#if s.bouts.length}
+						{#each s.bouts as b (b.bout)}<p>{b.bout === 'interval1' ? 'Bout 1' : 'Bout 2'}: RPE {b.rpe}{b.peak_hr ? ` · peak HR ${b.peak_hr}` : ''}</p>{/each}
+					{:else}<p class="muted">No RPE yet.</p>{/if}
+				</div>
+				<div>
+					<h3>Questions ({s.sa.answered}/{s.sa.total})</h3>
+					{#if s.answers.length}
+						{@const single = s.answers.filter((a) => a.question_type !== 'objects')}
+						{@const grid = s.answers.filter((a) => a.question_type === 'objects')}
+						{#each [...new Set(grid.map((g) => g.board))] as bd (bd)}
+							{@const g = grid.filter((x) => x.board === bd)}
+							<p>Board {bd} recognition grid: {g.filter((x) => x.target === 'seen' && x.response === 'selected').length}/{g.filter((x) => x.target === 'seen').length} seen picked, {g.filter((x) => x.target === 'foil' && x.response === 'selected').length} foils picked</p>
+						{/each}
+						<table>
+							<tbody>
+								{#each single as a (a.seq + a.item)}
+									<tr class:wrong={!a.correct}>
+										<td>{a.seq + 1}</td><td>{a.board}</td><td>{label(a.question_type)}</td><td>{a.item}</td>
+										<td>{a.response === 'dont_remember' ? "don't remember" : a.response}</td><td>{a.correct ? '✓' : '✗'}</td>
+										<td class="muted">{a.confidence ? `conf ${a.confidence}` : ''}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					{:else}<p class="muted">None yet.</p>{/if}
+				</div>
+			</div>
+		</section>
+
+		<section class="card god">
+			<h2>Override</h2>
+			<p class="row">
+				{#if s.abortedAt}
+					<button disabled={busy} onclick={() => jump(s.phase, 'Resume')}>Resume: restart {s.phase}</button>
+				{:else}
+					<button disabled={busy} onclick={() => jump(s.phase, 'Restart phase')}>Restart this phase</button>
+					{#if nextPhase}<button disabled={busy} onclick={() => jump(nextPhase, 'Skip')}>Skip to {nextPhase}</button>{/if}
+				{/if}
+				<button disabled={busy} onclick={() => jump('survey', 'Restart from the beginning')}>Restart from the beginning</button>
+				<label>Go to
+					<select bind:value={jumpTo}>
+						<option value="">phase…</option>
+						{#each s.phases as p (p)}<option value={p}>{p}</option>{/each}
+					</select>
+				</label>
+				<button disabled={busy || !jumpTo} onclick={() => jump(jumpTo, 'Go to phase')}>Go</button>
+			</p>
+			<p class="muted small">Moving to a phase deletes what was recorded in it and in later ones, so it starts fresh. Every move is logged in the change history. Their screen follows within 2 s.</p>
+			{#if !s.abortedAt && s.phase !== 'done'}
+				<p class="row"><button class="end" disabled={busy} onclick={endSession}>End session early…</button>
+					<span class="muted small">Participant left or the data is unusable.</span></p>
+			{/if}
+		</section>
 	{/if}
 </main>
 
@@ -413,6 +578,131 @@
 	}
 	.muted {
 		color: #777;
+	}
+	.ended {
+		background: #fdecea;
+		border: 1px solid #f5c2bc;
+		color: #8a1c10;
+		padding: 0.6rem 1rem;
+		border-radius: 8px;
+	}
+	.data,
+	.god {
+		margin-top: 1rem;
+	}
+	.data h3 {
+		font-size: 1rem;
+		margin: 0.8rem 0 0.3rem;
+	}
+	.data .cols {
+		display: grid;
+		grid-template-columns: 1fr 2fr;
+		gap: 1.5rem;
+	}
+	@media (max-width: 700px) {
+		.data .cols {
+			grid-template-columns: 1fr;
+		}
+	}
+	.data p {
+		margin: 0.2rem 0;
+	}
+	.data table {
+		border-collapse: collapse;
+		font-size: 0.85rem;
+		width: 100%;
+	}
+	.data td {
+		border-bottom: 1px solid #eee;
+		padding: 0.2rem 0.4rem;
+	}
+	.data tr.wrong td {
+		color: #a33;
+	}
+	.god .row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		align-items: center;
+	}
+	.svform {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		gap: 0.5rem 1rem;
+		align-items: end;
+	}
+	.svform label {
+		display: flex;
+		flex-direction: column;
+		font-size: 0.85rem;
+		gap: 0.2rem;
+	}
+	.svform input,
+	.svform select {
+		font-size: 1rem;
+		padding: 0.25rem;
+	}
+	.live {
+		display: grid;
+		grid-template-columns: repeat(var(--cols), 1fr);
+		gap: 0.35rem;
+		max-width: 24rem;
+		margin: 0.6rem 0;
+	}
+	.lc {
+		aspect-ratio: 1;
+		border-radius: 8px;
+		border: 2px solid #c8d0de;
+		background: #3d5a99;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.lc.up,
+	.lc.matched,
+	.lc.miss,
+	.lc.peek {
+		background: #fff;
+	}
+	.lc.up {
+		border-color: #1f63d6;
+		box-shadow: 0 0 0 2px #1f63d6;
+	}
+	.lc.matched {
+		border-color: #2a9d3f;
+		background: #eef8f0;
+	}
+	.lc.miss {
+		border-color: #e0a800;
+	}
+	.lc.peek {
+		opacity: 0.45;
+		border-style: dashed;
+	}
+	.k {
+		padding: 0 0.3rem;
+		border-radius: 3px;
+		border: 2px solid;
+	}
+	.k.up {
+		border-color: #1f63d6;
+	}
+	.k.matched {
+		border-color: #2a9d3f;
+	}
+	.k.miss {
+		border-color: #e0a800;
+	}
+	.peekl {
+		margin-left: 0.8rem;
+	}
+	.end {
+		color: #b00;
+		border: 1px solid #b00;
+		background: white;
+		border-radius: 6px;
+		padding: 0.35rem 0.9rem;
+		cursor: pointer;
 	}
 	.small {
 		font-size: 0.85rem;

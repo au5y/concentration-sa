@@ -70,11 +70,13 @@
 		let poll: ReturnType<typeof setInterval> | undefined;
 		api.session(pid).then((st) => {
 			setState(st);
+			if (st.aborted) return;
+			// Follow the facilitator's console: remote sessions are moved on from there, and any
+			// session can be ended, restarted or moved to another phase there.
+			poll = setInterval(followFacilitator, 2000);
 			if (!st.remote) return;
-			// Remote: the facilitator moves the session on from their console; follow along.
 			ownHr = new StrapManager({ pid: st.pid });
 			ownHr.start();
-			poll = setInterval(followFacilitator, 2000);
 		}, (e) => (loadError = e.message));
 		return () => {
 			window.removeEventListener('popstate', onPop);
@@ -89,6 +91,11 @@
 		try {
 			const next = await api.poll(s.pid);
 			if (!s || busy) return;
+			if (next.aborted) {
+				s = next;
+				ownHr?.stop();
+				return;
+			}
 			if (next.phase !== s.phase || next.phaseStartedAt !== s.phaseStartedAt) setState(next);
 			else {
 				clockOffset = next.serverNow - Date.now();
@@ -295,6 +302,12 @@
 	</main>
 {:else if !s}
 	<main class="start"><p>Loading…</p></main>
+{:else if s.aborted}
+	<main class="start">
+		<h1>This session has ended</h1>
+		<p>Thank you for your time. {s.remote ? 'You can close this page.' : 'Please let the researcher know.'}</p>
+		{#if laptop || data.laptop}<p class="small">{s.pid} was ended from the facilitator console. <a href="/run">Start page</a></p>{/if}
+	</main>
 {:else}
 	{#key `${s.phase}:${s.phaseStartedAt}`}
 		{#if s.phase === 'baseline'}
