@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Brain</title>
+  <g fill="#f4a7b9" stroke="#b03a5b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <!-- left hemisphere -->
+    <path d="M31 9c-3-3-9-3-11 1-5-1-9 3-8 8-5 2-6 8-3 11-4 4-2 11 3 12 0 5 5 8 9 6 2 4 7 5 10 2z"/>
+    <!-- right hemisphere -->
+    <path d="M33 9c3-3 9-3 11 1 5-1 9 3 8 8 5 2 6 8 3 11 4 4 2 11-3 12 0 5-5 8-9 6-2 4-7 5-10 2z"/>
+  </g>
+  <!-- folds -->
+  <g fill="none" stroke="#b03a5b" stroke-width="2.5" stroke-linecap="round">
+    <path d="M20 10c0 4 3 6 6 6M12 18c3 0 5 2 5 5M9 29c4 0 7 2 7 6M12 41c3-1 6 0 8 3M21 47c0-3 2-5 5-5M24 26c3 0 5 3 5 6"/>
+    <path d="M44 10c0 4-3 6-6 6M52 18c-3 0-5 2-5 5M55 29c-4 0-7 2-7 6M52 41c-3-1-6 0-8 3M43 47c0-3-2-5-5-5M40 26c-3 0-5 3-5 6"/>
+  </g>
+</svg>

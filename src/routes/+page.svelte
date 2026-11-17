@@ -166,7 +166,7 @@
 </script>
 
 <svelte:window onkeydown={onKey} />
-<svelte:head><title>{pid ? 'Session' : 'Concentration study'}</title></svelte:head>
+<svelte:head><title>Pump Up the Memory: HSE Study</title></svelte:head>
 
 {#if !pid}
 	<main class="start">

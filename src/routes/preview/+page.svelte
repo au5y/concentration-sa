@@ -122,7 +122,7 @@
 	}
 </script>
 
-<svelte:head><title>Preview &amp; feedback</title></svelte:head>
+<svelte:head><title>Preview &amp; feedback · Pump Up the Memory: HSE Study</title></svelte:head>
 
 {#if !data.authed}
 	<main class="narrow">
