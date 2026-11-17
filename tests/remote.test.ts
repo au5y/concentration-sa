@@ -231,4 +231,14 @@ describe('console override', () => {
 		expect(db.getDb().prepare("SELECT old_value, new_value FROM edits WHERE pid = ? AND field = 'condition'").get(pid)).toEqual({ old_value: other, new_value: before.condition });
 		expect(status(() => sched.setCondition(pid, 'swimming'))).toBe(400);
 	});
+
+	it('skips the baseline, leaving a marker', () => {
+		const [pid] = sched.addToSchedule(1, true);
+		session.openSession(pid);
+		con.consoleAction(pid, { action: 'survey', phase: 'survey', answers: { age: 25, exercise_days: 4, fitness: 4, hours_slept: 8 } });
+		expect(status(() => con.consoleAction(pid, { action: 'skip', phase: 'survey' }))).toBe(409);
+		con.consoleAction(pid, { action: 'skip', phase: 'baseline' });
+		expect(session.getSession(pid)!.phase).toBe('practice');
+		expect(db.getDb().prepare("SELECT 1 AS x FROM phases WHERE pid = ? AND phase = 'baseline.skipped'").get(pid)).toEqual({ x: 1 });
+	});
 });

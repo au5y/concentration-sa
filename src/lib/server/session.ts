@@ -34,7 +34,7 @@ export interface SessionRow {
 
 const BOARD_OF: Partial<Record<Phase, 'A' | 'B'>> = { board_a: 'A', board_b: 'B' };
 const MARKERS: Partial<Record<Phase, string[]>> = {
-	baseline: ['start'],
+	baseline: ['start', 'skipped'],
 	interval1: ['start'],
 	interval2: ['start'],
 	practice: ['preview', 'play', 'timeout', 'cleared'],

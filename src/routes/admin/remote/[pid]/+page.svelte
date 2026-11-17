@@ -331,6 +331,10 @@
 					{#if !st}
 						<p>Ask them to put on the strap (wet the electrodes) and click <b>Connect heart-rate strap</b> on their screen. When the heart rate shows here and they are sitting still, start the baseline.</p>
 						<button class="go" disabled={busy} onclick={() => act({ action: 'start' })}>Start baseline</button>
+						<p class="muted small">
+							No strap or no resting baseline?
+							<button class="small" disabled={busy} onclick={() => act({ action: 'skip' }, `Skip ${data.pid}'s baseline and go straight to practice? The data records that the baseline was skipped.`)}>Skip baseline →</button>
+						</p>
 					{:else}
 						<p class="ok">Baseline started {ago(serverNow - st.at)} ago.</p>
 						<button class="go" disabled={busy} onclick={() => act({ action: 'advance' })}>{NEXT.baseline} →</button>

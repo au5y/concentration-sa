@@ -124,6 +124,12 @@ export function consoleAction(pid: string, b: Record<string, unknown>) {
 	if (phase !== s.phase) error(409, `${pid} is now in ${s.phase}, not ${String(b.phase)}; the page will refresh`);
 	if (b.action === 'advance') return advance(pid, phase, { facilitator: true, clientTs: null });
 	if (b.action === 'start') return mark(pid, phase, 'start', null);
+	if (b.action === 'skip') {
+		// No resting baseline (e.g. no strap): leave a "baseline.skipped" marker in the data, then move on.
+		if (phase !== 'baseline') error(400, 'Only the baseline can be skipped');
+		mark(pid, phase, 'skipped', null);
+		return advance(pid, phase, { facilitator: true, clientTs: null });
+	}
 	if (b.action === 'survey') {
 		const v = (b.answers ?? {}) as Record<string, unknown>;
 		return recordSurvey(pid, { age: Number(v.age), exercise_days: Number(v.exercise_days), fitness: Number(v.fitness), hours_slept: Number(v.hours_slept) }, null);
