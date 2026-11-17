@@ -62,8 +62,7 @@ Outside Docker the defaults are `./config.json`, `./assets` and `./data`.
 contact email. Edit it on the admin page under **Front page & sign-up links** (with a live preview);
 it is saved to `DATA_DIR/landing.json`, so a new round only needs new links, not a code change.
 Links must be `https://` (e.g. one Google Calendar booking page per seat). Remove every link to close
-sign-ups; the page then shows the "no links" message. The small "Study team" link at the bottom
-goes to `/run`.
+sign-ups; the page then shows the "no links" message.
 
 ## 2. Config (`config.json`)
 
