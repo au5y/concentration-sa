@@ -33,29 +33,53 @@
 	}
 </script>
 
+<svelte:head>
+	<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</svelte:head>
+
 <details class="landing">
 	<summary><b>Front page &amp; sign-up links</b> <span class="muted small">({landing.links.length ? `${landing.links.length} sign-up link${landing.links.length > 1 ? 's' : ''} live` : 'sign-ups closed'})</span></summary>
 	<div class="cols">
 		<div class="form">
-			<label>Title <input bind:value={draft.title} /></label>
-			<label
-				>Text <span class="muted small">(blank line = new paragraph; start a line with • or - for a bullet)</span>
-				<textarea rows="10" bind:value={draft.body}></textarea>
-			</label>
 			<fieldset>
-				<legend>Sign-up links <span class="muted small">(e.g. one Google Calendar booking page per seat)</span></legend>
+				<legend>Sign-up box</legend>
+				<label>Date <span class="muted small">(shown first, e.g. Saturday, November 21 · 11 am – 4 pm)</span><input bind:value={draft.date} /></label>
+				<div class="sub">Sign-up links <span class="muted small">(e.g. the Google Calendar booking page)</span></div>
 				{#each draft.links as l, i (i)}
 					<div class="link">
-						<input placeholder="Button label, e.g. Book Seat A" bind:value={l.label} />
+						<input placeholder="Button label, e.g. Book on Google Calendar" bind:value={l.label} />
 						<input placeholder="https://calendar.app.google/…" bind:value={l.url} />
 						<button title="Move up" disabled={i === 0} onclick={() => move(i, -1)}>↑</button>
 						<button title="Remove" onclick={() => removeLink(i)}>✕</button>
 					</div>
 				{/each}
 				<button onclick={addLink}>+ Add link</button>
+				<label>Note under the link <input bind:value={draft.signupNote} /></label>
+				<label>Message when there are no links <input bind:value={draft.closed} /></label>
+				<label>Contact email <input type="email" bind:value={draft.contact} /></label>
 			</fieldset>
-			<label>Message when there are no links <input bind:value={draft.closed} /></label>
-			<label>Contact email <input type="email" bind:value={draft.contact} /></label>
+			<fieldset>
+				<legend>Top of the page</legend>
+				<div class="two">
+					<label>Top left <input bind:value={draft.kicker} /></label>
+					<label>Top right <input bind:value={draft.tag} /></label>
+					<label>Headline line 1 <input bind:value={draft.title} /></label>
+					<label>Headline line 2 (red) <input bind:value={draft.titleAccent} /></label>
+				</div>
+				<label
+					>Text <span class="muted small">(blank line = new paragraph; start a line with • or - for a bullet)</span>
+					<textarea rows="5" bind:value={draft.intro}></textarea>
+				</label>
+				<div class="sub">Rows <span class="muted small">(label and text, e.g. Time / About 20 minutes)</span></div>
+				{#each draft.facts as f, i (i)}
+					<div class="fact">
+						<input placeholder="Label" bind:value={f.label} />
+						<input placeholder="Text" bind:value={f.text} />
+						<button title="Remove" onclick={() => (draft.facts = draft.facts.filter((_, j) => j !== i))}>✕</button>
+					</div>
+				{/each}
+				<button onclick={() => (draft.facts = [...draft.facts, { label: '', text: '' }])}>+ Add row</button>
+			</fieldset>
 			<p><button class="save" onclick={save}>Save &amp; publish</button> <span class="small">{status}</span></p>
 			<p class="muted small">Remove all links to close sign-ups. <a href="/" target="_blank">Open the live page →</a></p>
 		</div>
@@ -109,12 +133,30 @@
 		border-radius: 6px;
 		display: flex;
 		flex-direction: column;
-		gap: 0.4rem;
+		gap: 0.5rem;
+	}
+	legend {
+		font-weight: 700;
 	}
 	.link {
 		display: grid;
 		grid-template-columns: 10rem minmax(0, 1fr) auto auto;
 		gap: 0.3rem;
+	}
+	.fact {
+		display: grid;
+		grid-template-columns: 6rem minmax(0, 1fr) auto;
+		gap: 0.3rem;
+	}
+	.two {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.5rem;
+	}
+	.sub {
+		font-weight: 600;
+		font-size: 0.9rem;
+		margin-top: 0.3rem;
 	}
 	.save {
 		background: #a31f34;
@@ -130,7 +172,7 @@
 		border-radius: 8px;
 		max-height: 40rem;
 		overflow: auto;
-		zoom: 0.8;
+		zoom: 0.7;
 	}
 	.muted {
 		color: #666;

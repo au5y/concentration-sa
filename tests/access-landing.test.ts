@@ -89,8 +89,11 @@ describe('front page', () => {
 
 	it('saves links and text to DATA_DIR, dropping empty link rows', () => {
 		const saved = landing.saveLanding({
+			...landing.DEFAULT_LANDING,
 			title: ' Round 2 ',
-			body: 'Hello',
+			intro: 'Hello',
+			date: 'Saturday, November 21 · 11 am – 4 pm',
+			facts: [{ label: 'Time', text: '20 min' }, { label: '', text: '' }],
 			links: [
 				{ label: 'Seat A', url: 'https://calendar.app.google/abc' },
 				{ label: '', url: '' }
@@ -99,13 +102,23 @@ describe('front page', () => {
 			contact: 'study@mit.edu'
 		});
 		expect(saved.title).toBe('Round 2');
+		expect(saved.date).toBe('Saturday, November 21 · 11 am – 4 pm');
+		expect(saved.facts).toEqual([{ label: 'Time', text: '20 min' }]);
 		expect(saved.links).toEqual([{ label: 'Seat A', url: 'https://calendar.app.google/abc' }]);
 		expect(landing.getLanding()).toEqual(saved);
 		expect(JSON.parse(fs.readFileSync(path.join(dir, 'landing.json'), 'utf8'))).toEqual(saved);
 	});
 
+	it('reads a page saved before the redesign (body → intro)', () => {
+		fs.writeFileSync(path.join(dir, 'landing.json'), JSON.stringify({ title: 'Old', body: 'Old text', links: [] }));
+		const l = landing.getLanding();
+		expect(l.intro).toBe('Old text');
+		expect(l.facts).toEqual(landing.DEFAULT_LANDING.facts);
+		expect('body' in l).toBe(false);
+	});
+
 	it('rejects unsafe or broken links and bad emails', () => {
-		const base = { title: 't', body: '', closed: '', contact: '' };
+		const base = { ...landing.DEFAULT_LANDING, contact: '' };
 		const bad = (v: Record<string, unknown>) => expect(() => landing.saveLanding({ ...base, ...v })).toThrow();
 		bad({ links: [{ label: 'x', url: 'javascript:alert(1)' }] });
 		bad({ links: [{ label: 'x', url: 'http://example.com' }] });
@@ -113,5 +126,6 @@ describe('front page', () => {
 		bad({ links: [{ label: '', url: 'https://example.com' }] });
 		bad({ links: 'nope' });
 		bad({ links: [], contact: 'not-an-email' });
+		bad({ facts: 'nope' });
 	});
 });
