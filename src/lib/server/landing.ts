@@ -17,8 +17,9 @@ export const DEFAULT_LANDING: Landing = {
 	title: 'Step Up',
 	titleAccent: 'Your Game',
 	intro:
-		'Raise your heart rate (or rest!), play two short computer matching games and answer some quick questions. ' +
-		'Between games, some people climb stairs at their own pace; others rest. Groups are assigned at random.',
+		'Play two short computer matching games and answer some quick questions. ' +
+		'Between games, some people climb stairs at their own pace to raise their heart rate; others rest. ' +
+		'Groups are assigned at random.',
 	facts: [
 		{ label: 'Time', text: 'About 20 minutes, one visit' },
 		{ label: 'Who', text: 'Adults 18+ who can climb stairs for a few minutes. No known heart conditions. Able to tell red, green, yellow and blue apart.' },
