@@ -1,7 +1,14 @@
-import { json } from '@sveltejs/kit';
-import { checkPid } from '$lib/server/http';
-import { buildState, openSession } from '$lib/server/session';
+import { error, json } from '@sveltejs/kit';
+import { sessionPid } from '$lib/server/remote';
+import { buildState, getSession, openSession } from '$lib/server/session';
 
-export function GET({ url }) {
-	return json(buildState(openSession(checkPid(url.searchParams.get('pid')))));
+/** Open (or resume) a session. ?poll=1 only reads it, for remote sessions watching for the facilitator's moves. */
+export function GET({ url, cookies }) {
+	const pid = sessionPid(cookies, url.searchParams.get('pid'));
+	if (url.searchParams.get('poll') === '1') {
+		const s = getSession(pid);
+		if (!s) error(404, `No session for ${pid}`);
+		return json(buildState(s));
+	}
+	return json(buildState(openSession(pid)));
 }

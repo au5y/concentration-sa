@@ -3,7 +3,7 @@
 	 * Questions at the start of the session, filled in by the facilitator: they ask each question out
 	 * loud and tap the participant's answer. RPE is recorded after each bout, not here.
 	 */
-	let { onSubmit }: { onSubmit: (v: Record<string, unknown>) => Promise<void> } = $props();
+	let { onSubmit, remote = false }: { onSubmit: (v: Record<string, unknown>) => Promise<void>; remote?: boolean } = $props();
 
 	const FITNESS = [
 		{ n: 1, label: 'Very low', desc: 'No regular exercise; winded after one flight of stairs' },
@@ -38,7 +38,7 @@
 </script>
 
 <div class="survey">
-	<p class="banner">Facilitator: ask each question out loud and tap the answer.</p>
+	<p class="banner">{remote ? 'Answer each question by tapping your answer, then press the button at the bottom.' : 'Facilitator: ask each question out loud and tap the answer.'}</p>
 
 	<div class="pair">
 		<section>

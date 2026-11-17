@@ -7,7 +7,8 @@ import { error } from '@sveltejs/kit';
 import { getDb } from './db';
 import { experiment } from './experiment';
 import { checkPid } from './http';
-import { checkBout, checkSurvey, getSession, renamePidRows, type SurveyAnswers } from './session';
+import { hasRemoteTag } from '../remote';
+import { checkBout, checkSurvey, getSession, makePlan, renamePidRows, type SurveyAnswers } from './session';
 
 export const BOUTS = ['interval1', 'interval2'] as const;
 type Bout = (typeof BOUTS)[number];
@@ -67,6 +68,15 @@ export function editParticipant(pid: string, e: ParticipantEdit): { pid: string;
 		if (e.tags !== undefined) {
 			const tags = normalizeTags(e.tags);
 			if (tags !== (s.tags ?? '')) {
+				// The RP tag makes a session remote, which drops the environment questions from its plan.
+				const remote = hasRemoteTag(tags);
+				if (remote !== hasRemoteTag(s.tags)) {
+					if (db.prepare('SELECT 1 FROM sa_responses WHERE pid = ? LIMIT 1').get(pid)) {
+						error(409, `${pid} has already answered questions; the RP (remote) tag can no longer be ${remote ? 'added' : 'removed'}`);
+					}
+					const plan = makePlan(pid, { seed: s.schedule_seed, board_a_theme: s.board_a_theme, board_b_theme: s.board_b_theme }, remote);
+					db.prepare('UPDATE sessions SET sa_plan = ? WHERE pid = ?').run(JSON.stringify(plan), pid);
+				}
 				db.prepare('UPDATE sessions SET tags = ? WHERE pid = ?').run(tags, pid);
 				log.push({ field: 'tags', old: s.tags ?? '', new: tags });
 			}

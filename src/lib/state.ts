@@ -19,6 +19,8 @@ export interface SessionState {
 	devTimers: boolean;
 	/** Admin-created test session: shows the developer toolbar; excluded from exports. */
 	isTest: boolean;
+	/** Remote participant (RP tag): own computer, facilitator drives from /admin/remote. */
+	remote: boolean;
 	timers: { preview_ms: number; mismatch_flip_ms: number; time_limit_ms: number; interval_ms: { interval1: number; interval2: number } };
 	/** This participant's condition records RPE at the end of each bout. */
 	recordRpe: boolean;

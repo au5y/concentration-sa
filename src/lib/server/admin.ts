@@ -8,6 +8,8 @@ import { getDb, TABLES } from './db';
 import { experiment } from './experiment';
 import { loadSchedule } from './files';
 import { ARCHIVE_PREFIX, sessionCards, TEST_PREFIX } from './session';
+import { hasRemoteTag } from '../remote';
+import { remoteKey } from './remote';
 
 const COOKIE = 'admin_token';
 /** SQL filters: real participants (no TEST-n, no ARCHIVE-…), and archived ones only. */
@@ -151,8 +153,13 @@ export function status() {
 			 ORDER BY h.strap_name`
 		)
 		.all(Date.now() - 60_000) as { strap: string; strap_name: string | null; pid: string | null; bpm: number; contact: number | null; ts: number }[];
+	// Link keys for remote participants (scheduled or started), for "Copy link" on the admin page.
+	const remoteKeys: Record<string, string> = {};
+	for (const r of schedule) if (r.remote && !started.has(r.pid)) remoteKeys[r.pid] = remoteKey(r.pid);
+	for (const s of sessions) if (hasRemoteTag(s.tags)) remoteKeys[s.pid] = remoteKey(s.pid);
 	return {
 		now: Date.now(),
+		remoteKeys,
 		active: sessions.filter((s) => s.phase !== 'done'),
 		sessions,
 		surveys,

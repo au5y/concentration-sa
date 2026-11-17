@@ -1,10 +1,11 @@
 import { json } from '@sveltejs/kit';
-import { body, checkPid, clientTs } from '$lib/server/http';
+import { sessionPid } from '$lib/server/remote';
+import { body, clientTs } from '$lib/server/http';
 import { recordSa } from '$lib/server/session';
 
-export async function POST({ request }) {
+export async function POST({ request, cookies }) {
 	const b = await body(request);
-	const pid = checkPid(b.pid);
+	const pid = sessionPid(cookies, b.pid);
 	const r = recordSa(pid, {
 		seq: Number(b.seq),
 		response: b.response,

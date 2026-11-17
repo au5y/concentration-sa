@@ -162,6 +162,8 @@ export interface ScheduleRow {
 	board_a_theme: string;
 	board_b_theme: string;
 	seed: number;
+	/** Remote participant (RP): joins from their own computer with a link; no environment questions. */
+	remote?: boolean;
 }
 
 export type ClickOutcome = 'first_flip' | 'match' | 'mismatch';

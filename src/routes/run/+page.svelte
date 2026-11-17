@@ -3,6 +3,8 @@
 	import { page } from '$app/state';
 	import { api, nowTs } from '$lib/client/api';
 	import Board from '$lib/components/Board.svelte';
+	import OwnHeartRate from '$lib/components/OwnHeartRate.svelte';
+	import { StrapManager } from '$lib/client/hr-straps.svelte';
 	import Interval from '$lib/components/Interval.svelte';
 	import Sa from '$lib/components/Sa.svelte';
 	import Survey from '$lib/components/Survey.svelte';
@@ -37,6 +39,15 @@
 
 	// Start-page form
 	let formPid = $state('');
+	let newRemote = $state(false);
+	let newBusy = $state(false);
+	let created = $state<{ pid: string; link: string } | null>(null);
+	let copied = $state(false);
+
+	/** A remote participant's own strap (their computer). Lives as long as the page, across phases. */
+	let ownHr = $state<StrapManager | null>(null);
+	/** Only a logged-in study laptop gets the facilitator shortcut; a remote participant's browser doesn't. */
+	const laptop = $derived(!!data.laptop && !s?.remote);
 
 	function say(msg: string, ms = 3000) {
 		toast = msg;
@@ -56,9 +67,56 @@
 		history.pushState(null, '', location.href);
 		const onPop = () => history.pushState(null, '', location.href);
 		window.addEventListener('popstate', onPop);
-		api.session(pid).then(setState, (e) => (loadError = e.message));
-		return () => window.removeEventListener('popstate', onPop);
+		let poll: ReturnType<typeof setInterval> | undefined;
+		api.session(pid).then((st) => {
+			setState(st);
+			if (!st.remote) return;
+			// Remote: the facilitator moves the session on from their console; follow along.
+			ownHr = new StrapManager({ pid: st.pid });
+			ownHr.start();
+			poll = setInterval(followFacilitator, 2000);
+		}, (e) => (loadError = e.message));
+		return () => {
+			window.removeEventListener('popstate', onPop);
+			clearInterval(poll);
+			ownHr?.stop();
+		};
 	});
+
+	/** Remote sessions: pick up phase changes, timer starts and RPE made on the facilitator's console. */
+	async function followFacilitator() {
+		if (!s || busy) return;
+		try {
+			const next = await api.poll(s.pid);
+			if (!s || busy) return;
+			if (next.phase !== s.phase || next.phaseStartedAt !== s.phaseStartedAt) setState(next);
+			else {
+				clockOffset = next.serverNow - Date.now();
+				const have = new Set(s.progress.markers.map((m) => `${m.name}@${m.at}`));
+				if (next.progress.markers.some((m) => !have.has(`${m.name}@${m.at}`))) s.progress.markers = next.progress.markers;
+				if (JSON.stringify(next.progress.bout) !== JSON.stringify(s.progress.bout)) s.progress.bout = next.progress.bout;
+			}
+		} catch {
+			// offline for a moment: try again next tick
+		}
+	}
+
+	async function newParticipant() {
+		newBusy = true;
+		try {
+			const r = await fetch('/api/session/new', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ remote: newRemote })
+			});
+			const out = await r.json().catch(() => ({}));
+			if (!r.ok) return say(`Could not create: ${out.message ?? r.statusText}`, 6000);
+			if (!newRemote) location.href = `/run?pid=${encodeURIComponent(out.pid)}`;
+			else created = { pid: out.pid, link: `${location.origin}/run?pid=${encodeURIComponent(out.pid)}&key=${encodeURIComponent(out.key)}` };
+		} finally {
+			newBusy = false;
+		}
+	}
 
 	const marker = (name: string) => s?.progress.markers.find((m) => m.name === name) ?? null;
 	/** Play time already used on the current board (server clock), for resuming after a reload. */
@@ -149,7 +207,7 @@
 	}
 
 	function onKey(e: KeyboardEvent) {
-		if (e.ctrlKey && e.shiftKey && e.code === 'KeyF') {
+		if (e.ctrlKey && e.shiftKey && e.code === 'KeyF' && laptop) {
 			e.preventDefault();
 			facilitatorKey();
 		}
@@ -182,7 +240,19 @@
 <svelte:window onkeydown={onKey} />
 <svelte:head><title>Step Up Your Game (HSE Study)</title></svelte:head>
 
-{#if !data.authed}
+{#if !data.authed && !data.laptop && (data.badLink || pid)}
+	<main class="start">
+		<h1>This link doesn't work</h1>
+		<p>Please ask your facilitator to send you your participant link again.</p>
+		<details class="small"><summary>Study laptop?</summary>
+			<form onsubmit={runLogin}>
+				<label>Study password <input type="password" bind:value={runPassword} autocomplete="current-password" required /></label>
+				<button type="submit">Log in</button>
+			</form>
+			{#if runError}<p class="small">{runError}</p>{/if}
+		</details>
+	</main>
+{:else if !data.authed}
 	<main class="start">
 		<h1>Study laptop login</h1>
 		<form onsubmit={runLogin}>
@@ -199,6 +269,22 @@
 			<label>Participant ID <input bind:value={formPid} placeholder="P07" autocomplete="off" required /></label>
 			<button type="submit">Start session</button>
 		</form>
+		<section class="new">
+			<h2>New participant</h2>
+			{#if created}
+				<p><b>{created.pid}</b> (remote, RP) is ready. Send them this link; they open it in Chrome on their own computer:</p>
+				<p class="linkbox"><code>{created.link}</code></p>
+				<p>
+					<button onclick={async () => { await navigator.clipboard.writeText(created!.link); copied = true; }}>{copied ? 'Copied ✓' : 'Copy link'}</button>
+					<a href="/admin/remote/{created.pid}" target="_blank">Open facilitator console →</a>
+				</p>
+				<p class="small"><button onclick={() => ((created = null), (copied = false))}>Create another</button></p>
+			{:else}
+				<p class="small">Adds the next ID to the schedule (balanced across groups).</p>
+				<label class="check"><input type="checkbox" bind:checked={newRemote} /> Remote (RP): they join from their own computer</label>
+				<button onclick={newParticipant} disabled={newBusy}>{newRemote ? 'Create remote participant' : 'Create & start here'}</button>
+			{/if}
+		</section>
 		<p class="small"><a href="/admin">Admin</a></p>
 	</main>
 {:else if loadError}
@@ -214,6 +300,16 @@
 		{#if s.phase === 'baseline'}
 			{@const start = marker('start')}
 			<main class="facil">
+				{#if s.remote}
+					<h1>Heart-rate strap & baseline</h1>
+					{#if ownHr}<OwnHeartRate mgr={ownHr} big />{/if}
+					{#if !start}
+						<p>Once your heart rate shows above, sit still and relax. Your facilitator will start the baseline.</p>
+					{:else}
+						<p class="logged">Baseline recording</p>
+						<p>Sit still and relax. Your facilitator will move you on.</p>
+					{/if}
+				{:else}
 				<p class="who">{s.pid} · condition <b>{s.condition}</b></p>
 				<h1>Sensor fit & baseline</h1>
 				{#if !start}
@@ -222,6 +318,7 @@
 				{:else}
 					<p class="logged">START logged at {new Date(start.at).toLocaleTimeString()}</p>
 					<p>When the baseline is done, press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> to begin practice.</p>
+				{/if}
 				{/if}
 			</main>
 		{:else if s.phase === 'practice'}
@@ -247,6 +344,7 @@
 				text={s.text[s.phase]}
 				saved={s.progress.bout}
 				recordRpe={s.recordRpe}
+				remote={s.remote}
 				durationMs={s.timers.interval_ms[bout]}
 				startedAt={marker('start')?.at ?? null}
 				onStart={() => addMarker('start')}
@@ -280,7 +378,7 @@
 				<h1>Short break</h1>
 				<p>Nice work. Take a moment to relax.</p>
 				<p class="waitbig">Wait for facilitator</p>
-				<p class="small">Facilitator: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> to start the questions.</p>
+				{#if !s.remote}<p class="small">Facilitator: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> to start the questions.</p>{/if}
 			</main>
 		{:else if s.phase === 'sa'}
 			<Sa
@@ -298,15 +396,17 @@
 				skippable={s.isTest}
 			/>
 		{:else if s.phase === 'survey'}
-			<Survey onSubmit={async (v) => setState(await api.survey(s!.pid, v))} />
+			<Survey remote={s.remote} onSubmit={async (v) => setState(await api.survey(s!.pid, v))} />
 		{:else}
 			<main class="start">
 				<h1>Thank you!</h1>
 				<p>You're all done. Please let the researcher know.</p>
-				<p class="small">{s.pid} complete. Facilitator: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> for the start page.</p>
+				{#if s.remote}<p class="small">{s.pid} complete. You can close this page{ownHr?.connected ? ' and take off the strap' : ''}.</p>
+				{:else}<p class="small">{s.pid} complete. Facilitator: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> for the start page.</p>{/if}
 			</main>
 		{/if}
 	{/key}
+	{#if ownHr && s.phase !== 'baseline' && s.phase !== 'done'}<OwnHeartRate mgr={ownHr} />{/if}
 	{#if s.isTest}
 		<div class="devbar" class:open={devOpen}>
 			<button class="devtoggle" onclick={() => (devOpen = !devOpen)}>
@@ -369,6 +469,32 @@
 	form button {
 		font-size: 1.3rem;
 		padding: 0.6rem 2rem;
+	}
+	.new {
+		margin: 2.5rem auto 1rem;
+		padding: 1rem 1.2rem;
+		border: 1px solid #ddd;
+		border-radius: 10px;
+		font-size: 1rem;
+	}
+	.new h2 {
+		margin-top: 0;
+		font-size: 1.2rem;
+	}
+	.new button {
+		font-size: 1rem;
+		padding: 0.4rem 1rem;
+	}
+	.new label.check {
+		justify-content: center;
+		margin-bottom: 0.6rem;
+	}
+	.linkbox code {
+		font-size: 0.8rem;
+		overflow-wrap: anywhere;
+		background: #f2f4f7;
+		padding: 0.3rem 0.5rem;
+		border-radius: 4px;
 	}
 	.huge {
 		font-size: 4rem;

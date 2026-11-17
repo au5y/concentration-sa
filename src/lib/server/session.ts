@@ -3,6 +3,7 @@ import { generateLayout } from '../layout';
 import { computeBoardMetrics } from '../metrics';
 import { hashString, mulberry32 } from '../rng';
 import { buildSaPlan, type SaStep } from '../sa-plan';
+import { hasRemoteTag, REMOTE_TAG } from '../remote';
 import type { SessionState } from '../state';
 import { DONT_REMEMBER, FACILITATOR_PHASES, LEVEL2_NEUTRAL_HEX, ORAL_RESPONSES, PHASES, type ClickOutcome, type ClickRecord, type Phase } from '../types';
 import { getDb } from './db';
@@ -75,18 +76,20 @@ export function openSession(pid: string): SessionRow {
 	}
 	if (!exp.config.conditions.includes(row.condition)) error(500, `Unknown condition "${row.condition}" in schedule`);
 
-	const plan = makePlan(pid, row);
+	const remote = !!row.remote;
+	const plan = makePlan(pid, row, remote);
 	db.transaction(() => {
 		db.prepare(
 			`INSERT INTO sessions (pid, condition, board_a_theme, board_b_theme, schedule_seed, phase,
-			 phase_started_at, created_at, updated_at, dev_timers, sa_plan, layouts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-		).run(pid, row.condition, row.board_a_theme, row.board_b_theme, row.seed, PHASES[0], now, now, now, exp.devTimers ? 1 : 0, JSON.stringify(plan), JSON.stringify(makeLayouts(pid, row)));
+			 phase_started_at, created_at, updated_at, dev_timers, sa_plan, layouts, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		).run(pid, row.condition, row.board_a_theme, row.board_b_theme, row.seed, PHASES[0], now, now, now, exp.devTimers ? 1 : 0, JSON.stringify(plan), JSON.stringify(makeLayouts(pid, row)), remote ? REMOTE_TAG : '');
 		insertPhase(pid, PHASES[0], now, null);
 	})();
 	return getSession(pid)!;
 }
 
-function makePlan(pid: string, row: { seed: number; board_a_theme: string; board_b_theme: string }): SaStep[] {
+/** The SA question plan. Remote participants (RP) get no environment (oral) questions. */
+export function makePlan(pid: string, row: { seed: number; board_a_theme: string; board_b_theme: string }, remote = false): SaStep[] {
 	const { config, manifests } = experiment();
 	return buildSaPlan(
 		[
@@ -98,7 +101,7 @@ function makePlan(pid: string, row: { seed: number; board_a_theme: string; board
 		mulberry32(hashString(`${pid}:${row.seed}:sa`)),
 		config.sa_random_per_theme,
 		config.sa_foils_per_theme,
-		(config.oral_sa_questions ?? []).map((q) => q.id),
+		remote ? [] : (config.oral_sa_questions ?? []).map((q) => q.id),
 		{ questions: config.sa_level2_questions ?? {}, rand: mulberry32(hashString(`${pid}:${row.seed}:sa-level2`)) },
 		config.sa_side_by_side
 	);
@@ -172,7 +175,7 @@ export function renamePidRows(from: string, to: string) {
 }
 
 /** Create a throwaway test session that starts in any phase. Returns its pid. */
-export function createTestSession(o: { condition: string; board_a_theme: string; board_b_theme: string; phase: Phase; fast: boolean }): string {
+export function createTestSession(o: { condition: string; board_a_theme: string; board_b_theme: string; phase: Phase; fast: boolean; remote?: boolean }): string {
 	const db = getDb();
 	const exp = experiment();
 	if (!exp.config.conditions.includes(o.condition)) error(400, `Unknown condition "${o.condition}"`);
@@ -186,8 +189,8 @@ export function createTestSession(o: { condition: string; board_a_theme: string;
 	db.transaction(() => {
 		db.prepare(
 			`INSERT INTO sessions (pid, condition, board_a_theme, board_b_theme, schedule_seed, phase,
-			 phase_started_at, created_at, updated_at, dev_timers, sa_plan, layouts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-		).run(pid, o.condition, o.board_a_theme, o.board_b_theme, row.seed, o.phase, now, now, now, o.fast ? 1 : 0, JSON.stringify(makePlan(pid, row)), JSON.stringify(makeLayouts(pid, row)));
+			 phase_started_at, created_at, updated_at, dev_timers, sa_plan, layouts, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		).run(pid, o.condition, o.board_a_theme, o.board_b_theme, row.seed, o.phase, now, now, now, o.fast ? 1 : 0, JSON.stringify(makePlan(pid, row, !!o.remote)), JSON.stringify(makeLayouts(pid, row)), o.remote ? REMOTE_TAG : '');
 		insertPhase(pid, o.phase, now, null);
 	})();
 	return pid;
@@ -272,6 +275,7 @@ export function buildState(s: SessionRow): SessionState {
 		serverNow: Date.now(),
 		devTimers: exp.devTimers || !!s.dev_timers,
 		isTest: isTestPid(s.pid),
+		remote: hasRemoteTag(s.tags),
 		timers: timers(exp, !!s.dev_timers),
 		recordRpe: !config.rpe_conditions || config.rpe_conditions.includes(s.condition),
 		text: config.condition_text[s.condition],

@@ -81,6 +81,16 @@ export class StrapManager {
 	private timer: ReturnType<typeof setInterval> | null = null;
 	private sending = false;
 
+	/**
+	 * Default: the admin page (straps assigned to participants there, sent to /admin/hr).
+	 * `{ pid }`: a remote participant's own computer; every reading is theirs, sent to /api/session/hr.
+	 */
+	constructor(private own?: { pid: string }) {}
+
+	private get pendingKey() {
+		return this.own ? `${PENDING_KEY}:${this.own.pid}` : PENDING_KEY;
+	}
+
 	/** Why straps can't be connected here, or '' if they can. */
 	static unsupported(): string {
 		if (typeof window === 'undefined') return '';
@@ -90,7 +100,7 @@ export class StrapManager {
 	}
 
 	start() {
-		this.buffer = load<HrSample[]>(PENDING_KEY, []);
+		this.buffer = load<HrSample[]>(this.pendingKey, []);
 		this.pending = this.buffer.length;
 		this.timer = setInterval(() => this.flush(), FLUSH_MS);
 	}
@@ -99,7 +109,7 @@ export class StrapManager {
 		if (this.timer) clearInterval(this.timer);
 		this.timer = null;
 		for (const s of this.straps) this.disconnect(s);
-		save(PENDING_KEY, this.buffer);
+		save(this.pendingKey, this.buffer);
 	}
 
 	get connected() {
@@ -113,7 +123,7 @@ export class StrapManager {
 		const existing = this.straps.find((s) => s.id === device.id);
 		if (existing && existing.status !== 'disconnected') return;
 		const strap = existing ?? new Strap(device, device.name || `strap ${this.straps.length + 1}`);
-		strap.pid = load<Record<string, string | null>>(ASSIGN_KEY, {})[device.id] ?? null;
+		strap.pid = this.own?.pid ?? load<Record<string, string | null>>(ASSIGN_KEY, {})[device.id] ?? null;
 		strap.closing = false;
 		if (!existing) {
 			this.straps.push(strap);
@@ -196,10 +206,10 @@ export class StrapManager {
 		this.sending = true;
 		const batch = this.buffer.slice(0, 2000);
 		try {
-			const res = await fetch('/admin/hr', {
+			const res = await fetch(this.own ? '/api/session/hr' : '/admin/hr', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ samples: batch, client_now: Date.now() })
+				body: JSON.stringify({ samples: batch, client_now: Date.now(), ...(this.own ? { pid: this.own.pid } : {}) })
 			});
 			if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message ?? res.statusText);
 			this.buffer.splice(0, batch.length);
@@ -209,7 +219,7 @@ export class StrapManager {
 			this.sendError = (e as Error).message || 'network error';
 		} finally {
 			this.pending = this.buffer.length;
-			save(PENDING_KEY, this.buffer);
+			save(this.pendingKey, this.buffer);
 			this.sending = false;
 		}
 	}

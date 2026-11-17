@@ -18,7 +18,8 @@ export async function POST({ request, cookies }) {
 			board_a_theme: String(b.board_a_theme),
 			board_b_theme: String(b.board_b_theme),
 			phase: b.phase as Phase,
-			fast: b.fast === true
+			fast: b.fast === true,
+			remote: b.remote === true
 		});
 		return json({ pid });
 	}

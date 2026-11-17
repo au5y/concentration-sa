@@ -19,7 +19,8 @@
 		durationMs,
 		startedAt,
 		onStart,
-		clockOffset
+		clockOffset,
+		remote = false
 	}: {
 		text: PhaseText;
 		saved: { rpe: number; peak_hr: number | null } | null;
@@ -33,6 +34,8 @@
 		onStart: () => Promise<void>;
 		/** Server clock minus this computer's clock. */
 		clockOffset: number;
+		/** Remote participant's own screen: no facilitator panel (RPE is entered on the console). */
+		remote?: boolean;
 	} = $props();
 
 	/** Borg 6-20 verbal anchors (Borg, 1998). */
@@ -88,7 +91,7 @@
 
 	// Time's up: bring up the RPE panel for the facilitator.
 	$effect(() => {
-		if (timeUp && recordRpe && status !== 'saved') open = true;
+		if (timeUp && recordRpe && !remote && status !== 'saved') open = true;
 	});
 
 	async function save() {
@@ -146,7 +149,9 @@
 	</div>
 {/if}
 
-{#if recordRpe}
+{#if remote}
+	<!-- The facilitator runs this from their console. -->
+{:else if recordRpe}
 	<div class="facil" class:done={status === 'saved'}>
 		{#if !open}
 			<button class="toggle" onclick={() => (open = true)}>

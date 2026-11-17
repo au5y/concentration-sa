@@ -4,6 +4,7 @@
 	import HeartRatePanel from '$lib/components/HeartRatePanel.svelte';
 	import LandingEditor from '$lib/components/LandingEditor.svelte';
 	import TagPresetsEditor from '$lib/components/TagPresetsEditor.svelte';
+	import { hasRemoteTag, remotePath } from '$lib/remote';
 
 	let { data } = $props();
 	let password = $state('');
@@ -48,18 +49,44 @@
 		const r = await dataAction({ action: 'archive', pid, tag });
 		if (r) notice = `Archived ${pid}.`;
 	}
-	let addCount = $state(4);
-	async function addParticipants() {
-		if (!confirm(`Add ${addCount} participant${addCount === 1 ? '' : 's'} to the end of the schedule? Existing IDs and assignments are not changed.`)) return;
+	let addCount = $state(1);
+	let addRemote = $state(false);
+	async function scheduleAction(payload: Record<string, unknown>) {
 		const r = await fetch('/admin/schedule', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ add: addCount })
+			body: JSON.stringify(payload)
 		});
 		const res = await r.json().catch(() => ({}));
-		notice = r.ok ? `Added ${res.added.join(', ')}.` : `Failed: ${res.message ?? r.statusText}`;
+		if (!r.ok) notice = `Failed: ${res.message ?? r.statusText}`;
 		await invalidateAll();
+		return r.ok ? res : null;
 	}
+	async function addParticipants() {
+		const what = `${addCount} ${addRemote ? 'remote (RP) ' : ''}participant${addCount === 1 ? '' : 's'}`;
+		if (!confirm(`Add ${what} to the end of the schedule? Existing IDs and assignments are not changed.`)) return;
+		const res = await scheduleAction({ add: addCount, remote: addRemote });
+		if (res) notice = `Added ${res.added.join(', ')}${addRemote ? ' (remote: copy their links from the schedule below)' : ''}.`;
+	}
+	async function removeScheduled(pids: string[]) {
+		if (!pids.length) return;
+		const list = pids.length > 6 ? `${pids.length} participants (${pids[0]} … ${pids.at(-1)})` : pids.join(', ');
+		if (!confirm(`Remove ${list} from the schedule? They haven't started, so no data is lost. New participants then fill the groups that are short.`)) return;
+		const res = await scheduleAction({ action: 'remove', pids });
+		if (res) notice = `Removed ${res.removed.join(', ')} from the schedule.`;
+	}
+	async function setRemote(pid: string, remote: boolean) {
+		if (await scheduleAction({ action: 'remote', pid, remote })) notice = `${pid} is now ${remote ? 'remote (RP)' : 'in person'}.`;
+	}
+	let copiedPid = $state('');
+	async function copyLink(pid: string) {
+		const key = data.authed ? data.remoteKeys[pid] : undefined;
+		if (!key) return;
+		await navigator.clipboard.writeText(location.origin + remotePath(pid, key));
+		copiedPid = pid;
+		setTimeout(() => copiedPid === pid && (copiedPid = ''), 1500);
+	}
+	const isRemote = (pid: string) => data.authed && !!data.remoteKeys[pid];
 	async function resetAll() {
 		const typed = prompt('This deletes every session, click, answer and survey (the schedule is kept).\nDownload the CSVs first if you need them.\n\nType RESET to confirm:');
 		if (typed !== 'RESET') return;
@@ -70,6 +97,7 @@
 	let tOrder = $state(0);
 	let tPhase = $state('survey');
 	let tFast = $state(true);
+	let tRemote = $state(false);
 	async function testAction(payload: Record<string, unknown>) {
 		const r = await fetch('/admin/test', {
 			method: 'POST',
@@ -90,11 +118,13 @@
 			board_a_theme: a,
 			board_b_theme: b,
 			phase: tPhase,
-			fast: tFast
+			fast: tFast,
+			remote: tRemote
 		});
 		if (out?.pid) {
 			notice = `Created ${out.pid}.`;
 			window.open(`/run?pid=${encodeURIComponent(out.pid)}`, '_blank');
+			if (tRemote) window.open(`/admin/remote/${encodeURIComponent(out.pid)}`, '_blank');
 		}
 	}
 	async function jumpTest(pid: string, phase: string) {
@@ -249,11 +279,12 @@
 		<div class="stations">
 			{#each data.active as st (st.pid)}
 				<div class="station">
-					<div class="name">{st.pid}</div>
+					<div class="name">{st.pid}{#if hasRemoteTag(st.tags)} <span class="rp">RP</span>{/if}</div>
 					<div>{st.condition}</div>
 					<div class="phase">{st.phase}</div>
 					<div>in phase {ago(data.now - st.phase_started_at)}</div>
 					<div class="muted">last activity {ago(data.now - st.updated_at)} ago</div>
+					<a href="/admin/remote/{encodeURIComponent(st.pid)}">{hasRemoteTag(st.tags) ? 'Remote console →' : 'Console →'}</a>
 				</div>
 			{/each}
 		</div>
@@ -280,6 +311,7 @@
 				</select>
 			</label>
 			<label><input type="checkbox" bind:checked={tFast} /> Fast timers (5 s preview)</label>
+			<label><input type="checkbox" bind:checked={tRemote} /> Remote (RP; also opens the console)</label>
 			<button class="primary" onclick={createTest}>Create test session &amp; open</button>
 			<a href="/preview" target="_blank">Icon / question preview →</a>
 		</div>
@@ -322,12 +354,16 @@
 				{#each data.sessions as r (r.pid)}
 					<tr>
 						<td><input type="checkbox" checked={selected.includes(r.pid)} onchange={() => toggle(r.pid)} /></td>
-						<td><a href="/admin/explore?pid={encodeURIComponent(r.pid)}">{r.pid}</a>{#if isTest(r.pid)} <span class="tag">test</span>{:else if isArchived(r.pid)} <span class="tag">archived</span>{/if}</td><td>{r.condition}</td>
+						<td><a href="/admin/explore?pid={encodeURIComponent(r.pid)}">{r.pid}</a>{#if isTest(r.pid)} <span class="tag">test</span>{:else if isArchived(r.pid)} <span class="tag">archived</span>{/if}{#if hasRemoteTag(r.tags)} <span class="rp">RP</span>{/if}</td><td>{r.condition}</td>
 						<td>{#each splitTags(r.tags) as t (t)}<span class="chip">{t}</span>{/each}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
 						<td>{r.phase}</td><td>{r.clicks}</td><td>{r.sa_answered}/{r.sa_total}</td>
 						<td class:warnc={r.reloads > 0}>{r.reloads}</td><td>{time(r.created_at)}</td><td>{time(r.completed_at)}</td>
 						<td class="nowrap">
 							<button class="small" onclick={() => (editing === r.pid ? (editing = null) : openEdit(r))}>{editing === r.pid ? 'Close' : 'Edit'}</button>
+							{#if hasRemoteTag(r.tags) && !isArchived(r.pid)}
+								<a class="small" href="/admin/remote/{encodeURIComponent(r.pid)}">Console</a>
+								<button class="small" onclick={() => copyLink(r.pid)}>{copiedPid === r.pid ? 'Copied ✓' : 'Link'}</button>
+							{/if}
 							{#if isTest(r.pid)}
 								<a class="small" href="/run?pid={r.pid}" target="_blank">Open</a>
 								<select class="small" value="" onchange={(e) => jumpTest(r.pid, e.currentTarget.value)}>
@@ -364,7 +400,7 @@
 												{/each}
 											</div>
 										{/if}
-										<p class="hint">Click a suggestion or type your own, comma separated. Edit the suggestions at the bottom of this page.</p>
+										<p class="hint">Click a suggestion or type your own, comma separated. Edit the suggestions at the bottom of this page. <b>RP</b> = remote participant: no environment questions, facilitator uses the console (can't be changed once they have answered questions).</p>
 									</fieldset>
 									<fieldset>
 										<legend>Survey</legend>
@@ -413,22 +449,37 @@
 		</table>
 
 		<h2>Schedule ({data.schedule.filter((r) => r.started).length}/{data.schedule.length} started)</h2>
-		{#if !data.schedule.length}
-			<p class="warn">No schedule found. Run <code>npm run schedule</code>.</p>
-		{:else}
-			<p class="add-participants">
-				<label>Add <input type="number" min="1" max="100" bind:value={addCount} /> participants</label>
-				<button onclick={addParticipants} disabled={!(addCount >= 1 && addCount <= 100)}>Add to schedule</button>
-				<span class="muted">New IDs continue after {data.schedule.at(-1)?.pid}, balanced across the {data.conditions.length * data.test.themeOrders.length} condition × theme-order groups. Add 4 at a time to keep the groups even.</span>
+		<p class="add-participants">
+			<label>Add <input type="number" min="1" max="100" bind:value={addCount} /> participant{addCount === 1 ? '' : 's'}</label>
+			<label><input type="checkbox" bind:checked={addRemote} /> Remote (RP)</label>
+			<button onclick={addParticipants} disabled={!(addCount >= 1 && addCount <= 100)}>Add to schedule</button>
+			<span class="muted">Each new ID goes to the condition × theme-order group with the fewest participants. You can also create one from the study start page (<a href="/run">/run</a>).</span>
+		</p>
+		{#if data.schedule.some((r) => !r.started)}
+			<p class="tools">
+				<button onclick={() => removeScheduled(data.authed ? data.schedule.filter((r) => !r.started).map((r) => r.pid) : [])}>
+					Remove all not started ({data.schedule.filter((r) => !r.started).length})
+				</button>
 			</p>
 		{/if}
 		<table>
-			<thead><tr><th>PID</th><th>Condition</th><th>Board A</th><th>Board B</th><th>Status</th></tr></thead>
+			<thead><tr><th>PID</th><th>Condition</th><th>Board A</th><th>Board B</th><th>Mode</th><th>Status</th><th></th></tr></thead>
 			<tbody>
 				{#each data.schedule as r (r.pid)}
 					<tr class:muted={r.started}>
 						<td>{r.pid}{#if isTest(r.pid)} <span class="tag">test</span>{/if}</td><td>{r.condition}</td><td>{r.board_a_theme}</td><td>{r.board_b_theme}</td>
+						<td>{#if isRemote(r.pid) || (!r.started && r.remote)}<span class="rp">RP</span>{:else}in person{/if}</td>
 						<td>{r.started ? 'started' : ''}</td>
+						<td class="nowrap">
+							{#if isRemote(r.pid)}
+								<button class="small" onclick={() => copyLink(r.pid)}>{copiedPid === r.pid ? 'Copied ✓' : 'Copy link'}</button>
+								<a class="small" href="/admin/remote/{encodeURIComponent(r.pid)}">Console</a>
+							{/if}
+							{#if !r.started}
+								<button class="small" onclick={() => setRemote(r.pid, !r.remote)}>{r.remote ? 'Make in person' : 'Make remote'}</button>
+								<button class="small" onclick={() => removeScheduled([r.pid])}>Remove</button>
+							{/if}
+						</td>
 					</tr>
 				{/each}
 			</tbody>
@@ -499,6 +550,14 @@
 		border-radius: 6px;
 		padding: 0.4rem 0.9rem;
 		cursor: pointer;
+	}
+	.rp {
+		background: #0b7a75;
+		color: white;
+		font-size: 0.7rem;
+		font-weight: 700;
+		padding: 0 0.3rem;
+		border-radius: 3px;
 	}
 	.tag {
 		background: #efe3fb;

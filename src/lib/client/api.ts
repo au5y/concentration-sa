@@ -63,6 +63,8 @@ export const queue = new Queue();
 
 export const api = {
 	session: (pid: string) => withRetry(() => request<SessionState>('GET', `/api/session?pid=${encodeURIComponent(pid)}`)),
+	/** Read the session without side effects (remote sessions follow the facilitator's console). */
+	poll: (pid: string) => request<SessionState>('GET', `/api/session?pid=${encodeURIComponent(pid)}&poll=1`),
 	advance: async (pid: string, from: string, facilitator = false) => {
 		await queue.flush();
 		return withRetry(() => request<SessionState>('POST', '/api/session/advance', { pid, from, facilitator, client_ts: nowTs() }));

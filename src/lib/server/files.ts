@@ -57,7 +57,8 @@ export function loadSchedule(file = paths.schedule): ScheduleRow[] {
 		condition: r.condition,
 		board_a_theme: r.board_a_theme,
 		board_b_theme: r.board_b_theme,
-		seed: Number(r.seed)
+		seed: Number(r.seed),
+		remote: r.remote === '1'
 	}));
 }
 
@@ -65,6 +66,7 @@ export function loadSchedule(file = paths.schedule): ScheduleRow[] {
 export function saveSchedule(rows: ScheduleRow[], file = paths.schedule): void {
 	fs.mkdirSync(path.dirname(file), { recursive: true });
 	const tmp = `${file}.tmp`;
-	fs.writeFileSync(tmp, toCsv(rows as unknown as Record<string, unknown>[], ['pid', 'condition', 'board_a_theme', 'board_b_theme', 'seed']));
+	const out = rows.map((r) => ({ ...r, remote: r.remote ? 1 : '' }));
+	fs.writeFileSync(tmp, toCsv(out, ['pid', 'condition', 'board_a_theme', 'board_b_theme', 'seed', 'remote']));
 	fs.renameSync(tmp, file);
 }

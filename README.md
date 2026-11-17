@@ -36,6 +36,7 @@ is the public landing page with the sign-up links (see *Front page and sign-ups*
 | `ASSETS_DIR`     | `/app/assets`      | Theme folders and `layouts.json`                           |
 | `SCHEDULE_PATH`  | `$DATA_DIR/schedule.csv` | Override the schedule location                       |
 | `DEV_TIMERS`     | `0`                | `1` forces the card preview to 5 s (for testing)           |
+| `REMOTE_SECRET`  | (`ADMIN_PASSWORD`) | Signs remote participants' links (optional)                |
 
 `docker-compose.yml` bind-mounts `./data`, `./config.json` and `./assets`, so you can
 edit config and images on the host without rebuilding. Restart the container after
@@ -109,11 +110,35 @@ counts, and refuses to overwrite an existing schedule without `--force`. If you 
 The server reads the schedule when a participant ID is first opened. IDs not in the
 schedule are rejected.
 
-**Adding participants later.** On the admin page, under *Schedule*, enter a number and click
-**Add to schedule**. New IDs continue after the last one (P31, P32, ...) and are appended to
-`schedule.csv`; nobody already in the schedule changes. The incomplete last block of 4 is
-filled with the groups it is missing first, then new full blocks follow, so the groups stay
-within 1 of each other. Adding 4 at a time keeps them exactly even.
+**Adding and removing participants.** On the admin page, under *Schedule*, enter a number
+(tick **Remote (RP)** for remote participants) and click **Add to schedule**, or create one at a
+time from the study start page (`/run`, *New participant*). New IDs continue after the last one
+and are appended to `schedule.csv`; nobody already in the schedule changes. Each new ID goes to the
+condition × theme-order group with the fewest participants, so the groups stay within 1 of each
+other. Participants who haven't started can be removed (one by one, or **Remove all not started**)
+or switched between remote and in person. You can start with an empty schedule and add as you go.
+
+### Remote participants (RP)
+
+A remote participant takes part from their own computer while the facilitator watches from
+another one and talks to them over Zoom or the phone. In-person sessions work exactly as before.
+
+1. Add them as **Remote (RP)** (admin *Schedule*, or `/run` → *New participant*). Their session
+   gets the `RP` tag.
+2. **Copy link** and send it. The link (`/run?pid=…&key=…`) opens only that participant's session
+   and needs no study password. It is signed with `ADMIN_PASSWORD` (or `REMOTE_SECRET` if set), so
+   changing that password invalidates links already sent.
+3. Open their **Console** (`/admin/remote/<pid>`, admin login). It shows the phase, board / question
+   progress and their live heart rate, and has the buttons the Ctrl+Shift+F shortcut gives on a study
+   laptop: start the baseline, end practice, start the exercise/rest timer, record RPE (peak HR is
+   prefilled from the strap), continue, start the questions.
+4. On the sensor-fit screen they click **Connect heart-rate strap** and pick their strap; readings
+   are saved under their pid like the admin page's straps. This needs Chrome or Edge on a computer
+   (or Chrome on Android); iPhones and iPads have no Web Bluetooth.
+
+Remote sessions get no environment (oral) SA questions. A participant's browser can't use the
+facilitator shortcut or advance facilitator phases; only the console (or a logged-in study laptop)
+can. Adding or removing the `RP` tag in *Edit* switches a session until it has answered questions.
 
 ---
 
