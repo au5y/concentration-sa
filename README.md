@@ -22,12 +22,15 @@ docker compose run --rm app npm run schedule -- --seed 12345   # once, see §3
 docker compose up -d
 ```
 
-Open `http://<server-ip>:3000/` on each participant computer.
+Open `http://<server-ip>:3000/run` on each participant computer and log in with the study password
+(`RUN_PASSWORD`, or the admin password); the laptop stays logged in for a week. The front page `/`
+is the public landing page with the sign-up links (see *Front page and sign-ups* below).
 
 | Env var          | Default (Docker)   | Meaning                                                    |
 | ---------------- | ------------------ | ---------------------------------------------------------- |
 | `PORT`           | `3000`             | HTTP port                                                  |
 | `ADMIN_PASSWORD` | (required)         | Password for `/admin`; admin is disabled if unset          |
+| `RUN_PASSWORD`   | (optional)         | Study-laptop password for `/run`, for helpers without admin. The admin password works there too. Without either, `/run` is open (local development only) |
 | `DATA_DIR`       | `/data`            | SQLite DB (`experiment.db`) and `schedule.csv`             |
 | `CONFIG_PATH`    | `/app/config.json` | Experiment config                                          |
 | `ASSETS_DIR`     | `/app/assets`      | Theme folders and `layouts.json`                           |
@@ -52,6 +55,15 @@ npm run validate                                  # check config/manifests/image
 Outside Docker the defaults are `./config.json`, `./assets` and `./data`.
 
 ---
+
+### Front page and sign-ups
+
+`/` is a public page for recruits: the study title, a short description, sign-up buttons and the
+contact email. Edit it on the admin page under **Front page & sign-up links** (with a live preview);
+it is saved to `DATA_DIR/landing.json`, so a new round only needs new links, not a code change.
+Links must be `https://` (e.g. one Google Calendar booking page per seat). Remove every link to close
+sign-ups; the page then shows the "no links" message. The small "Study team" link at the bottom
+goes to `/run`.
 
 ## 2. Config (`config.json`)
 
@@ -191,8 +203,9 @@ If you change a manifest's objects, regenerate the layouts **before** data colle
 
 ## 5. Running a session
 
-1. Open `http://<server>:3000/`, enter the participant ID, and click **Start session**.
-   You can also go straight to `/?pid=P07`.
+1. Open `http://<server>:3000/run` (log in once per laptop), enter the participant ID, and click
+   **Start session**. You can also go straight to `/run?pid=P07`. Without the login, the session
+   pages, the data they send (`/api/session/*`) and the game images (`/assets/themes/*`) all refuse.
 2. The facilitator uses one shortcut, **Ctrl + Shift + F**.
 
 | Phase | What happens | Facilitator |

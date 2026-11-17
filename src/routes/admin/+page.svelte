@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import HeartRatePanel from '$lib/components/HeartRatePanel.svelte';
+	import LandingEditor from '$lib/components/LandingEditor.svelte';
 
 	let { data } = $props();
 	let password = $state('');
@@ -80,7 +81,7 @@
 		});
 		if (out?.pid) {
 			notice = `Created ${out.pid}.`;
-			window.open(`/?pid=${encodeURIComponent(out.pid)}`, '_blank');
+			window.open(`/run?pid=${encodeURIComponent(out.pid)}`, '_blank');
 		}
 	}
 	async function jumpTest(pid: string, phase: string) {
@@ -146,6 +147,8 @@
 				</div>
 			{/each}
 		</div>
+
+		<LandingEditor landing={data.landing} />
 
 		<HeartRatePanel pids={data.active.map((a) => a.pid)} heard={data.straps} now={data.now} />
 
@@ -214,7 +217,7 @@
 						<td class:warnc={r.reloads > 0}>{r.reloads}</td><td>{time(r.created_at)}</td><td>{time(r.completed_at)}</td>
 						<td class="nowrap">
 							{#if isTest(r.pid)}
-								<a class="small" href="/?pid={r.pid}" target="_blank">Open</a>
+								<a class="small" href="/run?pid={r.pid}" target="_blank">Open</a>
 								<select class="small" value="" onchange={(e) => jumpTest(r.pid, e.currentTarget.value)}>
 									<option value="" disabled>Jump to…</option>
 									{#each data.test.phases as p (p)}<option value={p}>{p}</option>{/each}
