@@ -106,7 +106,13 @@
 				break;
 			case 'interval1':
 			case 'interval2': {
-				const running = Date.now() + clockOffset < s.phaseStartedAt + s.timers.interval_ms[s.phase];
+				const ms = s.timers.interval_ms[s.phase];
+				const start = marker('start');
+				if (ms > 0 && !start) {
+					addMarker('start');
+					break;
+				}
+				const running = !!start && Date.now() + clockOffset < start.at + ms;
 				const noRpe = s.recordRpe && !s.progress.bout;
 				const what = running ? (noRpe ? 'skip the timer and continue without RPE' : 'skip the rest of the timer') : 'continue without recording RPE';
 				confirmThen(!running && !noRpe, what);
@@ -218,7 +224,8 @@
 				saved={s.progress.bout}
 				recordRpe={s.recordRpe}
 				durationMs={s.timers.interval_ms[bout]}
-				startedAt={s.phaseStartedAt}
+				startedAt={marker('start')?.at ?? null}
+				onStart={() => addMarker('start')}
 				{clockOffset}
 				onSave={async (rpe, peak) => {
 					await api.bout(s!.pid, bout, rpe, peak);

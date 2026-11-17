@@ -41,6 +41,14 @@ describe('exercise / rest countdowns', () => {
 		expect(state(newSession('rest', 'interval1', true)).timers.interval_ms).toEqual({ interval1: 10_000, interval2: 10_000 });
 	});
 
+	it('waits for Start: the countdown begins at the interval start marker', () => {
+		const pid = newSession('rest', 'interval1');
+		expect(state(pid).progress.markers).toEqual([]);
+		const at = session.mark(pid, 'interval1', 'start', 123);
+		expect(state(pid).progress.markers).toEqual([{ name: 'start', at }]);
+		expect(() => session.mark(pid, 'interval1', 'bogus', 1)).toThrow();
+	});
+
 	it('records RPE only for the exercise condition', () => {
 		expect(state(newSession('elevated_hr', 'interval1')).recordRpe).toBe(true);
 		expect(state(newSession('rest', 'interval1')).recordRpe).toBe(false);

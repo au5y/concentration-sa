@@ -7,7 +7,9 @@
 	 * reaches 0:00 the screen says "Time's up" and, for conditions that record RPE, the
 	 * facilitator panel opens: show the Borg card ("Show Borg scale" fills the screen with it),
 	 * tap the rating, optionally type the peak HR, then press the shortcut to continue.
-	 * The facilitator can continue before the countdown ends (the shortcut asks for a second press).
+	 * The countdown waits for Start (the button, or the facilitator shortcut), so it can begin when
+	 * the participant actually starts. The facilitator can continue before it ends (the shortcut asks
+	 * for a second press).
 	 */
 	let {
 		text,
@@ -16,6 +18,7 @@
 		recordRpe,
 		durationMs,
 		startedAt,
+		onStart,
 		clockOffset
 	}: {
 		text: PhaseText;
@@ -25,8 +28,9 @@
 		recordRpe: boolean;
 		/** Countdown length; 0 = no countdown. */
 		durationMs: number;
-		/** Server time the phase started. */
-		startedAt: number;
+		/** Server time Start was pressed, or null if not yet. */
+		startedAt: number | null;
+		onStart: () => Promise<void>;
 		/** Server clock minus this computer's clock. */
 		clockOffset: number;
 	} = $props();
@@ -67,7 +71,10 @@
 	let showCard = $state(false);
 
 	let now = $state(Date.now());
-	const remaining = $derived(durationMs > 0 ? Math.max(0, startedAt + durationMs - (now + clockOffset)) : 0);
+	let starting = $state(false);
+	const remaining = $derived(
+		durationMs > 0 ? (startedAt === null ? durationMs : Math.max(0, startedAt + durationMs - (now + clockOffset))) : 0
+	);
 	const timeUp = $derived(durationMs > 0 && remaining === 0);
 	const clock = $derived.by(() => {
 		const s = Math.ceil(remaining / 1000);
@@ -105,7 +112,10 @@
 <div class="full">
 	<h1>{text.title}</h1>
 	<p class="body">{text.body}</p>
-	{#if durationMs > 0 && !timeUp}
+	{#if durationMs > 0 && startedAt === null}
+		<p class="clock idle" aria-live="off">{clock}</p>
+		<button class="start" disabled={starting} onclick={() => ((starting = true), onStart().finally(() => (starting = false)))}>Start</button>
+	{:else if durationMs > 0 && !timeUp}
 		<p class="clock" aria-live="off">{clock}</p>
 	{:else if timeUp}
 		<p class="up">Time's up</p>
@@ -178,7 +188,7 @@
 	</div>
 {:else}
 	<div class="facil quiet">
-		Facilitator: no RPE for this condition. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> to continue{durationMs > 0 && !timeUp ? ' (twice to skip the timer)' : ''}.
+		Facilitator: no RPE for this condition. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> to {durationMs > 0 && startedAt === null ? 'start the timer' : `continue${durationMs > 0 && !timeUp ? ' (twice to skip the timer)' : ''}`}.
 	</div>
 {/if}
 
@@ -208,6 +218,23 @@
 		font-variant-numeric: tabular-nums;
 		color: #1f63d6;
 		line-height: 1;
+	}
+	.clock.idle {
+		color: #999;
+	}
+	.start {
+		margin-top: 1.5rem;
+		font-size: 2.2rem;
+		font-weight: 700;
+		padding: 0.6rem 3rem;
+		border-radius: 12px;
+		border: none;
+		background: #2a9d3f;
+		color: white;
+		cursor: pointer;
+	}
+	.start:disabled {
+		opacity: 0.6;
 	}
 	.up {
 		margin: 2rem 0 0;
