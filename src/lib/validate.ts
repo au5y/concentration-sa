@@ -102,6 +102,14 @@ export function validateExperiment(
 	for (const c of config.rpe_conditions ?? []) {
 		if (!config.conditions.includes(c)) errs.push(`config.rpe_conditions: "${c}" is not one of config.conditions`);
 	}
+	if (config.metronome) {
+		const { bpm, conditions } = config.metronome;
+		if (typeof bpm !== 'number' || bpm < 20 || bpm > 300) errs.push('config.metronome.bpm must be between 20 and 300');
+		if (!Array.isArray(conditions)) errs.push('config.metronome.conditions must be a list of conditions');
+		else for (const c of conditions) {
+			if (!config.conditions.includes(c)) errs.push(`config.metronome.conditions: "${c}" is not one of config.conditions`);
+		}
+	}
 	if (!Number.isInteger(config.confidence_scale) || config.confidence_scale < 0) {
 		errs.push('config.confidence_scale must be a whole number (0 turns confidence off)');
 	}

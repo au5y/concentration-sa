@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { Metronome } from '$lib/client/metronome';
 	import type { PhaseText } from '$lib/types';
 
 	/**
@@ -16,6 +17,7 @@
 		saved,
 		onSave,
 		recordRpe,
+		metronomeBpm = null,
 		durationMs,
 		startedAt,
 		onStart,
@@ -27,6 +29,8 @@
 		onSave: (rpe: number, peakHr: number | null) => Promise<void>;
 		/** false (e.g. the rest condition): no RPE panel. */
 		recordRpe: boolean;
+		/** Step-test metronome tempo; clicks while the countdown runs. null = none. */
+		metronomeBpm?: number | null;
 		/** Countdown length; 0 = no countdown. */
 		durationMs: number;
 		/** Server time Start was pressed, or null if not yet. */
@@ -89,6 +93,20 @@
 		return () => clearInterval(t);
 	});
 
+	// Metronome: on from Start until time's up (or the whole screen if there is no countdown).
+	let muted = $state(false);
+	let pulse = $state(false);
+	const ticking = $derived(!!metronomeBpm && !muted && (durationMs > 0 ? startedAt !== null && !timeUp : true));
+	$effect(() => {
+		if (!ticking || !metronomeBpm) return;
+		const m = new Metronome(metronomeBpm, () => {
+			pulse = true;
+			setTimeout(() => (pulse = false), 100);
+		});
+		m.start();
+		return () => m.close();
+	});
+
 	// Time's up: bring up the RPE panel for the facilitator.
 	$effect(() => {
 		if (timeUp && recordRpe && !remote && status !== 'saved') open = true;
@@ -120,10 +138,18 @@
 		<button class="start" disabled={starting} onclick={() => ((starting = true), onStart().finally(() => (starting = false)))}>Start</button>
 	{:else if durationMs > 0 && !timeUp}
 		<p class="clock" aria-live="off">{clock}</p>
-	{:else if timeUp}
+	{/if}
+	{#if metronomeBpm && !timeUp}
+		<p class="metro">
+			<span class="dot" class:on={pulse && ticking}></span>
+			Step in time with the click ({metronomeBpm} beats/min)
+			<button class="mute" onclick={() => (muted = !muted)}>{muted ? '🔇 Sound off' : '🔊 Sound on'}</button>
+		</p>
+	{/if}
+	{#if timeUp}
 		<p class="up">Time's up</p>
 		<p class="wait">Wait for facilitator</p>
-	{:else}
+	{:else if durationMs === 0}
 		<p class="wait">Wait for facilitator</p>
 	{/if}
 </div>
@@ -215,6 +241,32 @@
 	.body {
 		font-size: 1.8rem;
 		max-width: 40ch;
+	}
+	.metro {
+		margin: 1.5rem 0 0;
+		font-size: 1.4rem;
+		color: #555;
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+	}
+	.dot {
+		width: 1.4rem;
+		height: 1.4rem;
+		border-radius: 50%;
+		background: #ddd;
+		transition: background 60ms;
+	}
+	.dot.on {
+		background: #1f63d6;
+	}
+	.mute {
+		font-size: 1rem;
+		padding: 0.2rem 0.7rem;
+		border-radius: 6px;
+		border: 1px solid #bbb;
+		background: white;
+		cursor: pointer;
 	}
 	.clock {
 		margin: 2rem 0 0;

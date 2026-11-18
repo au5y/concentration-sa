@@ -7,7 +7,7 @@ import { hasRemoteTag, REMOTE_TAG } from '../remote';
 import type { SessionState } from '../state';
 import { DONT_REMEMBER, FACILITATOR_PHASES, LEVEL2_NEUTRAL_HEX, ORAL_RESPONSES, PHASES, type ClickOutcome, type ClickRecord, type Phase } from '../types';
 import { getDb } from './db';
-import { experiment, timers } from './experiment';
+import { experiment, metronomeBpm, timers } from './experiment';
 import { loadSchedule } from './files';
 
 export interface SessionRow {
@@ -334,6 +334,7 @@ export function buildState(s: SessionRow): SessionState {
 		aborted: !!s.aborted_at,
 		timers: timers(exp, !!s.dev_timers),
 		recordRpe: !config.rpe_conditions || config.rpe_conditions.includes(s.condition),
+		metronomeBpm: metronomeBpm(exp, s.condition),
 		text: config.condition_text[s.condition],
 		colors: config.colors,
 		orientations: config.orientations,

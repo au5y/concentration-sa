@@ -107,6 +107,7 @@
 					s.condition = next.condition;
 					s.text = next.text;
 					s.recordRpe = next.recordRpe;
+					s.metronomeBpm = next.metronomeBpm;
 				}
 			}
 		} catch {
@@ -366,6 +367,7 @@
 				text={s.text[s.phase]}
 				saved={s.progress.bout}
 				recordRpe={s.recordRpe}
+				metronomeBpm={s.metronomeBpm}
 				remote={s.remote}
 				durationMs={s.timers.interval_ms[bout]}
 				startedAt={marker('start')?.at ?? null}

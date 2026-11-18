@@ -62,6 +62,11 @@ export interface ExperimentConfig {
 	/** Conditions whose bouts get an RPE rating (Borg 6-20). Omit to ask every condition. */
 	rpe_conditions?: string[];
 	/**
+	 * Audible metronome on these conditions' exercise screens (Harvard step test cadence, e.g.
+	 * 120 bpm = 2 clicks/s, one per step). Clicks while the countdown runs. Omit for none.
+	 */
+	metronome?: { bpm: number; conditions: string[] };
+	/**
 	 * Situation-awareness questions about the environment, asked aloud by the facilitator
 	 * after the on-screen questions. The participant's screen only asks them to talk to the
 	 * facilitator; the facilitator unlocks the controls (Ctrl+Shift+F) and marks each answer

@@ -46,6 +46,12 @@ export function timers(exp: Experiment, fast = false) {
 	};
 }
 
+/** Metronome tempo for this condition's exercise screens, or null if none. */
+export function metronomeBpm(exp: Experiment, condition: string): number | null {
+	const m = exp.config.metronome;
+	return m && m.conditions.includes(condition) ? m.bpm : null;
+}
+
 function intervalMs(s: number | undefined, fast: boolean): number {
 	if (!s || s <= 0) return 0;
 	return fast ? Math.min(10_000, s * 1000) : Math.round(s * 1000);
