@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { Metronome, audioReady, primeAudio, unlockAudio } from '$lib/client/metronome';
+	import { onMount, untrack } from 'svelte';
+	import { BEATS_PER_CYCLE, Metronome, SOUNDS, audioReady, primeAudio, unlockAudio, type SoundId } from '$lib/client/metronome';
 	import type { PhaseText } from '$lib/types';
 
 	/**
@@ -97,21 +97,54 @@
 	// Metronome: on from Start until time's up (or the whole screen if there is no countdown).
 	// Harvard step test: up, up, down, down, one step per click.
 	const STEPS = ['Up', 'Up', 'Down', 'Down'];
+	const BPM_MIN = 40;
+	const BPM_MAX = 200;
 	let muted = $state(false);
 	let pulse = $state(false);
 	let beat = $state(-1);
 	let met: Metronome | null = null;
+	/** Tempo for this screen; starts at the configured step-test tempo. */
+	// svelte-ignore state_referenced_locally
+	let bpm = $state(metronomeBpm ?? 120);
+	let bpmText = $state('');
+	$effect(() => {
+		bpmText = String(bpm);
+	});
+	function setBpm(v: number) {
+		if (Number.isFinite(v)) bpm = Math.round(Math.min(BPM_MAX, Math.max(BPM_MIN, v)));
+		bpmText = String(bpm);
+	}
+	/** Click sound, remembered on this computer. */
+	const SOUND_KEY = 'concentration-sa.metronome-sound';
+	let sound = $state<SoundId>('woodblock');
+	try {
+		const v = localStorage.getItem(SOUND_KEY);
+		if (SOUNDS.some((x) => x.id === v)) sound = v as SoundId;
+	} catch {
+		// storage blocked: default sound
+	}
+	const previewer = new Metronome(120);
+	function pickSound(id: SoundId) {
+		sound = id;
+		try {
+			localStorage.setItem(SOUND_KEY, id);
+		} catch {
+			// not remembered
+		}
+		if (!ticking) previewer.preview(id, true);
+	}
 	const ticking = $derived(!!metronomeBpm && (durationMs > 0 ? startedAt !== null && !timeUp : true));
 	// Re-checked with the 250 ms clock: has the browser let the page make sound yet?
 	const soundBlocked = $derived(ticking && !muted && now > 0 && !audioReady());
 	$effect(() => {
 		if (!ticking || !metronomeBpm) return;
-		const m = new Metronome(metronomeBpm, (b) => {
+		const m = new Metronome(untrack(() => bpm), (b) => {
 			beat = b;
 			pulse = true;
 			setTimeout(() => (pulse = false), 120);
 		});
-		m.muted = muted;
+		m.muted = untrack(() => muted);
+		m.sound = untrack(() => sound);
 		met = m;
 		m.start();
 		return () => {
@@ -121,7 +154,12 @@
 		};
 	});
 	$effect(() => {
-		if (met) met.muted = muted;
+		const [mu, so, b] = [muted, sound, bpm];
+		if (met) {
+			met.muted = mu;
+			met.sound = so;
+			met.bpm = b;
+		}
 	});
 
 	// Time's up: bring up the RPE panel for the facilitator.
@@ -147,7 +185,7 @@
 	}
 </script>
 
-<div class="full">
+<div class="full" class:has-facil={!remote}>
 	<h1>{text.title}</h1>
 	<p class="body">{text.body}</p>
 	{#if durationMs > 0 && startedAt === null}
@@ -158,16 +196,39 @@
 	{/if}
 	{#if metronomeBpm && !timeUp}
 		<div class="metro">
-			<div class="beat" class:on={pulse && ticking} class:idle={!ticking}>
-				<span class="step">{ticking && beat >= 0 ? STEPS[beat % 4] : 'Step'}</span>
-				<span class="tempo">{metronomeBpm} BPM</span>
+			<div class="beat" class:on={pulse && ticking} class:accent={ticking && beat % BEATS_PER_CYCLE === 0} class:idle={!ticking}>
+				<span class="step">{ticking && beat >= 0 ? STEPS[beat % BEATS_PER_CYCLE] : 'Step'}</span>
+				<span class="tempo">{bpm} BPM</span>
 			</div>
 			<p class="metro-hint">Step with each click: up, up, down, down.</p>
 			{#if soundBlocked}
 				<button class="unlock" onclick={() => unlockAudio()}>🔈 Tap here to turn on the sound</button>
-			{:else}
-				<button class="mute" onclick={() => (muted = !muted)}>{muted ? '🔇 Sound off' : '🔊 Sound on'}</button>
 			{/if}
+			<div class="controls">
+				<label class="tempo-ctl">
+					<span>Tempo</span>
+					<input type="range" min={BPM_MIN} max={BPM_MAX} step="1" value={bpm} oninput={(e) => setBpm(e.currentTarget.valueAsNumber)} aria-label="Tempo (beats per minute)" />
+					<input
+						class="bpm-num"
+						type="number"
+						min={BPM_MIN}
+						max={BPM_MAX}
+						inputmode="numeric"
+						bind:value={bpmText}
+						onchange={(e) => setBpm(e.currentTarget.valueAsNumber)}
+						onkeydown={(e) => e.key === 'Enter' && setBpm(e.currentTarget.valueAsNumber)}
+						aria-label="Beats per minute"
+					/>
+					<span>BPM</span>
+					{#if metronomeBpm && bpm !== metronomeBpm}<button class="reset" onclick={() => setBpm(metronomeBpm!)}>Reset to {metronomeBpm}</button>{/if}
+				</label>
+				<div class="sounds" role="radiogroup" aria-label="Click sound">
+					{#each SOUNDS as s (s.id)}
+						<button role="radio" aria-checked={sound === s.id} class:sel={sound === s.id} onclick={() => pickSound(s.id)}>{s.label}</button>
+					{/each}
+					<button class="mute" onclick={() => (muted = !muted)}>{muted ? '🔇 Off' : '🔊 On'}</button>
+				</div>
+			</div>
 		</div>
 	{/if}
 	{#if timeUp}
@@ -248,34 +309,43 @@
 {/if}
 
 <style>
+	/* Whole screen, no scrolling: everything scales with the window height/width. */
 	.full {
-		min-height: 100vh;
+		height: 100vh;
+		height: 100dvh;
+		overflow: hidden;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		text-align: center;
-		padding: 2rem;
+		padding: clamp(0.5rem, 2vh, 2rem) 1rem;
 		box-sizing: border-box;
+		gap: clamp(0.2rem, 1vh, 0.8rem);
+	}
+	.full.has-facil {
+		padding-bottom: 3rem;
 	}
 	h1 {
-		font-size: 3.5rem;
-		margin: 0 0 1rem;
+		font-size: clamp(1.6rem, 6vh, 3.5rem);
+		margin: 0;
 	}
 	.body {
-		font-size: 1.8rem;
+		font-size: clamp(1rem, 3vh, 1.8rem);
 		max-width: 40ch;
+		margin: 0;
 	}
 	.metro {
-		margin: 1.5rem 0 0;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.8rem;
+		gap: clamp(0.3rem, 1.2vh, 0.8rem);
+		min-height: 0;
 	}
 	.beat {
-		width: min(18rem, 40vh);
+		width: min(36vh, 70vw);
 		aspect-ratio: 1;
+		container-type: size;
 		border-radius: 50%;
 		background: #1f63d6;
 		color: white;
@@ -291,10 +361,13 @@
 			opacity 220ms ease-out,
 			box-shadow 260ms ease-out;
 	}
+	.beat.accent {
+		background: #e0712a;
+	}
 	.beat.on {
 		transform: scale(1);
 		opacity: 1;
-		box-shadow: 0 0 0 1.6rem rgba(31, 99, 214, 0.15);
+		box-shadow: 0 0 0 min(3vh, 1.6rem) rgba(31, 99, 214, 0.15);
 		transition: none;
 	}
 	.beat.idle {
@@ -302,40 +375,77 @@
 		opacity: 1;
 	}
 	.step {
-		font-size: 4rem;
+		font-size: 24cqw;
 		font-weight: 800;
 		line-height: 1;
 	}
 	.tempo {
-		margin-top: 0.4rem;
-		font-size: 1.2rem;
+		margin-top: 3cqw;
+		font-size: 8cqw;
 		font-weight: 600;
 		opacity: 0.85;
 	}
 	.metro-hint {
 		margin: 0;
-		font-size: 1.4rem;
+		font-size: clamp(0.9rem, 2.4vh, 1.4rem);
 		color: #555;
 	}
+	.controls {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: 0.5rem 1.5rem;
+		font-size: clamp(0.85rem, 2vh, 1.05rem);
+		color: #444;
+	}
+	.tempo-ctl {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.tempo-ctl input[type='range'] {
+		width: min(16rem, 40vw);
+	}
+	.bpm-num {
+		width: 4.2rem;
+		font-size: 1em;
+		text-align: center;
+		margin: 0;
+	}
+	.sounds {
+		display: flex;
+		gap: 0.3rem;
+	}
+	.sounds button,
 	.mute,
+	.reset,
 	.unlock {
-		font-size: 1rem;
-		padding: 0.3rem 0.9rem;
+		font-size: 1em;
+		padding: 0.25rem 0.8rem;
 		border-radius: 6px;
 		border: 1px solid #bbb;
 		background: white;
 		cursor: pointer;
 	}
+	.sounds button.sel {
+		background: #1f63d6;
+		border-color: #1f63d6;
+		color: white;
+	}
+	.mute {
+		margin-left: 0.4rem;
+	}
 	.unlock {
-		font-size: 1.4rem;
+		font-size: clamp(1rem, 2.6vh, 1.4rem);
 		font-weight: 700;
 		border: 2px solid #c0392b;
 		color: #c0392b;
 		background: #fff3f1;
 	}
 	.clock {
-		margin: 2rem 0 0;
-		font-size: 7rem;
+		margin: 0;
+		font-size: clamp(2.5rem, 11vh, 7rem);
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
 		color: #1f63d6;
@@ -345,10 +455,10 @@
 		color: #999;
 	}
 	.start {
-		margin-top: 1.5rem;
-		font-size: 2.2rem;
+		margin: 0;
+		font-size: clamp(1.3rem, 4.5vh, 2.2rem);
 		font-weight: 700;
-		padding: 0.6rem 3rem;
+		padding: 0.4em 1.4em;
 		border-radius: 12px;
 		border: none;
 		background: #2a9d3f;
@@ -359,14 +469,14 @@
 		opacity: 0.6;
 	}
 	.up {
-		margin: 2rem 0 0;
-		font-size: 4rem;
+		margin: 0;
+		font-size: clamp(2rem, 8vh, 4rem);
 		font-weight: 800;
 		color: #2a9d3f;
 	}
 	.wait {
-		margin-top: 2rem;
-		font-size: 2.4rem;
+		margin: 0;
+		font-size: clamp(1.4rem, 5vh, 2.4rem);
 		font-weight: 700;
 		color: #1f63d6;
 	}
