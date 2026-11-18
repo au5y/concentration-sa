@@ -90,8 +90,15 @@
 
 	onMount(() => {
 		primeAudio();
-		const t = setInterval(() => (now = Date.now()), 250);
-		return () => clearInterval(t);
+		// Every frame, so the countdown's seconds change exactly on the metronome click.
+		let raf = 0;
+		const frame = () => {
+			now = Date.now();
+			raf = requestAnimationFrame(frame);
+		};
+		raf = requestAnimationFrame(frame);
+		const t = setInterval(() => (now = Date.now()), 250); // keeps going if frames are throttled
+		return () => (cancelAnimationFrame(raf), clearInterval(t));
 	});
 
 	// Metronome: on from Start until time's up (or the whole screen if there is no countdown).
@@ -146,7 +153,9 @@
 		m.muted = untrack(() => muted);
 		m.sound = untrack(() => sound);
 		met = m;
-		m.start();
+		// Same grid as the countdown: beat 0 = when Start was pressed (in this computer's clock).
+		const anchor = untrack(() => (durationMs > 0 && startedAt !== null ? startedAt - clockOffset : undefined));
+		m.start(anchor);
 		return () => {
 			m.stop();
 			met = null;

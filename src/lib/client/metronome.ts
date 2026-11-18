@@ -58,10 +58,18 @@ export function primeAudio() {
 	for (const ev of ['pointerdown', 'keydown', 'touchend'] as const) window.addEventListener(ev, go, true);
 }
 
+/** Seconds between scheduling a sound and hearing it. */
+function latency(ctx: AudioContext): number {
+	return (ctx.outputLatency || 0) + (ctx.baseLatency || 0);
+}
+
 export class Metronome {
 	private timer: ReturnType<typeof setInterval> | null = null;
 	private next = 0;
 	private beat = 0;
+	/** Audio-clock time of beat 0 (the timer's start), so clicks land on the countdown's seconds. */
+	private anchor = 0;
+	private period = 0.5;
 	private noise: AudioBuffer | null = null;
 	/** Silent but still pulsing. */
 	muted = false;
@@ -75,14 +83,30 @@ export class Metronome {
 		this.bpm = bpm;
 	}
 
-	start() {
+	/**
+	 * `anchorMs`: this computer's Date.now() when the countdown started. Beats fall on
+	 * anchor + k * period, so at 120 BPM every second click lands exactly when the timer's
+	 * seconds change. Without it, beats start now.
+	 */
+	start(anchorMs?: number) {
 		if (this.timer) return;
 		const ctx = context();
 		void ctx.resume();
-		this.next = ctx.currentTime + 0.05;
-		this.beat = 0;
+		const nowMs = Date.now();
+		this.anchor = ctx.currentTime + ((anchorMs ?? nowMs + 50) - nowMs) / 1000 - latency(ctx);
+		this.period = this.periodFor(this.bpm);
+		this.beat = this.firstBeatAfter(ctx.currentTime + 0.02);
+		this.next = this.anchor + this.beat * this.period;
 		this.timer = setInterval(() => this.schedule(), 25);
 		this.schedule();
+	}
+
+	private periodFor(bpm: number) {
+		return 60 / Math.min(300, Math.max(20, bpm));
+	}
+
+	private firstBeatAfter(t: number) {
+		return Math.max(0, Math.ceil((t - this.anchor) / this.period - 1e-6));
 	}
 
 	stop() {
@@ -100,15 +124,25 @@ export class Metronome {
 	/** Queue every click due in the next 120 ms. */
 	private schedule() {
 		const ctx = context();
+		const period = this.periodFor(this.bpm);
+		// Tempo changed: stay on the timer's grid (beat k at anchor + k * period) from the next click.
+		if (period !== this.period) {
+			this.period = period;
+			this.beat = this.firstBeatAfter(ctx.currentTime + 0.02);
+			this.next = this.anchor + this.beat * period;
+		}
 		// Fell behind (tab was in the background, or audio still locked): skip ahead, no burst.
-		if (this.next < ctx.currentTime) this.next = ctx.currentTime + 0.02;
+		if (this.next < ctx.currentTime) {
+			this.beat = this.firstBeatAfter(ctx.currentTime + 0.02);
+			this.next = this.anchor + this.beat * period;
+		}
 		while (this.next < ctx.currentTime + 0.12) {
 			const beat = this.beat++;
 			if (!this.muted) this.play(this.sound, this.next, beat % BEATS_PER_CYCLE === 0);
-			const delay = Math.max(0, (this.next - ctx.currentTime) * 1000);
+			// Flash when the click is actually heard (after the output latency).
+			const delay = Math.max(0, (this.next + latency(ctx) - ctx.currentTime) * 1000);
 			setTimeout(() => this.timer && this.onBeat?.(beat), delay);
-			// Read every beat, so a tempo change applies from the next click.
-			this.next += 60 / Math.min(300, Math.max(20, this.bpm));
+			this.next = this.anchor + this.beat * period;
 		}
 	}
 
