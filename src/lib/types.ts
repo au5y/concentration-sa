@@ -62,6 +62,11 @@ export interface ExperimentConfig {
 	/** Conditions whose bouts get an RPE rating (Borg 6-20). Omit to ask every condition. */
 	rpe_conditions?: string[];
 	/**
+	 * Heart rate the step test should reach in these conditions' exercise bouts (both intervals).
+	 * Shown on the exercise screen and the facilitator console. Omit for no target.
+	 */
+	target_hr?: { bpm: number; conditions: string[] };
+	/**
 	 * Situation-awareness questions about the environment, asked aloud by the facilitator
 	 * after the on-screen questions. The participant's screen only asks them to talk to the
 	 * facilitator; the facilitator unlocks the controls (Ctrl+Shift+F) and marks each answer

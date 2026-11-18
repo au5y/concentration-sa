@@ -16,6 +16,8 @@
 		saved,
 		onSave,
 		recordRpe,
+		targetHr = null,
+		liveBpm = null,
 		durationMs,
 		startedAt,
 		onStart,
@@ -27,6 +29,10 @@
 		onSave: (rpe: number, peakHr: number | null) => Promise<void>;
 		/** false (e.g. the rest condition): no RPE panel. */
 		recordRpe: boolean;
+		/** Step-test target heart rate (bpm); null = none (rest condition). */
+		targetHr?: number | null;
+		/** Participant's live HR from their own strap (remote), if connected. */
+		liveBpm?: number | null;
 		/** Countdown length; 0 = no countdown. */
 		durationMs: number;
 		/** Server time Start was pressed, or null if not yet. */
@@ -115,6 +121,12 @@
 <div class="full">
 	<h1>{text.title}</h1>
 	<p class="body">{text.body}</p>
+	{#if targetHr}
+		<p class="target" class:hit={liveBpm !== null && liveBpm >= targetHr}>
+			Target heart rate: <b>{targetHr}+ bpm</b>
+			{#if liveBpm !== null}<span class="now">· now {liveBpm}{liveBpm >= targetHr ? ' ✓' : ''}</span>{/if}
+		</p>
+	{/if}
 	{#if durationMs > 0 && startedAt === null}
 		<p class="clock idle" aria-live="off">{clock}</p>
 		<button class="start" disabled={starting} onclick={() => ((starting = true), onStart().finally(() => (starting = false)))}>Start</button>
@@ -171,6 +183,7 @@
 				{/each}
 			</div>
 			<p class="row">
+				{#if targetHr}<span class="hint">Target {targetHr} bpm</span>{/if}
 				<label>Peak HR from monitor (optional)
 					<input
 						type="number"
@@ -215,6 +228,17 @@
 	.body {
 		font-size: 1.8rem;
 		max-width: 40ch;
+	}
+	.target {
+		margin: 1rem 0 0;
+		font-size: 1.8rem;
+		color: #c0392b;
+	}
+	.target.hit {
+		color: #2a9d3f;
+	}
+	.target .now {
+		font-variant-numeric: tabular-nums;
 	}
 	.clock {
 		margin: 2rem 0 0;

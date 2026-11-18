@@ -71,13 +71,21 @@
 	// Heart rate
 	const last = $derived(s?.hr.at(-1) ?? null);
 	const hrAge = $derived(last ? serverNow - last.ts : null);
-	function spark(h: { ts: number; bpm: number }[]): string {
-		if (h.length < 2 || !s) return '';
-		const lo = Math.min(...h.map((x) => x.bpm)) - 3;
-		const hi = Math.max(...h.map((x) => x.bpm)) + 3;
+	/** Step-test target, shown while an exercise bout is on. */
+	const target = $derived(s?.targetHr && (s.phase === 'interval1' || s.phase === 'interval2') ? s.targetHr : null);
+	const spark = $derived.by(() => {
+		const h = s?.hr ?? [];
+		if (h.length < 2 || !s) return null;
+		const vals = h.map((x) => x.bpm).concat(target ? [target] : []);
+		const lo = Math.min(...vals) - 3;
+		const hi = Math.max(...vals) + 3;
+		const y = (bpm: number) => (40 - ((bpm - lo) / (hi - lo)) * 40).toFixed(1);
 		const t0 = s.now - 5 * 60_000;
-		return h.map((x) => `${(((x.ts - t0) / (5 * 60_000)) * 100).toFixed(1)},${(40 - ((x.bpm - lo) / (hi - lo)) * 40).toFixed(1)}`).join(' ');
-	}
+		return {
+			line: h.map((x) => `${(((x.ts - t0) / (5 * 60_000)) * 100).toFixed(1)},${y(x.bpm)}`).join(' '),
+			targetY: target ? y(target) : null
+		};
+	});
 
 	// RPE form (exercise/rest bouts)
 	const BORG: Record<number, string> = { 6: 'No exertion', 7: 'Extremely light', 9: 'Very light', 11: 'Light', 13: 'Somewhat hard', 15: 'Hard', 17: 'Very hard', 19: 'Extremely hard', 20: 'Maximal' };
@@ -410,14 +418,20 @@
 				<h2>Heart rate</h2>
 				{#if last}
 					<p class="bpm" class:stale={(hrAge ?? 0) > 6}>{last.bpm}<small> bpm</small></p>
+					{#if target}
+						<p class="target" class:hit={last.bpm >= target}>
+							Target {target}+ bpm · {last.bpm >= target ? 'reached ✓' : `${target - last.bpm} below`}
+						</p>
+					{/if}
 					<p class="muted small">
 						{(hrAge ?? 0) > 6 ? `no reading for ${ago(hrAge ?? 0)}` : 'live'}
 						{#if last.contact === 0}· <span class="err">no skin contact</span>{/if}
 					</p>
-					<svg viewBox="0 0 100 40" preserveAspectRatio="none" class="spark" aria-hidden="true"><polyline points={spark(s.hr)} /></svg>
-					<p class="muted small">last 5 minutes</p>
+					<svg viewBox="0 0 100 40" preserveAspectRatio="none" class="spark" aria-hidden="true">{#if spark}{#if spark.targetY}<line class="tgt" x1="0" x2="100" y1={spark.targetY} y2={spark.targetY} />{/if}<polyline points={spark.line} />{/if}</svg>
+					<p class="muted small">last 5 minutes{target ? ` · dashed line = ${target} bpm target` : ''}</p>
 				{:else}
 					<p class="muted">No heart-rate readings in the last 5 minutes.</p>
+					{#if target}<p class="target">Target {target}+ bpm</p>{/if}
 				{/if}
 			</section>
 		</div>
@@ -667,6 +681,20 @@
 	.spark {
 		width: 100%;
 		height: 4rem;
+	}
+	.target {
+		margin: 0.3rem 0 0;
+		font-weight: 700;
+		color: #b07d00;
+	}
+	.target.hit {
+		color: #2a9d3f;
+	}
+	.spark .tgt {
+		stroke: #2a9d3f;
+		stroke-width: 1;
+		stroke-dasharray: 4 3;
+		vector-effect: non-scaling-stroke;
 	}
 	.spark polyline {
 		fill: none;
