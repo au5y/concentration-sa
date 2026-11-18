@@ -5,7 +5,7 @@ import type { SaStep } from '../sa-plan';
 import type { ClickRecord } from '../types';
 import { FACILITATOR_PHASES, PHASES, type Phase } from '../types';
 import { getDb } from './db';
-import { experiment, targetHr, timers } from './experiment';
+import { experiment, timers } from './experiment';
 import { remoteKey } from './remote';
 import { setCondition } from './schedule';
 import { abortSession, advance, getSession, jumpSession, mark, recordBout, recordSurvey, sessionCards, type SurveyAnswers } from './session';
@@ -91,7 +91,6 @@ export function consoleState(pid: string) {
 		markers,
 		timers: t,
 		recordRpe: !exp.config.rpe_conditions || exp.config.rpe_conditions.includes(s.condition),
-		targetHr: targetHr(exp, s.condition),
 		bout,
 		peak,
 		boardProgress,

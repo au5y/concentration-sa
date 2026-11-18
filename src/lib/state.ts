@@ -26,8 +26,6 @@ export interface SessionState {
 	timers: { preview_ms: number; mismatch_flip_ms: number; time_limit_ms: number; interval_ms: { interval1: number; interval2: number } };
 	/** This participant's condition records RPE at the end of each bout. */
 	recordRpe: boolean;
-	/** Heart rate the exercise bouts should reach (step test), or null (e.g. rest condition). */
-	targetHr: number | null;
 	text: { interval1: PhaseText; interval2: PhaseText };
 	colors: ColorOption[];
 	orientations: OrientationOption[];

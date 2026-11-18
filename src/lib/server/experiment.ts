@@ -46,12 +46,6 @@ export function timers(exp: Experiment, fast = false) {
 	};
 }
 
-/** Target heart rate (bpm) for this condition's exercise bouts, or null if none. */
-export function targetHr(exp: Experiment, condition: string): number | null {
-	const t = exp.config.target_hr;
-	return t && t.conditions.includes(condition) ? t.bpm : null;
-}
-
 function intervalMs(s: number | undefined, fast: boolean): number {
 	if (!s || s <= 0) return 0;
 	return fast ? Math.min(10_000, s * 1000) : Math.round(s * 1000);
