@@ -6,6 +6,7 @@
 	import OwnHeartRate from '$lib/components/OwnHeartRate.svelte';
 	import { StrapManager } from '$lib/client/hr-straps.svelte';
 	import Interval from '$lib/components/Interval.svelte';
+	import { primeAudio } from '$lib/client/metronome';
 	import Sa from '$lib/components/Sa.svelte';
 	import Survey from '$lib/components/Survey.svelte';
 	import type { SessionState } from '$lib/state';
@@ -62,6 +63,9 @@
 	}
 
 	onMount(() => {
+		// Unlock sound on the participant's first click / key press, so the step-test metronome
+		// can play later even when the timer is started from the facilitator console.
+		primeAudio();
 		if (!pid || !data.authed) return;
 		// The participant cannot navigate back.
 		history.pushState(null, '', location.href);

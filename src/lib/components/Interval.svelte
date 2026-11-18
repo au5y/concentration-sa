@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Metronome } from '$lib/client/metronome';
+	import { Metronome, audioReady, primeAudio, unlockAudio } from '$lib/client/metronome';
 	import type { PhaseText } from '$lib/types';
 
 	/**
@@ -89,22 +89,39 @@
 	});
 
 	onMount(() => {
+		primeAudio();
 		const t = setInterval(() => (now = Date.now()), 250);
 		return () => clearInterval(t);
 	});
 
 	// Metronome: on from Start until time's up (or the whole screen if there is no countdown).
+	// Harvard step test: up, up, down, down, one step per click.
+	const STEPS = ['Up', 'Up', 'Down', 'Down'];
 	let muted = $state(false);
 	let pulse = $state(false);
-	const ticking = $derived(!!metronomeBpm && !muted && (durationMs > 0 ? startedAt !== null && !timeUp : true));
+	let beat = $state(-1);
+	let met: Metronome | null = null;
+	const ticking = $derived(!!metronomeBpm && (durationMs > 0 ? startedAt !== null && !timeUp : true));
+	// Re-checked with the 250 ms clock: has the browser let the page make sound yet?
+	const soundBlocked = $derived(ticking && !muted && now > 0 && !audioReady());
 	$effect(() => {
 		if (!ticking || !metronomeBpm) return;
-		const m = new Metronome(metronomeBpm, () => {
+		const m = new Metronome(metronomeBpm, (b) => {
+			beat = b;
 			pulse = true;
-			setTimeout(() => (pulse = false), 100);
+			setTimeout(() => (pulse = false), 120);
 		});
+		m.muted = muted;
+		met = m;
 		m.start();
-		return () => m.close();
+		return () => {
+			m.stop();
+			met = null;
+			beat = -1;
+		};
+	});
+	$effect(() => {
+		if (met) met.muted = muted;
 	});
 
 	// Time's up: bring up the RPE panel for the facilitator.
@@ -140,11 +157,18 @@
 		<p class="clock" aria-live="off">{clock}</p>
 	{/if}
 	{#if metronomeBpm && !timeUp}
-		<p class="metro">
-			<span class="dot" class:on={pulse && ticking}></span>
-			Step in time with the click ({metronomeBpm} beats/min)
-			<button class="mute" onclick={() => (muted = !muted)}>{muted ? '🔇 Sound off' : '🔊 Sound on'}</button>
-		</p>
+		<div class="metro">
+			<div class="beat" class:on={pulse && ticking} class:idle={!ticking}>
+				<span class="step">{ticking && beat >= 0 ? STEPS[beat % 4] : 'Step'}</span>
+				<span class="tempo">{metronomeBpm} BPM</span>
+			</div>
+			<p class="metro-hint">Step with each click: up, up, down, down.</p>
+			{#if soundBlocked}
+				<button class="unlock" onclick={() => unlockAudio()}>🔈 Tap here to turn on the sound</button>
+			{:else}
+				<button class="mute" onclick={() => (muted = !muted)}>{muted ? '🔇 Sound off' : '🔊 Sound on'}</button>
+			{/if}
+		</div>
 	{/if}
 	{#if timeUp}
 		<p class="up">Time's up</p>
@@ -244,29 +268,70 @@
 	}
 	.metro {
 		margin: 1.5rem 0 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.8rem;
+	}
+	.beat {
+		width: min(18rem, 40vh);
+		aspect-ratio: 1;
+		border-radius: 50%;
+		background: #1f63d6;
+		color: white;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 0 0 0 rgba(31, 99, 214, 0.45);
+		transform: scale(0.92);
+		opacity: 0.55;
+		transition:
+			transform 220ms ease-out,
+			opacity 220ms ease-out,
+			box-shadow 260ms ease-out;
+	}
+	.beat.on {
+		transform: scale(1);
+		opacity: 1;
+		box-shadow: 0 0 0 1.6rem rgba(31, 99, 214, 0.15);
+		transition: none;
+	}
+	.beat.idle {
+		background: #bbb;
+		opacity: 1;
+	}
+	.step {
+		font-size: 4rem;
+		font-weight: 800;
+		line-height: 1;
+	}
+	.tempo {
+		margin-top: 0.4rem;
+		font-size: 1.2rem;
+		font-weight: 600;
+		opacity: 0.85;
+	}
+	.metro-hint {
+		margin: 0;
 		font-size: 1.4rem;
 		color: #555;
-		display: flex;
-		align-items: center;
-		gap: 0.7rem;
 	}
-	.dot {
-		width: 1.4rem;
-		height: 1.4rem;
-		border-radius: 50%;
-		background: #ddd;
-		transition: background 60ms;
-	}
-	.dot.on {
-		background: #1f63d6;
-	}
-	.mute {
+	.mute,
+	.unlock {
 		font-size: 1rem;
-		padding: 0.2rem 0.7rem;
+		padding: 0.3rem 0.9rem;
 		border-radius: 6px;
 		border: 1px solid #bbb;
 		background: white;
 		cursor: pointer;
+	}
+	.unlock {
+		font-size: 1.4rem;
+		font-weight: 700;
+		border: 2px solid #c0392b;
+		color: #c0392b;
+		background: #fff3f1;
 	}
 	.clock {
 		margin: 2rem 0 0;
