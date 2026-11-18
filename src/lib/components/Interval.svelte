@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { onMount, untrack } from 'svelte';
-	import { BEATS_PER_CYCLE, Metronome, SOUNDS, audioReady, primeAudio, unlockAudio, type SoundId } from '$lib/client/metronome';
+	import { onMount } from 'svelte';
+	import { primeAudio } from '$lib/client/metronome';
+	import StepMetronome from './StepMetronome.svelte';
 	import type { PhaseText } from '$lib/types';
 
 	/**
@@ -101,75 +102,10 @@
 		return () => (cancelAnimationFrame(raf), clearInterval(t));
 	});
 
-	// Metronome: on from Start until time's up (or the whole screen if there is no countdown).
-	// Harvard step test: up, up, down, down, one step per click.
-	const STEPS = ['Up', 'Up', 'Down', 'Down'];
-	const BPM_MIN = 40;
-	const BPM_MAX = 200;
-	let muted = $state(false);
-	let pulse = $state(false);
-	let beat = $state(-1);
-	let met: Metronome | null = null;
-	/** Tempo for this screen; starts at the configured step-test tempo. */
-	// svelte-ignore state_referenced_locally
-	let bpm = $state(metronomeBpm ?? 120);
-	let bpmText = $state('');
-	$effect(() => {
-		bpmText = String(bpm);
-	});
-	function setBpm(v: number) {
-		if (Number.isFinite(v)) bpm = Math.round(Math.min(BPM_MAX, Math.max(BPM_MIN, v)));
-		bpmText = String(bpm);
-	}
-	/** Click sound, remembered on this computer. */
-	const SOUND_KEY = 'concentration-sa.metronome-sound';
-	let sound = $state<SoundId>('woodblock');
-	try {
-		const v = localStorage.getItem(SOUND_KEY);
-		if (SOUNDS.some((x) => x.id === v)) sound = v as SoundId;
-	} catch {
-		// storage blocked: default sound
-	}
-	const previewer = new Metronome(120);
-	function pickSound(id: SoundId) {
-		sound = id;
-		try {
-			localStorage.setItem(SOUND_KEY, id);
-		} catch {
-			// not remembered
-		}
-		if (!ticking) previewer.preview(id, true);
-	}
+	// Metronome: on from Start until time's up (or the whole screen if there is no countdown),
+	// on the same grid as the countdown (beat 0 = when Start was pressed, in this computer's clock).
 	const ticking = $derived(!!metronomeBpm && (durationMs > 0 ? startedAt !== null && !timeUp : true));
-	// Re-checked with the 250 ms clock: has the browser let the page make sound yet?
-	const soundBlocked = $derived(ticking && !muted && now > 0 && !audioReady());
-	$effect(() => {
-		if (!ticking || !metronomeBpm) return;
-		const m = new Metronome(untrack(() => bpm), (b) => {
-			beat = b;
-			pulse = true;
-			setTimeout(() => (pulse = false), 120);
-		});
-		m.muted = untrack(() => muted);
-		m.sound = untrack(() => sound);
-		met = m;
-		// Same grid as the countdown: beat 0 = when Start was pressed (in this computer's clock).
-		const anchor = untrack(() => (durationMs > 0 && startedAt !== null ? startedAt - clockOffset : undefined));
-		m.start(anchor);
-		return () => {
-			m.stop();
-			met = null;
-			beat = -1;
-		};
-	});
-	$effect(() => {
-		const [mu, so, b] = [muted, sound, bpm];
-		if (met) {
-			met.muted = mu;
-			met.sound = so;
-			met.bpm = b;
-		}
-	});
+	const anchorMs = $derived(durationMs > 0 && startedAt !== null ? startedAt - clockOffset : undefined);
 
 	// Time's up: bring up the RPE panel for the facilitator.
 	$effect(() => {
@@ -204,41 +140,7 @@
 		<p class="clock" aria-live="off">{clock}</p>
 	{/if}
 	{#if metronomeBpm && !timeUp}
-		<div class="metro">
-			<div class="beat" class:on={pulse && ticking} class:accent={ticking && beat % BEATS_PER_CYCLE === 0} class:idle={!ticking}>
-				<span class="step">{ticking && beat >= 0 ? STEPS[beat % BEATS_PER_CYCLE] : 'Step'}</span>
-				<span class="tempo">{bpm} BPM</span>
-			</div>
-			<p class="metro-hint">Step with each click: up, up, down, down.</p>
-			{#if soundBlocked}
-				<button class="unlock" onclick={() => unlockAudio()}>🔈 Tap here to turn on the sound</button>
-			{/if}
-			<div class="controls">
-				<label class="tempo-ctl">
-					<span>Tempo</span>
-					<input type="range" min={BPM_MIN} max={BPM_MAX} step="1" value={bpm} oninput={(e) => setBpm(e.currentTarget.valueAsNumber)} aria-label="Tempo (beats per minute)" />
-					<input
-						class="bpm-num"
-						type="number"
-						min={BPM_MIN}
-						max={BPM_MAX}
-						inputmode="numeric"
-						bind:value={bpmText}
-						onchange={(e) => setBpm(e.currentTarget.valueAsNumber)}
-						onkeydown={(e) => e.key === 'Enter' && setBpm(e.currentTarget.valueAsNumber)}
-						aria-label="Beats per minute"
-					/>
-					<span>BPM</span>
-					{#if metronomeBpm && bpm !== metronomeBpm}<button class="reset" onclick={() => setBpm(metronomeBpm!)}>Reset to {metronomeBpm}</button>{/if}
-				</label>
-				<div class="sounds" role="radiogroup" aria-label="Click sound">
-					{#each SOUNDS as s (s.id)}
-						<button role="radio" aria-checked={sound === s.id} class:sel={sound === s.id} onclick={() => pickSound(s.id)}>{s.label}</button>
-					{/each}
-					<button class="mute" onclick={() => (muted = !muted)}>{muted ? '🔇 Off' : '🔊 On'}</button>
-				</div>
-			</div>
-		</div>
+		<StepMetronome defaultBpm={metronomeBpm} running={ticking} {anchorMs} />
 	{/if}
 	{#if timeUp}
 		<p class="up">Time's up</p>
@@ -343,114 +245,6 @@
 		font-size: clamp(1rem, 3vh, 1.8rem);
 		max-width: 40ch;
 		margin: 0;
-	}
-	.metro {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: clamp(0.3rem, 1.2vh, 0.8rem);
-		min-height: 0;
-	}
-	.beat {
-		width: min(36vh, 70vw);
-		aspect-ratio: 1;
-		container-type: size;
-		border-radius: 50%;
-		background: #1f63d6;
-		color: white;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		box-shadow: 0 0 0 0 rgba(31, 99, 214, 0.45);
-		transform: scale(0.92);
-		opacity: 0.55;
-		transition:
-			transform 220ms ease-out,
-			opacity 220ms ease-out,
-			box-shadow 260ms ease-out;
-	}
-	.beat.accent {
-		background: #e0712a;
-	}
-	.beat.on {
-		transform: scale(1);
-		opacity: 1;
-		box-shadow: 0 0 0 min(3vh, 1.6rem) rgba(31, 99, 214, 0.15);
-		transition: none;
-	}
-	.beat.idle {
-		background: #bbb;
-		opacity: 1;
-	}
-	.step {
-		font-size: 24cqw;
-		font-weight: 800;
-		line-height: 1;
-	}
-	.tempo {
-		margin-top: 3cqw;
-		font-size: 8cqw;
-		font-weight: 600;
-		opacity: 0.85;
-	}
-	.metro-hint {
-		margin: 0;
-		font-size: clamp(0.9rem, 2.4vh, 1.4rem);
-		color: #555;
-	}
-	.controls {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		align-items: center;
-		gap: 0.5rem 1.5rem;
-		font-size: clamp(0.85rem, 2vh, 1.05rem);
-		color: #444;
-	}
-	.tempo-ctl {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-	.tempo-ctl input[type='range'] {
-		width: min(16rem, 40vw);
-	}
-	.bpm-num {
-		width: 4.2rem;
-		font-size: 1em;
-		text-align: center;
-		margin: 0;
-	}
-	.sounds {
-		display: flex;
-		gap: 0.3rem;
-	}
-	.sounds button,
-	.mute,
-	.reset,
-	.unlock {
-		font-size: 1em;
-		padding: 0.25rem 0.8rem;
-		border-radius: 6px;
-		border: 1px solid #bbb;
-		background: white;
-		cursor: pointer;
-	}
-	.sounds button.sel {
-		background: #1f63d6;
-		border-color: #1f63d6;
-		color: white;
-	}
-	.mute {
-		margin-left: 0.4rem;
-	}
-	.unlock {
-		font-size: clamp(1rem, 2.6vh, 1.4rem);
-		font-weight: 700;
-		border: 2px solid #c0392b;
-		color: #c0392b;
-		background: #fff3f1;
 	}
 	.clock {
 		margin: 0;

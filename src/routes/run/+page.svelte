@@ -6,6 +6,7 @@
 	import OwnHeartRate from '$lib/components/OwnHeartRate.svelte';
 	import { StrapManager } from '$lib/client/hr-straps.svelte';
 	import Interval from '$lib/components/Interval.svelte';
+	import StepMetronome from '$lib/components/StepMetronome.svelte';
 	import { primeAudio } from '$lib/client/metronome';
 	import Sa from '$lib/components/Sa.svelte';
 	import Survey from '$lib/components/Survey.svelte';
@@ -344,6 +345,13 @@
 					<p>When the baseline is done, press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> to begin practice.</p>
 				{/if}
 				{/if}
+				{#if s.metronomeBpm}
+					<section class="demo">
+						<h2>Step test: how it works</h2>
+						<p>Later you'll step up and down in time with this click. Press Play to try the rhythm.</p>
+						<StepMetronome defaultBpm={s.metronomeBpm} playPause compact />
+					</section>
+				{/if}
 			</main>
 		{:else if s.phase === 'practice'}
 			<Board
@@ -632,5 +640,17 @@
 		font-weight: 700;
 		padding: 0.15rem 0.4rem;
 		border-radius: 4px;
+	}
+	.demo {
+		margin-top: 2rem;
+		padding-top: 1.2rem;
+		border-top: 1px solid #ddd;
+		text-align: center;
+	}
+	.demo h2 {
+		margin: 0 0 0.3rem;
+	}
+	.demo p {
+		margin: 0 0 1rem;
 	}
 </style>
