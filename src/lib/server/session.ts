@@ -7,7 +7,7 @@ import { hasRemoteTag, REMOTE_TAG } from '../remote';
 import type { SessionState } from '../state';
 import { DONT_REMEMBER, FACILITATOR_PHASES, LEVEL2_NEUTRAL_HEX, ORAL_RESPONSES, PHASES, type ClickOutcome, type ClickRecord, type Phase } from '../types';
 import { getDb } from './db';
-import { experiment, metronomeBpm, timers } from './experiment';
+import { experiment, metronomeBpm, skippedPhases, timers } from './experiment';
 import { loadSchedule } from './files';
 
 export interface SessionRow {
@@ -385,7 +385,10 @@ export function advance(pid: string, from: Phase, opts: { facilitator: boolean; 
 		if (from === 'survey' && !db.prepare('SELECT 1 FROM survey WHERE pid = ?').get(pid)) error(409, 'Survey not submitted');
 
 		const now = Date.now();
-		const next = PHASES[idx + 1];
+		// Skip the intervals this condition leaves out (e.g. rest: no 5-minute interval1).
+		const skip = skippedPhases(experiment(), s.condition);
+		let next = PHASES[idx + 1];
+		while (skip.includes(next) && next !== 'done') next = PHASES[PHASES.indexOf(next) + 1];
 		db.prepare(
 			'UPDATE phases SET ended_at = ?, client_ended_at = ? WHERE pid = ? AND phase = ? AND ended_at IS NULL'
 		).run(now, opts.clientTs, pid, from);

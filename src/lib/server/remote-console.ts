@@ -5,7 +5,7 @@ import type { SaStep } from '../sa-plan';
 import type { ClickRecord } from '../types';
 import { FACILITATOR_PHASES, PHASES, type Phase } from '../types';
 import { getDb } from './db';
-import { experiment, timers } from './experiment';
+import { experiment, skippedPhases, timers } from './experiment';
 import { remoteKey } from './remote';
 import { setCondition } from './schedule';
 import { abortSession, advance, getSession, jumpSession, mark, recordBout, recordSurvey, sessionCards, type SurveyAnswers } from './session';
@@ -83,6 +83,8 @@ export function consoleState(pid: string) {
 		board_b_theme: s.board_b_theme,
 		phase: s.phase,
 		phases: PHASES,
+		/** Phases this condition leaves out (config.skip_phases). */
+		skipped: skippedPhases(exp, s.condition),
 		facilitatorPhases: FACILITATOR_PHASES,
 		phaseStartedAt: s.phase_started_at,
 		updatedAt: s.updated_at,

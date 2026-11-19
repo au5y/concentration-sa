@@ -12,6 +12,7 @@
 	"interval_timer_s": { "interval1": 300, "interval2": 60 },
 	"rpe_conditions": ["elevated_hr"],
 	"metronome": { "bpm": 120, "conditions": ["elevated_hr"] },
+	"skip_phases": { "rest": ["interval1"] },
 	"max_participants": 30,
 	"sa_questions": ["objects", "color", "side_by_side"],
 	"sa_random_per_theme": 2,

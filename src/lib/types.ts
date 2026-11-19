@@ -67,6 +67,11 @@ export interface ExperimentConfig {
 	 */
 	metronome?: { bpm: number; conditions: string[] };
 	/**
+	 * Exercise/rest intervals a condition leaves out, e.g. { "rest": ["interval1"] }: rest
+	 * participants go from practice straight to Game A. Only interval1 / interval2.
+	 */
+	skip_phases?: Record<string, ('interval1' | 'interval2')[]>;
+	/**
 	 * Situation-awareness questions about the environment, asked aloud by the facilitator
 	 * after the on-screen questions. The participant's screen only asks them to talk to the
 	 * facilitator; the facilitator unlocks the controls (Ctrl+Shift+F) and marks each answer

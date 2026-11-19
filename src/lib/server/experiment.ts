@@ -1,4 +1,4 @@
-import type { ExperimentConfig, LayoutsFile, ThemeManifest } from '../types';
+import type { ExperimentConfig, LayoutsFile, Phase, ThemeManifest } from '../types';
 import { validateExperiment } from '../validate';
 import { loadConfig, loadLayouts, loadManifests, themeFileExists } from './files';
 
@@ -44,6 +44,11 @@ export function timers(exp: Experiment, fast = false) {
 			interval2: intervalMs(config.interval_timer_s?.interval2, devTimers)
 		}
 	};
+}
+
+/** Phases this condition leaves out (config.skip_phases). */
+export function skippedPhases(exp: Experiment, condition: string): Phase[] {
+	return exp.config.skip_phases?.[condition] ?? [];
 }
 
 /** Metronome tempo for this condition's exercise screens, or null if none. */

@@ -54,6 +54,14 @@ describe('exercise / rest countdowns', () => {
 		expect(state(newSession('rest', 'interval1')).recordRpe).toBe(false);
 	});
 
+	it('rest skips the 5-minute interval: practice goes straight to Game A; exercise keeps it', () => {
+		const rest = newSession('rest', 'practice');
+		expect(session.advance(rest, 'practice', { facilitator: true, clientTs: null }).phase).toBe('board_a');
+		const ex = newSession('elevated_hr', 'practice');
+		expect(session.advance(ex, 'practice', { facilitator: true, clientTs: null }).phase).toBe('interval1');
+		expect(config.skip_phases).toEqual({ rest: ['interval1'] }); // the 1-minute interval before Game B stays
+	});
+
 	it('rejects bad timer and RPE settings', () => {
 		const all = Object.fromEntries(['mit', 'transport', config.practice_board.theme].map((t) => [t, manifest(t)]));
 		const layouts = JSON.parse(fs.readFileSync('assets/layouts.json', 'utf8'));

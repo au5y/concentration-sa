@@ -102,6 +102,13 @@ export function validateExperiment(
 	for (const c of config.rpe_conditions ?? []) {
 		if (!config.conditions.includes(c)) errs.push(`config.rpe_conditions: "${c}" is not one of config.conditions`);
 	}
+	for (const [cond, phases] of Object.entries(config.skip_phases ?? {})) {
+		if (!config.conditions.includes(cond)) errs.push(`config.skip_phases: "${cond}" is not one of config.conditions`);
+		if (!Array.isArray(phases)) errs.push(`config.skip_phases.${cond} must be a list`);
+		else for (const ph of phases) {
+			if (ph !== 'interval1' && ph !== 'interval2') errs.push(`config.skip_phases.${cond}: "${ph}" can't be skipped (interval1 or interval2 only)`);
+		}
+	}
 	if (config.metronome) {
 		const { bpm, conditions } = config.metronome;
 		if (typeof bpm !== 'number' || bpm < 20 || bpm > 300) errs.push('config.metronome.bpm must be between 20 and 300');

@@ -129,7 +129,7 @@
 			(s.abortedAt ? '\n\nThe session was ended; this reopens it.' : '');
 		act({ action: 'jump', to }, msg);
 	}
-	const nextPhase = $derived(s ? s.phases[s.phases.indexOf(s.phase) + 1] : undefined);
+	const nextPhase = $derived(s ? s.phases.slice(s.phases.indexOf(s.phase) + 1).find((p) => !s.skipped.includes(p)) : undefined);
 
 	// Survey filled in for them
 	let sv = $state({ age: null as number | null, exercise_days: null as number | null, fitness: null as number | null, hours_slept: null as number | null });
@@ -302,7 +302,7 @@
 
 		<ol class="phases">
 			{#each s.phases as p (p)}
-				<li class:cur={p === s.phase} class:past={s.phases.indexOf(p) < s.phases.indexOf(s.phase)}>{p}</li>
+				<li class:cur={p === s.phase} class:past={s.phases.indexOf(p) < s.phases.indexOf(s.phase)} class:skip={s.skipped.includes(p)} title={s.skipped.includes(p) ? `skipped in ${s.condition}` : undefined}>{p}</li>
 			{/each}
 		</ol>
 
@@ -343,7 +343,7 @@
 					{@const pEnd = s.boardsDone.find((b) => b.key === 'practice')}
 					{#if pEnd}<p class="big">{pEnd.cleared ? 'Practice board cleared ✓' : 'Practice time ran out'} · waiting for you</p>
 					{:else}<p>They are playing the practice board. When they say they're done (or to cut it short):</p>{/if}
-					<button class="go" disabled={busy} onclick={() => act({ action: 'advance' }, 'End practice and move on to the exercise/rest period?')}>{NEXT.practice} →</button>
+					<button class="go" disabled={busy} onclick={() => act({ action: 'advance' }, s.skipped.includes('interval1') ? 'End practice and go straight to Game A?' : 'End practice and move on to the exercise/rest period?')}>{s.skipped.includes('interval1') ? 'End practice → Game A' : NEXT.practice} →</button>
 				{:else if s.phase === 'interval1' || s.phase === 'interval2'}
 					{@const ms = s.timers.interval_ms[s.phase]}
 					{@const st = marker('start')}
@@ -843,5 +843,9 @@
 	}
 	.err {
 		color: #b00;
+	}
+	li.skip {
+		text-decoration: line-through;
+		opacity: 0.45;
 	}
 </style>
