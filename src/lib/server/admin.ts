@@ -1,7 +1,7 @@
 import { error, type Cookies } from '@sveltejs/kit';
 import crypto from 'node:crypto';
 import { toCsv } from '../csv';
-import { hrByPhase, type PhaseSpan } from '../hr';
+import { applyStrapPeaks, hrByPhase, type PhaseSpan } from '../hr';
 import { buildSummary, rescoreFixedAnswers } from '../metrics';
 import { PHASES } from '../types';
 import { getDb, TABLES } from './db';
@@ -100,9 +100,10 @@ export function summaryRows(scope: Scope | boolean = 'real'): Record<string, unk
 		all(`SELECT pid, ts, bpm, contact FROM hr_samples WHERE pid IS NOT NULL AND ${where}`),
 		all(`SELECT pid, phase, started_at, ended_at FROM phases WHERE ${where}`) as PhaseSpan[]
 	);
-	if (!Object.keys(hr).length) return rows;
+	// Peak HR 1/2 come from the strap when it recorded the bout, else from the typed-in value.
+	if (!Object.keys(hr).length) return applyStrapPeaks(rows);
 	const blank = Object.fromEntries(Object.keys(Object.values(hr)[0]).map((k) => [k, null]));
-	return rows.map((r) => ({ ...r, ...blank, ...hr[r.pid as string] }));
+	return applyStrapPeaks(rows.map((r) => ({ ...r, ...blank, ...hr[r.pid as string] })));
 }
 
 /** Level 2 question types present in the config (level2_color, level2_count). */

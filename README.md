@@ -405,10 +405,14 @@ Download links, each a full table as CSV (every epoch-ms column also gets an `_i
   - `_acc_known`: the sensitivity analysis, with "I don't remember" left out of the denominator
   - `_dont_remember_rate`
   - `_conf`: mean confidence
+  - `memory_acc_A`/`_B`, `level2_acc_A`/`_B`: accuracy per board (for the theme comparison)
 - `level2_acc_excl_color`: Level 2 accuracy without the color-pair questions (only the count
   question remains), e.g. for a participant you know is color blind.
 - `rpe_1`, `peak_hr_1`, `pct_hrmax_1` (bout before Game A) and `_2` (bout before Game B):
-  %HRmax = peak HR / (220 − age).
+  %HRmax = peak HR / (220 − age). When a strap recorded the bout, `peak_hr_<n>` is the strap's
+  highest reading during `interval1` / `interval2` (= `hr_peak_interval<n>`); otherwise it is the
+  value typed in on the RPE screen. `peak_hr_source_<n>` says which (`strap` / `entered`) and
+  `peak_hr_entered_<n>` keeps the typed-in value.
 - Survey fields: `age`, `exercise_days`, `fitness`, `hours_slept`.
 
 The raw database is `data/experiment.db`. Back it up by copying it while the server is

@@ -1,6 +1,10 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import ObjectImage from '$lib/components/ObjectImage.svelte';
+	import PairedChart from '$lib/components/PairedChart.svelte';
+	import StripChart from '$lib/components/StripChart.svelte';
 	import { renderSpec } from '$lib/render';
+	import { describe, fmtP, paired, welch, type Describe, type TTest } from '$lib/stats';
 
 	let { data } = $props();
 
@@ -60,6 +64,110 @@
 		})
 	);
 
+	// ---------- statistics (recomputed from the rows on every refresh) ----------
+	/** Condition colors in config order (fixed, so a condition keeps its color). */
+	const SERIES = ['#2a78d6', '#eb6834', '#1baf7a', '#6250d6'];
+	const condColor = (c: string) => SERIES[Math.max(0, data.conditions.indexOf(c)) % SERIES.length];
+	const fmtNum = (d: number) => (v: number) => v.toFixed(d);
+	const fmtPct = (v: number) => `${Math.round(v * 100)}%`;
+	const fmtSigned = (f: (v: number) => string) => (v: number) => (v > 0 ? '+' : v < 0 ? '−' : '') + f(Math.abs(v));
+
+	// Tags to leave out of the statistics (sessions tagged "exclude" by default).
+	const allTags = $derived([...new Set(rows.flatMap((r) => String(r.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean)))].sort());
+	let leaveOut = $state<string[]>(['exclude']);
+	const tagsOf = (r: Row) => String(r.tags ?? '').split(',').map((t) => t.trim());
+	const statRows = $derived(rows.filter((r) => !tagsOf(r).some((t) => leaveOut.includes(t))));
+
+	/** Time to clear in seconds; a board that ran out of time counts as the time limit. */
+	const boardTimeS = (r: Row, b: string) =>
+		r[`${b}_cleared`] ? r[`${b}_time_to_clear_ms`] / 1000 : r[`${b}_timed_out`] && data.timeLimitS ? data.timeLimitS : null;
+	const boardTimeLabel = $derived(data.timeLimitS ? `time-ups count as ${data.timeLimitS} s` : 'cleared boards');
+
+	interface Metric {
+		label: string;
+		note?: string;
+		get: (r: Row) => unknown;
+		fmt: (v: number) => string;
+		domain?: [number, number];
+	}
+	const CONDITION_METRICS: Metric[] = $derived([
+		{ label: 'Peak HR, bout 1', note: 'bpm; strap if recorded, else typed in', get: (r) => r.peak_hr_1, fmt: fmtNum(0) },
+		{ label: 'Peak HR, bout 2', note: 'bpm; strap if recorded, else typed in', get: (r) => r.peak_hr_2, fmt: fmtNum(0) },
+		{ label: 'Board A time', note: `s; ${boardTimeLabel}`, get: (r) => boardTimeS(r, 'A'), fmt: fmtNum(0) },
+		{ label: 'Board B time', note: `s; ${boardTimeLabel}`, get: (r) => boardTimeS(r, 'B'), fmt: fmtNum(0) },
+		{ label: 'Board A errors', note: 'mismatches', get: (r) => r.A_mismatches, fmt: fmtNum(0) },
+		{ label: 'Board B errors', note: 'mismatches', get: (r) => r.B_mismatches, fmt: fmtNum(0) },
+		{ label: 'Board A efficiency', note: 'pairs found / moves', get: (r) => r.A_efficiency, fmt: fmtPct, domain: [0, 1] },
+		{ label: 'Board B efficiency', note: 'pairs found / moves', get: (r) => r.B_efficiency, fmt: fmtPct, domain: [0, 1] },
+		{ label: 'Memory accuracy', note: 'Level 1 card questions', get: (r) => r.memory_acc, fmt: fmtPct, domain: [0, 1] },
+		{ label: 'Level 2 accuracy', note: 'comprehension questions', get: (r) => r.level2_acc, fmt: fmtPct, domain: [0, 1] },
+		{ label: 'SA environment accuracy', note: 'spoken questions', get: (r) => r.sa_env_acc, fmt: fmtPct, domain: [0, 1] },
+		{ label: "Objects d′", note: 'recognition grid', get: (r) => r.q_objects_dprime, fmt: fmtNum(1) }
+	]);
+	const condStats = $derived.by(() => {
+		const conds = data.conditions.filter((c: string) => statRows.some((r) => r.condition === c));
+		return CONDITION_METRICS.map((m) => {
+			const groups = conds.map((c: string) => {
+				const pts = statRows.filter((r) => r.condition === c && isNum(m.get(r))).map((r) => ({ pid: r.pid as string, v: m.get(r) as number }));
+				return { label: c, color: condColor(c), points: pts, stats: describe(pts.map((p) => p.v)) };
+			});
+			const test = groups.length === 2 ? welch(groups[0].points.map((p) => p.v), groups[1].points.map((p) => p.v)) : null;
+			return { m, groups, test };
+		});
+	});
+
+	/** Value of a board-level field for the board that showed `theme` (null if neither did). */
+	const boardOf = (r: Row, theme: string) => (r.board_a_theme === theme ? 'A' : r.board_b_theme === theme ? 'B' : null);
+	const THEME_METRICS: (Omit<Metric, 'get'> & { get: (r: Row, b: string) => unknown })[] = $derived([
+		{ label: 'Time', note: `s; ${boardTimeLabel}`, get: boardTimeS, fmt: fmtNum(0) },
+		{ label: 'Pairs found', get: (r, b) => r[`${b}_pairs_found`], fmt: fmtNum(0), domain: [0, data.boardPairs] },
+		{ label: 'Errors', note: 'mismatches', get: (r, b) => r[`${b}_mismatches`], fmt: fmtNum(0) },
+		{ label: 'Efficiency', note: 'pairs found / moves', get: (r, b) => r[`${b}_efficiency`], fmt: fmtPct, domain: [0, 1] },
+		{ label: 'Memory accuracy', note: 'Level 1 card questions', get: (r, b) => r[`memory_acc_${b}`], fmt: fmtPct, domain: [0, 1] },
+		{ label: 'Level 2 accuracy', note: 'comprehension questions', get: (r, b) => r[`level2_acc_${b}`], fmt: fmtPct, domain: [0, 1] },
+		{ label: "Objects d′", note: 'recognition grid', get: (r, b) => r[`q_objects_dprime_${b}`], fmt: fmtNum(1) }
+	]);
+	const themePair = $derived(data.themes.slice(0, 2) as [string, string]);
+	const themeStats = $derived.by(() => {
+		if (themePair.length < 2) return [];
+		const [t1, t2] = themePair;
+		return THEME_METRICS.map((m) => {
+			const val = (r: Row, t: string) => {
+				const b = boardOf(r, t);
+				return b ? m.get(r, b) : null;
+			};
+			const pairs = statRows
+				.map((r) => ({ r, a: val(r, t1), b: val(r, t2) }))
+				.filter((p) => isNum(p.a) && isNum(p.b))
+				.map(({ r, a, b }) => ({ pid: r.pid as string, a: a as number, b: b as number, color: condColor(r.condition), group: r.condition as string }));
+			// Means by theme and position, to see the order (practice / fatigue) effect alongside the theme effect.
+			const pos = (t: string, b: 'A' | 'B') => describe(statRows.filter((r) => boardOf(r, t) === b).map((r) => m.get(r, b)));
+			return {
+				m,
+				pairs,
+				test: paired(pairs.map((p) => [p.a, p.b])),
+				byPos: { [t1]: { A: pos(t1, 'A'), B: pos(t1, 'B') }, [t2]: { A: pos(t2, 'A'), B: pos(t2, 'B') } } as Record<string, Record<'A' | 'B', Describe>>
+			};
+		});
+	});
+	const testLine = (t: TTest | null, f: (v: number) => string, label: string) =>
+		t ? `${label}: ${fmtSigned(f)(t.diff)} [${fmtSigned(f)(t.lo)}, ${fmtSigned(f)(t.hi)}] · t(${t.df.toFixed(1)}) = ${t.t.toFixed(2)}, ${fmtP(t.p)}` : 'Not enough data for a test yet';
+	const meanSd = (d: Describe, f: (v: number) => string) => (d.mean === null ? dash : d.sd === null ? f(d.mean) : `${f(d.mean)} ± ${f(d.sd)}`);
+	const explorerHref = (pid: string) => qs({ pid });
+
+	// Live refresh: re-load the rows every 30 s so the plots grow as sessions finish.
+	let live = $state(true);
+	let loadedAt = $state(Date.now());
+	$effect(() => {
+		data.rows;
+		loadedAt = Date.now();
+	});
+	$effect(() => {
+		if (!live || data.pid) return;
+		const id = setInterval(() => invalidateAll(), 30_000);
+		return () => clearInterval(id);
+	});
+
 	// ---------- sortable participant table ----------
 	interface Col {
 		key: string;
@@ -91,8 +199,8 @@
 		{ key: 'dprime', label: "Objects d′", title: 'Recognition grid sensitivity', sort: (r) => r.q_objects_dprime, show: (r) => num(r.q_objects_dprime, 2) },
 		{ key: 'rpe1', label: 'RPE 1', sort: (r) => r.rpe_1, show: (r) => int(r.rpe_1) },
 		{ key: 'rpe2', label: 'RPE 2', sort: (r) => r.rpe_2, show: (r) => int(r.rpe_2) },
-		{ key: 'hr1', label: 'HR 1', title: 'Peak HR, bout 1', sort: (r) => r.peak_hr_1, show: (r) => int(r.peak_hr_1) },
-		{ key: 'hr2', label: 'HR 2', title: 'Peak HR, bout 2', sort: (r) => r.peak_hr_2, show: (r) => int(r.peak_hr_2) }
+		{ key: 'hr1', label: 'HR 1', title: 'Peak HR, bout 1 (strap if recorded, else typed in)', sort: (r) => r.peak_hr_1, show: (r) => int(r.peak_hr_1) },
+		{ key: 'hr2', label: 'HR 2', title: 'Peak HR, bout 2 (strap if recorded, else typed in)', sort: (r) => r.peak_hr_2, show: (r) => int(r.peak_hr_2) }
 	];
 	let sortKey = $state('pid');
 	let sortDir = $state<1 | -1>(1);
@@ -210,7 +318,19 @@
 	}
 	const boards = $derived(d ? [boardView('A'), boardView('B')].filter((b) => b !== null) : []);
 	const s = $derived((d?.summary ?? {}) as Row);
-	const hrMax = $derived(d?.survey?.age ? 220 - (d.survey.age as number) : null);
+	/** Bouts with RPE and peak HR (strap peak when recorded, else the typed-in value; see applyStrapPeaks). */
+	const boutRows = $derived(
+		([1, 2] as const)
+			.map((n) => ({
+				n,
+				rpe: d?.bouts.find((b: Row) => b.bout === `interval${n}`)?.rpe ?? null,
+				peak: s[`peak_hr_${n}`] ?? null,
+				source: s[`peak_hr_source_${n}`] ?? null,
+				entered: s[`peak_hr_entered_${n}`] ?? null,
+				pct: s[`pct_hrmax_${n}`]
+			}))
+			.filter((b) => b.rpe !== null || b.peak !== null)
+	);
 	const saGroups = $derived.by(() => {
 		if (!d) return [];
 		const types = [...new Set(d.sa.map((r: Row) => r.question_type as string))];
@@ -362,16 +482,17 @@
 		<div class="two">
 			<section>
 				<h3>Exercise / rest check</h3>
-				{#if !d.bouts.length}<p class="muted">No RPE recorded.</p>{:else}
+				{#if !boutRows.length}<p class="muted">No RPE or heart rate recorded.</p>{:else}
 					<table>
-						<thead><tr><th>Bout</th><th>RPE</th><th>Peak HR</th><th>%HRmax</th></tr></thead>
+						<thead><tr><th>Bout</th><th>RPE</th><th>Peak HR</th><th>%HRmax</th><th>Typed in</th></tr></thead>
 						<tbody>
-							{#each d.bouts as b (b.bout)}
+							{#each boutRows as b (b.n)}
 								<tr>
-									<td>{b.bout === 'interval1' ? '1 (before A)' : '2 (before B)'}</td>
-									<td>{b.rpe}</td>
-									<td>{b.peak_hr ?? dash}</td>
-									<td>{b.peak_hr && hrMax ? pct(b.peak_hr / hrMax) : dash}</td>
+									<td>{b.n === 1 ? '1 (before A)' : '2 (before B)'}</td>
+									<td>{b.rpe ?? dash}</td>
+									<td>{b.peak ?? dash}{#if b.source} <span class="muted small">({b.source})</span>{/if}</td>
+									<td>{pct(b.pct)}</td>
+									<td>{b.entered ?? dash}</td>
 								</tr>
 							{/each}
 						</tbody>
@@ -479,7 +600,140 @@
 					</tbody>
 				</table>
 			</div>
-			<p class="muted small">Board times average cleared boards only; timed-out boards are counted under Timeouts.</p>
+			<p class="muted small">
+				Board times average cleared boards only; timed-out boards are counted under Timeouts. Peak HR is the strap's highest
+				reading in the bout when a strap recorded it, otherwise the typed-in value.
+			</p>
+
+			<section class="stats">
+				<div class="statbar">
+					<h2>Statistics</h2>
+					<label class="toggle"><input type="checkbox" bind:checked={live} /> Refresh every 30 s</label>
+					<span class="muted small">updated {new Date(loadedAt).toLocaleTimeString()} · {statRows.length} participants</span>
+				</div>
+				{#if allTags.length}
+					<p class="chips small">
+						<span class="muted">Leave out sessions tagged:</span>
+						{#each allTags as t (t)}
+							<label class="chip tagpick" class:on={leaveOut.includes(t)}>
+								<input
+									type="checkbox"
+									checked={leaveOut.includes(t)}
+									onchange={(e) => (leaveOut = e.currentTarget.checked ? [...leaveOut, t] : leaveOut.filter((x) => x !== t))}
+								/>
+								{t}
+							</label>
+						{/each}
+					</p>
+				{/if}
+				<p class="legendrow small">
+					{#each data.conditions as c (c)}<span><i class="swatch" style:background={condColor(c)}></i>{c}</span>{/each}
+					<span class="muted">· dots = participants (hover for PID, click to open) · bar = mean with 95% CI</span>
+				</p>
+
+				<h3>Condition effect <span class="muted small">(between participants, Welch's t-test)</span></h3>
+				<div class="charts">
+					{#each condStats as c (c.m.label)}
+						<figure class="chart">
+							<figcaption><b>{c.m.label}</b>{#if c.m.note} <span class="muted">({c.m.note})</span>{/if}</figcaption>
+							<StripChart groups={c.groups} fmt={c.m.fmt} domain={c.m.domain} href={explorerHref} />
+							<p class="testline" class:sig={c.test && c.test.p < 0.05}>
+								{testLine(c.test, c.m.fmt, c.groups.length === 2 ? `${c.groups[1].label} − ${c.groups[0].label}` : '')}{#if c.test?.d !== null && c.test?.d !== undefined}, d = {c.test.d.toFixed(2)}{/if}
+							</p>
+						</figure>
+					{/each}
+				</div>
+				<details>
+					<summary>Table view</summary>
+					<div class="scroll">
+						<table class="compact">
+							<thead>
+								<tr>
+									<th>Measure</th>
+									{#each data.conditions as c (c)}<th>{c} mean ± SD (n)</th>{/each}
+									<th>Difference [95% CI]</th><th>t (df)</th><th>p</th><th>d</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each condStats as c (c.m.label)}
+									<tr>
+										<td>{c.m.label}</td>
+										{#each data.conditions as cond (cond)}
+											{@const g = c.groups.find((x: { label: string }) => x.label === cond)}
+											<td>{g ? `${meanSd(g.stats, c.m.fmt)} (${g.stats.n})` : dash}</td>
+										{/each}
+										{#if c.test}
+											<td>{fmtSigned(c.m.fmt)(c.test.diff)} [{fmtSigned(c.m.fmt)(c.test.lo)}, {fmtSigned(c.m.fmt)(c.test.hi)}]</td>
+											<td>{c.test.t.toFixed(2)} ({c.test.df.toFixed(1)})</td>
+											<td class:sigc={c.test.p < 0.05}>{fmtP(c.test.p).replace('p ', '').replace('= ', '')}</td>
+											<td>{c.test.d?.toFixed(2) ?? dash}</td>
+										{:else}<td colspan="4" class="muted">not enough data</td>{/if}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				</details>
+
+				{#if themeStats.length}
+					<h3>
+						Board theme: {themePair[0]} vs {themePair[1]}
+						<span class="muted small">(within participants, paired t-test; each participant played both)</span>
+					</h3>
+					<div class="charts">
+						{#each themeStats as t (t.m.label)}
+							<figure class="chart">
+								<figcaption><b>{t.m.label}</b>{#if t.m.note} <span class="muted">({t.m.note})</span>{/if}</figcaption>
+								<PairedChart pairs={t.pairs} labels={themePair} fmt={t.m.fmt} domain={t.m.domain} href={explorerHref} />
+								<p class="testline" class:sig={t.test && t.test.p < 0.05}>
+									{testLine(t.test, t.m.fmt, `${themePair[1]} − ${themePair[0]}`)}{#if t.test?.d !== null && t.test?.d !== undefined}, d<sub>z</sub> = {t.test.d.toFixed(2)}{/if}
+									<span class="muted">· n = {t.pairs.length}</span>
+								</p>
+							</figure>
+						{/each}
+					</div>
+					<p class="muted small">
+						Lines are colored by condition, so a theme × condition interaction shows as the colors sloping differently. Theme and
+						board position (A first, B second) are counterbalanced; the table below splits each theme by position so a
+						practice or fatigue effect isn't mistaken for a theme difference.
+					</p>
+					<div class="scroll">
+						<table class="compact">
+							<thead>
+								<tr>
+									<th rowspan="2">Measure</th>
+									<th colspan="2">{themePair[0]}</th><th colspan="2">{themePair[1]}</th>
+									<th rowspan="2">{themePair[1]} − {themePair[0]} [95% CI]</th><th rowspan="2">t (df)</th><th rowspan="2">p</th><th rowspan="2">d<sub>z</sub></th>
+								</tr>
+								<tr><th>as A</th><th>as B</th><th>as A</th><th>as B</th></tr>
+							</thead>
+							<tbody>
+								{#each themeStats as t (t.m.label)}
+									<tr>
+										<td>{t.m.label}</td>
+										{#each themePair as th (th)}
+											{#each ['A', 'B'] as const as b (b)}
+												{@const d = t.byPos[th][b]}
+												<td>{d.mean === null ? dash : `${t.m.fmt(d.mean)} (${d.n})`}</td>
+											{/each}
+										{/each}
+										{#if t.test}
+											<td>{fmtSigned(t.m.fmt)(t.test.diff)} [{fmtSigned(t.m.fmt)(t.test.lo)}, {fmtSigned(t.m.fmt)(t.test.hi)}]</td>
+											<td>{t.test.t.toFixed(2)} ({t.test.df})</td>
+											<td class:sigc={t.test.p < 0.05}>{fmtP(t.test.p).replace('p ', '').replace('= ', '')}</td>
+											<td>{t.test.d?.toFixed(2) ?? dash}</td>
+										{:else}<td colspan="4" class="muted">not enough data</td>{/if}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
+				<p class="muted small">
+					p-values are uncorrected and the samples are small, so read them as a running check rather than results; effect sizes
+					and CIs say more while n is low.
+				</p>
+			</section>
 
 			<h3>Participants <span class="muted small">(click a row for details, a header to sort)</span></h3>
 			<div class="scroll">
@@ -823,6 +1077,74 @@
 		.metrics {
 			grid-template-columns: repeat(2, 1fr);
 		}
+	}
+	.stats {
+		margin-top: 2rem;
+		border-top: 1px solid #ddd;
+		padding-top: 0.6rem;
+	}
+	.statbar {
+		display: flex;
+		align-items: baseline;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+	.legendrow {
+		display: flex;
+		gap: 1rem;
+		flex-wrap: wrap;
+		align-items: center;
+	}
+	.legendrow span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+	.swatch {
+		width: 0.75rem;
+		height: 0.75rem;
+		border-radius: 50%;
+		display: inline-block;
+	}
+	.tagpick {
+		cursor: pointer;
+		display: inline-flex;
+		gap: 0.3rem;
+		align-items: center;
+	}
+	.tagpick input {
+		margin: 0;
+	}
+	.tagpick.on {
+		background: #fde8d4;
+		text-decoration: line-through;
+	}
+	.charts {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+		gap: 1rem 1.4rem;
+		margin-bottom: 0.8rem;
+	}
+	.chart {
+		margin: 0;
+		border: 1px solid #e3e3e3;
+		border-radius: 10px;
+		padding: 0.6rem 0.7rem 0.4rem;
+	}
+	.chart figcaption {
+		font-size: 0.88rem;
+		margin-bottom: 0.3rem;
+	}
+	.testline {
+		font-size: 0.78rem;
+		color: #555;
+		margin: 0.3rem 0 0;
+		font-variant-numeric: tabular-nums;
+	}
+	.testline.sig,
+	.sigc {
+		color: #111;
+		font-weight: 700;
 	}
 	.hrchart {
 		width: 100%;

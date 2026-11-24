@@ -88,3 +88,29 @@ export function hrByPhase(
 	}
 	return out;
 }
+
+/**
+ * Peak HR for the two exercise/rest bouts: the strap's peak during interval1 / interval2 when there
+ * are readings, otherwise the value typed in on the RPE screen. Keeps the typed value as
+ * peak_hr_entered_<n>, records which one was used in peak_hr_source_<n> ('strap' | 'entered'), and
+ * recomputes pct_hrmax_<n> (220 − age).
+ */
+export function applyStrapPeaks(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+	return rows.map((r) => {
+		const out: Record<string, unknown> = { ...r };
+		const age = typeof r.age === 'number' && r.age > 0 ? r.age : null;
+		for (const [n, phase] of [
+			[1, 'interval1'],
+			[2, 'interval2']
+		] as const) {
+			const strap = r[`hr_peak_${phase}`];
+			const entered = r[`peak_hr_${n}`] ?? null;
+			const peak = typeof strap === 'number' ? strap : typeof entered === 'number' ? entered : null;
+			out[`peak_hr_${n}`] = peak;
+			out[`peak_hr_source_${n}`] = typeof strap === 'number' ? 'strap' : peak !== null ? 'entered' : null;
+			out[`peak_hr_entered_${n}`] = entered;
+			out[`pct_hrmax_${n}`] = peak !== null && age ? peak / (220 - age) : null;
+		}
+		return out;
+	});
+}

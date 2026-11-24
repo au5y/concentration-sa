@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { hrByPhase, parseHrMeasurement } from '../src/lib/hr';
+import { applyStrapPeaks, hrByPhase, parseHrMeasurement } from '../src/lib/hr';
 
 const dv = (bytes: number[]) => new DataView(new Uint8Array(bytes).buffer);
 
@@ -95,5 +95,24 @@ describe('stored readings', () => {
 		expect(() => hr.recordHr([{ strap: 'x', ts: 1, bpm: 60.5 }], 1)).toThrow();
 		expect(() => hr.recordHr([{ strap: 'x', pid: "P01'; DROP", ts: 1, bpm: 60 }], 1)).toThrow();
 		expect(() => hr.recordHr('nope', 1)).toThrow();
+	});
+});
+
+describe('applyStrapPeaks', () => {
+	it('prefers the strap peak, falls back to the typed value, and recomputes %HRmax', () => {
+		const [r] = applyStrapPeaks([{ age: 20, peak_hr_1: 150, peak_hr_2: 160, hr_peak_interval1: 172, hr_peak_interval2: null }]);
+		expect(r.peak_hr_1).toBe(172);
+		expect(r.peak_hr_source_1).toBe('strap');
+		expect(r.peak_hr_entered_1).toBe(150);
+		expect(r.pct_hrmax_1).toBeCloseTo(172 / 200, 10);
+		expect(r.peak_hr_2).toBe(160);
+		expect(r.peak_hr_source_2).toBe('entered');
+	});
+	it('fills strap peaks when nothing was typed in, and leaves blanks blank', () => {
+		const [r] = applyStrapPeaks([{ age: null, peak_hr_1: null, peak_hr_2: null, hr_peak_interval2: 131 }]);
+		expect(r.peak_hr_1).toBeNull();
+		expect(r.peak_hr_source_1).toBeNull();
+		expect(r.peak_hr_2).toBe(131);
+		expect(r.pct_hrmax_2).toBeNull();
 	});
 });

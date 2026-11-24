@@ -246,6 +246,9 @@ export function buildSummary(input: SummaryInput): Record<string, unknown>[] {
 			row[`${group}_acc_known`] = mean(known.map((r) => r.correct));
 			row[`${group}_dont_remember_rate`] = rows.length ? (rows.length - known.length) / rows.length : null;
 			row[`${group}_conf`] = mean(known.map((r) => r.confidence).filter((c): c is number => c !== null));
+			// Per board, for comparing the two themes (environment questions belong to neither board).
+			if (group !== 'sa_env')
+				for (const b of ['A', 'B']) row[`${group}_acc_${b}`] = mean(rows.filter((r) => r.board === b).map((r) => r.correct));
 		}
 		// Level 2 accuracy without the color-pair questions, for color-blind participants.
 		const l2NoColor = sa.filter((r) => QUESTION_GROUPS.level2.includes(r.question_type) && !COLOR_TYPES.includes(r.question_type));

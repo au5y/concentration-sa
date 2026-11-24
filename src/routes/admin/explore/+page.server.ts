@@ -12,6 +12,8 @@ export function load({ cookies, url }) {
 		includeTests,
 		timeLimitS: config.board_time_limit_s ?? 0,
 		boardPairs: (config.board.rows * config.board.cols) / 2,
+		conditions: config.conditions,
+		themes: [...new Set(config.theme_orders.flat())],
 		rows: summaryRows(includeTests),
 		detail: pid ? participantDetail(pid) : null,
 		pid
